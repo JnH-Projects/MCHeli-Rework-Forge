@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Getting the original MCHeli zip
+    url: https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files
+    about: The vehicles come from MC1.7.10_mcheli_1.0.3.zip on the MCHeli CurseForge page. Put it in the mcheli folder next to mods.
