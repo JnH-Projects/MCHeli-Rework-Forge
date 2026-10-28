@@ -110,8 +110,12 @@ split into six phases, each ending in a beta.
 Every beta goes through the usual flow: set `mod_version`, move the changelog section, merge,
 tag `v1.1.0-beta.N` in the private repo, mirror the commits to the public repo and tag the same
 content there. The hyphen in the version already marks both GitHub releases as pre-releases. The
-CurseForge page stays on 1.0.0 until 1.1.0 ships, and links the public pre-releases for players
-who want to test early.
+CurseForge page stays on 1.0.0 until 1.1.0 ships.
+
+Betas are still public: anyone can download the jar from the
+[public repository's releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases), and
+the CurseForge description links there for players who want to test early. Treat every beta as
+something players will install and keep worlds on, not as an internal build.
 
 Rules that hold for every beta:
 
