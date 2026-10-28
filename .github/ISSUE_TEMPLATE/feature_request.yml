@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest something new, or a feature of the original MCHeli that is still missing.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check [docs/ROADMAP.md](https://github.com/JnH-Projects/MCHeli-Rework-Forge/blob/main/docs/ROADMAP.md)
+        first; many features of the original are already planned for 1.1.0.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of feature?
+      options:
+        - A feature of the original MCHeli that is missing
+        - Something new
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe it
+      description: What should happen in game, and why it would help.
+    validations:
+      required: true
+  - type: textarea
+    id: original
+    attributes:
+      label: How the original did it
+      description: For missing features, how it worked in MCHeli 1.0.3, including definition keys if you know them.

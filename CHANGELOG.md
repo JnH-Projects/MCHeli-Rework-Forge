@@ -59,6 +59,7 @@ Servers need the same two files. Only the zip goes in the `mcheli` folder, never
   joining a world. A zip that fails to import reports the reason in the chat and the log.
 - A guide to modeling vehicles in Blockbench or Blender (`docs/content/modeling.md`): axes,
   scale, part names, textures and export settings.
+- A contributing guide (`CONTRIBUTING.md`) and issue and pull request templates.
 
 ## [1.0.0-beta.1] - 2026-10-27
 

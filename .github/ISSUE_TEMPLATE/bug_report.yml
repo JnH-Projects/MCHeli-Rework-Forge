@@ -1,0 +1,67 @@
+name: Bug report
+description: Something does not work, crashes or behaves differently from the original MCHeli.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not attach files from the original MCHeli zip; name the
+        vehicle or weapon instead.
+  - type: input
+    id: version
+    attributes:
+      label: MCHeli Rework version
+      description: From the jar name or the mod list, for example 1.0.0.
+    validations:
+      required: true
+  - type: input
+    id: forge
+    attributes:
+      label: Forge version
+      placeholder: "66.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: side
+    attributes:
+      label: Where does it happen?
+      options:
+        - Single player
+        - Multiplayer, dedicated server
+        - Multiplayer, LAN
+        - Both single player and multiplayer
+    validations:
+      required: true
+  - type: input
+    id: vehicle
+    attributes:
+      label: Vehicle or weapon
+      description: The name shown in game, for example AH-64 or AIM-9X. Leave empty if it is not about one.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Spawn an AH-64
+        2. Get in as the pilot and press H
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Attach `logs/latest.log`, and the crash report from `crash-reports` if the game crashed. Drag the files in here.
+    validations:
+      required: true
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods
+      description: Any other mods installed, or "none".
