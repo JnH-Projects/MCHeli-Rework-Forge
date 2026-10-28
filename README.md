@@ -199,11 +199,12 @@ bottom right shows hit points, the weapon, ammunition, reload, heat, lock and fl
 ## Documentation
 
 * [Changelog](CHANGELOG.md)
-* [Roadmap](docs/ROADMAP.md): what each phase delivers on the way to 1.0.0
+* [Roadmap](docs/ROADMAP.md): what each phase delivered, and what is planned for 1.1.0
 * [Architecture](docs/ARCHITECTURE.md): how the mod is put together
 * [Development](docs/DEVELOPMENT.md): building, running, testing and releasing
 * [In-game test plan](docs/TESTING.md)
 * Content authoring: [modeling in Blockbench or Blender](docs/content/modeling.md), [vehicles](docs/content/aircraft.md), [weapons](docs/content/weapons.md), [HUD scripts](docs/content/hud.md)
+* [Contributing](CONTRIBUTING.md): rules for pull requests and bug reports
 
 ## Building from source
 
