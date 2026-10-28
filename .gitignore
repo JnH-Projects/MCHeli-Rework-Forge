@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+eclipse/
+*.launch
+
+# Run directories
+run/
+run-data/
+logs/
+*.log
+
+# Original 1.7.10 distribution, kept locally for reference only
+Mod/
+
+# OS noise
+.DS_Store
+Thumbs.db

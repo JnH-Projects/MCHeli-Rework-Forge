@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL="https://github.com/JnH-Projects/MCHeli-Rework-Forge/issues"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+displayURL="https://github.com/JnH-Projects/MCHeli-Rework-Forge"
+authors="${mod_authors}"
+credits="EMB4 created the original MCHeli mod and all of its vehicle content. Fureniku maintains the CurseForge project."
+description='''
+Helicopters, planes, tanks and vehicles for modern Minecraft Forge.
+A ground-up rework of MCHeli 1.0.3 by EMB4, which stopped at Minecraft 1.7.10.
+The vehicles come from your own copy of the original: put MC1.7.10_mcheli_1.0.3.zip from the
+MCHeli CurseForge page into the "mcheli" folder of the game directory.
+'''
+
+[[dependencies.${mod_id}]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"

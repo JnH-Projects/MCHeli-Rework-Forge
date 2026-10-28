@@ -1,0 +1,23 @@
+{
+  "entity.mcheli.helicopter": "ヘリコプター",
+  "entity.mcheli.plane": "飛行機",
+  "entity.mcheli.tank": "戦車",
+  "entity.mcheli.vehicle": "地上兵器",
+  "itemGroup.mcheli.helicopters": "MCHeli ヘリコプター",
+  "itemGroup.mcheli.planes": "MCHeli 飛行機",
+  "itemGroup.mcheli.tanks": "MCHeli 戦車・車両",
+  "itemGroup.mcheli.vehicles": "MCHeli 地上兵器",
+  "key.category.mcheli.main": "MCHeli",
+  "key.mcheli.fold": "翼・ハッチの折りたたみ",
+  "key.mcheli.free_look": "フリールック",
+  "key.mcheli.landing_gear": "着陸脚",
+  "key.mcheli.rack_load": "ラックに積載 / 搭載",
+  "key.mcheli.rack_unload": "ラックから降ろす / 離脱",
+  "key.mcheli.switch_camera": "カメラ / 照準切り替え",
+  "key.mcheli.switch_seat": "座席切り替え",
+  "key.mcheli.vtol": "VTOLモード",
+  "message.mcheli.content.import_failed": "MCHeli: 元の機体データを読み込めませんでした: %s。logs/latest.log を確認してください。",
+  "message.mcheli.content.missing": "MCHeli: 機体データがありません。MCHeli の CurseForge ページから %s をダウンロードし、%s に置いてからゲームを再起動してください。",
+  "pack.mcheli.content": "MCHeli コンテンツ",
+  "pack.mcheli.content.description": "EMB4 氏の MCHeli 1.0.3 から読み込み"
+}
