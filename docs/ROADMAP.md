@@ -2,7 +2,8 @@
 
 The original mod is about 60,000 lines of 1.7.10 code. Nearly all of it touches APIs that no
 longer exist (immediate mode OpenGL, numeric ids, the old network and event systems), so the port
-happens in four phases. Each phase ends with a tagged pre-release that installs and runs on its own.
+happened in four phases toward 1.0.0, and 1.1.0 continues with six more. Each phase ends with a
+tagged pre-release that installs and runs on its own.
 
 | Phase | Version | Theme | State |
 |-------|---------|-------|-------|
@@ -10,8 +11,9 @@ happens in four phases. Each phase ends with a tagged pre-release that installs 
 | 2 | `1.0.0-alpha.2` | Planes, tanks and ground vehicles | Implemented, in-game test in progress |
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
-| | `1.0.0` | Release: code-only jar | Releasing |
-| 5 | `1.1.0` | Equipment, remaining phase 4 features, vehicle workshop | Planned |
+| | `1.0.0` | Release: code-only jar | Released |
+| 5-10 | `1.1.0-beta.1` to `beta.6` | Content packs, older versions, equipment, workshop ([plan](#road-to-110)) | Planned |
+| | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
 
@@ -82,7 +84,7 @@ textures (back faces are culled again). See the [test plan](TESTING.md#phase-4-c
       the recipe book from the first login
 - [x] Code-only jar: the original content is imported from the player's own copy of the 1.0.3 zip
 
-The rest of the original phase 4 list moved to 1.1.0 (below), so 1.0.0 can ship.
+The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 can ship.
 
 ## 1.0.0 release criteria
 
@@ -91,47 +93,180 @@ The rest of the original phase 4 list moved to 1.1.0 (below), so 1.0.0 can ship.
 - No known crash, data loss or desync issue
 - No original MCHeli file in the jar or the repository; players import their own copy (done)
 
-## Phase 5: 1.1.0
+## Road to 1.1.0
 
-### Carried over from phase 4
+1.1.0 adds three big things on top of 1.0.0: content packs, older Minecraft versions, and the
+vehicle workshop. It also picks up the phase 4 items that were left out of 1.0.0. The work is
+split into six phases, each ending in a beta.
+
+### Release channels
+
+| Build | Private repo | Public repo | CurseForge |
+|-------|--------------|-------------|------------|
+| `1.1.0-beta.N` | GitHub pre-release | Mirrored, GitHub pre-release | Not uploaded |
+| `1.1.0-rc.N` (if needed) | GitHub pre-release | Mirrored, GitHub pre-release | Not uploaded |
+| `1.1.0` | GitHub release | Mirrored, GitHub release | Uploaded, one file per Minecraft version |
+
+Every beta goes through the usual flow: set `mod_version`, move the changelog section, merge,
+tag `v1.1.0-beta.N` in the private repo, mirror the commits to the public repo and tag the same
+content there. The hyphen in the version already marks both GitHub releases as pre-releases. The
+CurseForge page stays on 1.0.0 until 1.1.0 ships, and links the public pre-releases for players
+who want to test early.
+
+Rules that hold for every beta:
+
+- A world saved by 1.0.0 or an earlier beta loads in the next one. Breaking a save format needs
+  a data fixer or a migration, and a line under `Changed` in the changelog.
+- The jar still holds no EMB4 file, on every Minecraft version.
+- A phase is done when the build is green for every supported Minecraft version, its checklist
+  in [TESTING.md](TESTING.md) passes in single player and on a dedicated server, and
+  `CHANGELOG.md`, the docs and [ARCHITECTURE.md](ARCHITECTURE.md) describe what changed.
+
+| Phase | Version | Theme | State |
+|-------|---------|-------|-------|
+| 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Planned |
+| 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Planned |
+| 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
+| 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
+| 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning | Planned |
+| 10 | `1.1.0-beta.6` | Workshop: textures, sounds and sharing | Planned |
+| | `1.1.0` | Release on CurseForge | Planned |
+
+The order is deliberate. The registry and the source split come first because everything else
+sits on them. Content packs come before the workshop, since the workshop's output is a pack.
+The ports come right after packs, while the code is still close to 1.0.0; from then on each
+feature is built once in shared code and only its Minecraft glue is written per version, instead
+of back-porting four phases of work at the end.
+
+## Phase 5: groundwork (`1.1.0-beta.1`)
+
+Engine changes that packs, ports and the workshop all depend on. Players mostly see the config
+and the command.
+
+- [ ] One generic vehicle item per kind, carrying the definition id in a data component, with a
+      data fixer so 1.0.0 worlds keep their items ([why](#one-generic-vehicle-item-per-kind))
+- [ ] `ContentRegistry` can add and replace definitions while the game runs
+- [ ] Runtime client assets: textures through `DynamicTexture`, sounds through a streaming
+      `SoundInstance`, models through `MeshCache`, all without a resource reload
+- [ ] In-game definition reload, built on the runtime registry
+- [ ] Server config (`mcheli.cfg` equivalent) and the `/mcheli` command
+- [ ] Source split: a `common` source set with the version-free code (`content`, `model`, `hud`,
+      the expression library, weapon and vehicle definitions, flight and damage maths) and one
+      platform module per Minecraft version for rendering, networking, registration and events.
+      Minecraft classes stay out of `common`, enforced by a test.
+- [ ] Multi-version Gradle build: one tag builds every platform module, and the release attaches
+      one jar per Minecraft version (`mcheli-<mc>-<version>.jar`). Release workflow and
+      [DEVELOPMENT.md](DEVELOPMENT.md#releasing) updated; 26.3 is still the only module.
+
+## Phase 6: content packs and multiplayer sync (`1.1.0-beta.2`)
+
+The external content packs from phase 4, in the package format the workshop will write later
+([format](#vehicle-packages)).
+
+- [ ] Package format: definition, OBJ or MQO model, PNG textures, OGG sounds and a manifest (id,
+      author, version, content hash). Data only, never code.
+- [ ] Packs loaded from `<game dir>/mcheli/packs`; the 1.0.3 import becomes one more pack
+- [ ] Load errors reported per pack (log, and chat for operators); a broken pack never stops the
+      game from starting
+- [ ] Server to client sync: id and hash list on join, missing packs sent in chunks and cached in
+      `mcheli/cache/<hash>.zip` ([details](#multiplayer))
+- [ ] Server limits and an allow list in the config; clients cap the cache size
+- [ ] Pack author guide in `docs/content/packs.md`, with a small example pack in the repo made
+      from our own assets (no EMB4 files)
+
+## Phase 7: older Minecraft versions (`1.1.0-beta.3`)
+
+Ports of the platform module. The shared code should need no changes; if it does, the split
+from phase 5 gets fixed rather than worked around.
+
+- [ ] Decide the target list and loader for each version (see [open decisions](#open-decisions))
+- [ ] 26.2 and 26.1 on Forge: closest to 26.3, mostly renamed methods
+- [ ] 1.21.1 on Java 21: older rendering and networking APIs, item stacks with NBT where 26.x
+      uses data components
+- [ ] Legacy importer checked on each version (pack format numbers and the asset layout differ)
+- [ ] CI builds and tests every module on every pull request
+- [ ] [TESTING.md](TESTING.md) gets a short per-version smoke test: import, fly a helicopter,
+      drive a tank, fire a missile, join a dedicated server
+
+1.20.1 (Java 17) is the next candidate after 1.21.1. It joins 1.1.0 only if it is ready in this
+phase; otherwise it moves to 1.2.0 so it does not hold the release back.
+
+## Phase 8: equipment and the rest of phase 4 (`1.1.0-beta.4`)
+
+Gameplay carried over from phase 4, built once in `common` with per-version glue.
 
 - [ ] Night vision, thermal view and zoom
 - [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, parachute, chain towing,
       container, fuel, wrench, Stinger and Javelin, smoke grenades
+- [ ] Fuel use and the vehicle inventory
 - [ ] Parachutes for ejection seats and rack drops, containers on racks, repelling and troop drops
 - [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
-- [ ] The drafting table and its recipe browser
-- [ ] Server config (`mcheli.cfg` equivalent) and the `/mcheli` command
+- [ ] Resupply from the inventory screen and from supply vehicles, marking blocks with targeting
+      pods, mortar distance
+- [ ] The drafting table and its recipe browser (pack vehicles included)
 - [ ] Multiplayer team manager and spotting
-- [ ] In-game definition reload
-- [ ] External content packs loaded from the game directory (becomes the vehicle packages below)
 
-### Vehicle workshop
+## Phase 9: workshop, model, parts and tuning (`1.1.0-beta.5`)
+
+The first half of the [editor](#the-editor). Its output is a pack from phase 6, so anything
+built here syncs to other players with no extra work.
+
+- [ ] Workshop block (or the drafting table) opening a 3D editor screen around the model
+- [ ] OBJ import from Blockbench or Blender, with clear errors for unsupported files
+- [ ] Gizmos for seats, cameras, rotors, wings, flaps, nozzles, wheels, tracks, landing gear,
+      canopy and hatches, weapon mounts, hit boxes, engine and fuel tank
+- [ ] Flight and drive tuning with a test flight from the editor
+- [ ] Save, export and load packages; undo and redo
+- [ ] Workshop guide in `docs/content/workshop.md`
+
+## Phase 10: workshop, textures, sounds and sharing (`1.1.0-beta.6`)
+
+- [ ] Texture painting on the model and PNG import per part (cockpit textures included), with
+      live preview
+- [ ] OGG sounds for engine, rotor and weapons, with pitch curves
+- [ ] Package browser, author credits shown in game
+- [ ] Operator approval before a player's new vehicle goes live on a server
+
+## 1.1.0 release
+
+No new features after beta.6; a `1.1.0-rc.N` follows only if beta.6 testing finds problems.
+
+- [ ] Every phase checklist done on every supported Minecraft version
+- [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
+- [ ] A pack made in the workshop on one version loads on every other supported version
+- [ ] Tag `v1.1.0` in both repositories; upload one CurseForge file per Minecraft version, with
+      the player-facing changelog from `docs/CURSEFORGE.md`
+
+## Open decisions
+
+- **Older versions and loaders.** Which versions are in 1.1.0, and Forge or NeoForge for each
+  one below 26.x. NeoForge is where most 1.21.1 mods live; Forge keeps one loader for the whole
+  project. The current plan is 26.2, 26.1 and 1.21.1, with 1.20.1 next.
+- **Workshop entry point.** A new workshop block, or a tab in the drafting table.
+- **Pack hosting.** Whether there is ever a shared place to publish packs, or only hand sharing
+  and server sync.
+
+## Design notes
+
+### One generic vehicle item per kind
+
+Every vehicle currently registers its own item at startup, and Forge freezes the registry before
+a world loads, so a vehicle created or received later could never get an item. The item carries
+the definition id in a data component instead; the entities already work this way (one entity
+type per kind, definition name synced). Existing worlds keep their items through a data fixer.
+
+### Vehicle packages
 
 Players build their own vehicles in game, save them as a file, share them, and fly them on any
 server. Someone can build an A350 with its own cockpit texture and engine sound, and everyone on
 the server sees and flies it without installing anything.
 
-### What a custom vehicle is
-
-A **vehicle package**: one zip holding a definition in the existing text format (the same keys
+A **vehicle package** is one zip holding a definition in the existing text format (the same keys
 the original vehicles use, so everything the engine supports is available), an OBJ model,
 PNG textures and OGG sounds, plus a manifest with id, author, version and a content hash. The
 package is data only, never code, so loading one cannot run anything on a player's machine.
-Packages live in `<game dir>/mcheli/packs`; the 1.0.3 import becomes one more pack.
-
-### Design changes the engine needs first
-
-- **One generic vehicle item per kind.** Every vehicle currently registers its own item at
-  startup, and Forge freezes the registry before a world loads, so a vehicle created or received
-  later could never get an item. The item carries the definition id in a data component instead;
-  the entities already work this way (one entity type per kind, definition name synced).
-  Existing worlds keep their items through a data fixer.
-- **Definitions loadable at runtime.** `ContentRegistry` becomes a registry that can add and
-  replace definitions while the game runs (the original vehicles stay as they are now).
-- **Runtime client assets.** Models already load from files (`MeshCache`); textures go through
-  `DynamicTexture` and sounds through a custom `SoundInstance` streaming the OGG, so nothing needs
-  a resource reload.
+Packages live in `<game dir>/mcheli/packs`; the 1.0.3 import becomes one more pack. The format
+does not depend on the Minecraft version, so the same zip works on every supported version.
 
 ### Multiplayer
 
@@ -158,13 +293,3 @@ A workshop block (or the drafting table) opens a 3D editor screen around the mod
   texture included), with live preview.
 - **Sounds:** pick OGG files for engine, rotor and weapons, with pitch curves.
 - **Save and export** to a package; **load** any package to keep editing.
-
-### Order of work
-
-1. Generic items and runtime registry, with the 1.0.3 content moved onto them
-2. Package format and loading from `mcheli/packs`, which also covers "external content packs"
-   from phase 4
-3. Server to client package sync with caching and limits
-4. Editor: OBJ import, part placement and tuning, saving
-5. Editor: texture painting and sounds
-6. Sharing polish: package browser, author credits, operator approval
