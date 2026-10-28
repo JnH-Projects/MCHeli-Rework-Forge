@@ -115,6 +115,9 @@ who want to test early.
 
 Rules that hold for every beta:
 
+- One phase at a time. Once a phase starts, it is finished and its beta jar is shipped (tagged,
+  released on GitHub in both repositories) before any work on the next phase begins. Bugs found
+  in a shipped beta are fixed in the current phase, not by reopening the old one.
 - A world saved by 1.0.0 or an earlier beta loads in the next one. Breaking a save format needs
   a data fixer or a migration, and a line under `Changed` in the changelog.
 - The jar still holds no EMB4 file, on every Minecraft version.
