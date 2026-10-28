@@ -80,7 +80,8 @@ containing a hyphen (`-alpha.N`, `-beta.N`, `-rc.N`) are marked as pre-releases.
 
 Every release, pre-releases included, is mirrored to the public repository and tagged there too.
 Only full releases (`1.0.0`, `1.1.0`, ...) are uploaded to CurseForge; betas and release
-candidates stay on GitHub. See [the release channels](ROADMAP.md#release-channels).
+candidates stay on GitHub, where anyone can still download them from the public repository's
+releases page. See [the release channels](ROADMAP.md#release-channels).
 
 ## Original content
 
