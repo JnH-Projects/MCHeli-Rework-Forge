@@ -78,6 +78,10 @@ Releases are cut from tags. The release workflow refuses to publish when the tag
 `CHANGELOG.md` section as release notes, and publishes a GitHub release with the jar. Versions
 containing a hyphen (`-alpha.N`, `-beta.N`, `-rc.N`) are marked as pre-releases.
 
+Every release, pre-releases included, is mirrored to the public repository and tagged there too.
+Only full releases (`1.0.0`, `1.1.0`, ...) are uploaded to CurseForge; betas and release
+candidates stay on GitHub. See [the release channels](ROADMAP.md#release-channels).
+
 ## Original content
 
 Neither the repository nor the jar may contain EMB4's files. Don't commit anything from the zip
