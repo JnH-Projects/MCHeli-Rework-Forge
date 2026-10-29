@@ -15,6 +15,12 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
   The glow is faint by day and strongest at night, in caves and under water. Turn it off with
   `effects.nightGlow` in the new client config, `config/mcheli-client.toml`.
 
+### Changed
+
+- Vehicles no longer flash red when hit.
+- Hits no longer jolt a vehicle that someone is flying or driving, and explosions no longer push
+  it. An empty vehicle still rocks a little from a nearby blast (a quarter of the old push).
+
 ## [1.1.0-beta.1] - 2026-10-29
 
 Phase 5 of the road to 1.1.0: the groundwork that content packs, older Minecraft versions and
