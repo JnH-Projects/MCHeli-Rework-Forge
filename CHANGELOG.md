@@ -5,6 +5,41 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge.
+
+### Added
+
+- NeoForge and Fabric jars for Minecraft 26.3, with the same features as the Forge one. Fabric
+  needs Fabric API. Worlds, the `mcheli` folder, content packs and configs carry over between
+  loaders.
+- The log names the loader the mod runs on, next to the version.
+
+### Changed
+
+- Jar names carry the loader: `mcheli-forge-26.3-<version>.jar`, `mcheli-neoforge-26.3-<version>.jar`
+  and `mcheli-fabric-26.3-<version>.jar`.
+- The configs are read by the mod itself instead of Forge's config system, which Fabric does not
+  have. The files, their place and their keys stay the same, so existing settings are kept. Edits
+  to `serverconfig/mcheli-server.toml` now apply on the next world start or `/mcheli reload`
+  instead of while the server runs; `/mcheli reload` now reads the server config again too.
+- The original content is imported again on the first start, since the recipes now name the
+  vehicle ingredient for every loader.
+- Every packet travels under its own id (`mcheli:pilot_state` and so on) with the same encoding on
+  every loader. Clients and servers need the same version, since the network protocol changed.
+- Glass panes that bullets shoot through come from the `c:glass_panes` tag, which every loader
+  fills.
+
+### Developers
+
+- The code is split in three layers: `common` (no Minecraft), `minecraft-26.3` (Minecraft, no
+  loader) and a thin module per loader (`forge-26.3`, `neoforge-26.3`, `fabric-26.3`). The shared
+  code reaches the loader through `Platform` and `Registration`, and the loaders call
+  `CommonHooks` and `ClientHooks` from their events. Where NeoForge or Fabric has no event, a
+  mixin hooks in where Forge fires its own. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- Gradle 9.8.2, for Fabric Loom 1.19. NeoForge modules build with ModDevGradle.
+
 ## [1.1.0-beta.2] - 2026-10-29
 
 Phase 6 of the road to 1.1.0: content packs that servers send to their players, night glow and
