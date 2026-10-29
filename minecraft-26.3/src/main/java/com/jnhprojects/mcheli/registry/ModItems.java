@@ -1,16 +1,14 @@
 package com.jnhprojects.mcheli.registry;
 
-import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.jnhprojects.mcheli.item.LegacyAircraftItem;
+import com.jnhprojects.mcheli.platform.Registered;
+import com.jnhprojects.mcheli.platform.Registration;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.eventbus.api.bus.BusGroup;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
 import java.util.Map;
 
@@ -19,24 +17,26 @@ import java.util.Map;
  * items, one per vehicle, are kept for the content present at startup so old worlds keep them.
  */
 public final class ModItems {
-    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MCHeli.MOD_ID);
+    public static final Registered<Item> HELICOPTER = kind("helicopter");
+    public static final Registered<Item> PLANE = kind("plane");
+    public static final Registered<Item> TANK = kind("tank");
+    public static final Registered<Item> VEHICLE = kind("vehicle");
 
-    public static final RegistryObject<Item> HELICOPTER = kind("helicopter");
-    public static final RegistryObject<Item> PLANE = kind("plane");
-    public static final RegistryObject<Item> TANK = kind("tank");
-    public static final RegistryObject<Item> VEHICLE = kind("vehicle");
-
-    private static final Map<String, RegistryObject<Item>> BY_KIND =
+    private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
 
     private ModItems() {
     }
 
-    private static RegistryObject<Item> kind(String kind) {
-        return ITEMS.register(kind, () -> new AircraftItem(kind, new Item.Properties().setId(ITEMS.key(kind)).stacksTo(1)));
+    private static Registered<Item> kind(String kind) {
+        return Registration.register(Registries.ITEM, kind, key -> new AircraftItem(kind, new Item.Properties().setId(key).stacksTo(1)));
     }
 
-    public static void register(BusGroup modBus, ContentRegistry content) {
+    /**
+     * Declares the entries, with a 1.0.0 item for each original vehicle in {@code content}; the
+     * loader module registers them.
+     */
+    public static void init(ContentRegistry content) {
         for (AircraftDefinition def : content.all()) {
             String name = def.name();
             // Only the imported content existed in 1.0.0; pack vehicles never had their own item.
@@ -45,15 +45,14 @@ public final class ModItems {
                 continue;
             }
             String kind = def.kind();
-            ITEMS.register(name, () -> new LegacyAircraftItem(kind, name,
-                    new Item.Properties().setId(ITEMS.key(name)).stacksTo(1)));
+            Registration.register(Registries.ITEM, name, key -> new LegacyAircraftItem(kind, name,
+                    new Item.Properties().setId(key).stacksTo(1)));
         }
-        ITEMS.register(modBus);
     }
 
     /** The generic item of a vehicle kind ({@code helicopter}, {@code plane}, {@code tank} or {@code vehicle}). */
     public static Item forKind(String kind) {
-        RegistryObject<Item> item = BY_KIND.get(kind);
+        Registered<Item> item = BY_KIND.get(kind);
         if (item == null) {
             throw new IllegalArgumentException("Unknown vehicle kind " + kind);
         }
