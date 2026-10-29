@@ -12,15 +12,23 @@ import java.util.function.Supplier;
  */
 public final class ClientAccess {
     private static Supplier<@Nullable Entity> localPlayer = () -> null;
+    private static Runnable contentReloaded = () -> {
+    };
 
     private ClientAccess() {
     }
 
-    public static void install(Supplier<@Nullable Entity> player) {
+    public static void install(Supplier<@Nullable Entity> player, Runnable onContentReloaded) {
         localPlayer = player;
+        contentReloaded = onContentReloaded;
     }
 
     public static @Nullable Entity localPlayer() {
         return localPlayer.get();
+    }
+
+    /** The server reloaded the content. Runs on the client's main thread. */
+    public static void contentReloaded() {
+        contentReloaded.run();
     }
 }
