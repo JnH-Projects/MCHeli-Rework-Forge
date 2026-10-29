@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
@@ -52,7 +53,6 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
         state.yaw = entity.getYRot(partialTicks);
         state.pitch = entity.getXRot(partialTicks);
         state.roll = entity.roll(partialTicks);
-        state.hurtTime = entity.getHurtTime() - partialTicks;
         if (def == null) {
             return;
         }
@@ -209,7 +209,7 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
             poseStack.rotateDegrees(Axis.XP, state.pitch);
             poseStack.rotateDegrees(Axis.ZP, state.roll);
             new PartRenderer(def, mesh, state, poseStack, collector, texture(def.folder(), state.texture), state.lightCoords,
-                    MeshRenderer.overlay(state.hurtTime), state.glassColor).submitAll();
+                    OverlayTexture.NO_OVERLAY, state.glassColor).submitAll();
             poseStack.popPose();
         }
         super.submit(state, poseStack, collector, camera);

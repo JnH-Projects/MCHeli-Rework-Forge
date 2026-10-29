@@ -3,7 +3,6 @@ package com.jnhprojects.mcheli.client.render;
 import com.jnhprojects.mcheli.model.MeshGroup;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -85,9 +84,5 @@ final class MeshRenderer {
                 .setOverlay(overlay)
                 .setLight(light)
                 .setNormal(pose, n[a], n[a + 1], n[a + 2]);
-    }
-
-    static int overlay(float hurtTime) {
-        return OverlayTexture.pack(0, OverlayTexture.v(hurtTime > 0.0F));
     }
 }

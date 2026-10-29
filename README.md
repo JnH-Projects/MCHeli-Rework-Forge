@@ -27,6 +27,18 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
+Phase 6 in a development build (`1.1.0-beta.2`): night glow. Tracers, rocket motors, flares and
+explosions light up the dark, and a wreck keeps burning until it disappears.
+
+| | |
+|---|---|
+| ![An SA-2 closing on a helicopter in the night sky, its motor glowing](docs/images/phase-6/sa-2-night-intercept.png) | ![The shot down helicopter exploding on a hilltop at night in a bright flash](docs/images/phase-6/helicopter-crash-night.png) |
+| An SA-2 intercept at night | The helicopter goes up in a flash of light |
+| ![Glowing embers and burning debris arcing over the burning wreck at night](docs/images/phase-6/crash-embers-night.png) | ![A torpedo running towards a patrol boat at dusk](docs/images/phase-6/torpedo-run-dusk.png) |
+| Burning debris arcs over the wreck | A torpedo run at dusk |
+| ![The patrol boat cooking off in a fireball against the sunset](docs/images/phase-6/patrol-boat-cook-off-dusk.png) | ![Glowing debris raining down around the sinking patrol boat](docs/images/phase-6/burning-debris-dusk.png) |
+| The patrol boat cooks off | Glowing debris rains down as it sinks |
+
 Phase 5 in a development build (`1.1.0-beta.1`): a patrol boat hit by a torpedo cooks off and
 sinks.
 
@@ -223,6 +235,12 @@ server runs):
 | `vehicles.damageFactor` | `1.0` | Multiplies the damage vehicles take; `0.5` makes them twice as tough |
 | `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
 | `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
+
+Each player also has `config/mcheli-client.toml`, which only changes what that player sees:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `effects.nightGlow` | `true` | Tracers, rocket motors, flares and explosions glow: faintly by day, brightly at night, in caves and under water |
 
 ## Documentation
 

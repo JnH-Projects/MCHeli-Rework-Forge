@@ -118,7 +118,8 @@ releases page. See [the release channels](ROADMAP.md#release-channels).
 
 Neither the repository nor the jar may contain EMB4's files. Don't commit anything from the zip
 or from `run/mcheli/imported`. As a guard, the `jar` task excludes everything under
-`assets/mcheli` except `lang` and the four fallback item models of the generic vehicle items.
+`assets/mcheli` except `lang`, the four fallback item models of the generic vehicle items and
+the night glow particle (`particles/glow.json`, `textures/particle/glow.png`, both our own).
 After a build, check every jar with:
 
 ```
@@ -126,7 +127,7 @@ for jar in build/release/*.jar; do unzip -l "$jar" | grep -v "com/"; done
 ```
 
 which should list only the manifest, `mods.toml`, `pack.mcmeta`, the two lang files, the four
-generic item models and the damage type data.
+generic item models, the glow particle and its texture, and the damage type data.
 
 When the conversion changes, change `content.LegacyImporter` and bump its `FORMAT`, so existing
 installs, the dev run and the tests all convert again. Keys the rework adds go into the lang files

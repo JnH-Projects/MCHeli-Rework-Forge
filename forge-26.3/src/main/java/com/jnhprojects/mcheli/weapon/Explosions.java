@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.weapon;
 
 import com.jnhprojects.mcheli.ServerConfig;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
+import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.projectile.FlareEntity;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.network.ExplosionEffectPacket;
@@ -41,6 +42,8 @@ import java.util.Optional;
 public final class Explosions {
     /** Players this far away still see the smoke of an explosion. */
     private static final double EFFECT_RANGE = 256.0;
+    /** Share of the blast knockback an empty vehicle takes; they are far heavier than a mob. */
+    private static final double VEHICLE_PUSH = 0.25;
 
     private Explosions() {
     }
@@ -148,7 +151,13 @@ public final class Explosions {
                 }
             }
             Combat.hurt(entity, source, damage, p.weapon);
-            if (!(entity instanceof ProjectileEntity)) {
+            if (entity instanceof AircraftEntity vehicle) {
+                // Not in the original: a vehicle someone is driving is simulated on their client,
+                // so a push here only snaps it back a step. An empty one still rocks a little.
+                if (vehicle.getControllingPassenger() == null) {
+                    entity.push(dx * impact * VEHICLE_PUSH * 0.4, dy * impact * VEHICLE_PUSH * 0.1, dz * impact * VEHICLE_PUSH * 0.4);
+                }
+            } else if (!(entity instanceof ProjectileEntity)) {
                 entity.push(dx * impact * 0.4, dy * impact * 0.1, dz * impact * 0.4);
             }
             if (damage > 0.0F && p.fireSeconds > 0) {

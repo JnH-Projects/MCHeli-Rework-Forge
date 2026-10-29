@@ -7,6 +7,7 @@ import com.jnhprojects.mcheli.registry.ModCreativeTabs;
 import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
+import com.jnhprojects.mcheli.registry.ModParticles;
 import com.jnhprojects.mcheli.registry.ModRecipes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
@@ -37,8 +38,10 @@ public final class MCHeli {
         legacyContent.registerPacks();
         content = loadContent(legacyContent.assets());
         context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         ModDataComponents.register(modBus);
         ModEntities.register(modBus);
+        ModParticles.register(modBus);
         ModItems.register(modBus, content);
         ModCreativeTabs.register(modBus);
         ModRecipes.register(modBus);

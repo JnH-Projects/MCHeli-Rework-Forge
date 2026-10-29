@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+### Added
+
+- Night glow: rounds trail a tracer, rockets and missiles burn with a glowing motor, burning
+  flares light up around them, and every explosion throws a flash of light and glowing embers.
+  A crashing vehicle goes up in a bigger flash and keeps burning with a glow for several seconds.
+  The glow is faint by day and strongest at night, in caves and under water. Turn it off with
+  `effects.nightGlow` in the new client config, `config/mcheli-client.toml`.
+- Wrecks stay for 30 seconds instead of 25 and keep burning until they disappear: flames, a fire
+  glow and rising embers that die down over the last five seconds. Sunk wrecks do not burn.
+- Screenshots of night glow in `docs/images/phase-6`, shown in the README.
+
+### Changed
+
+- Vehicles no longer flash red when hit.
+- Hits no longer jolt a vehicle that someone is flying or driving, and explosions no longer push
+  it. An empty vehicle still rocks a little from a nearby blast (a quarter of the old push).
+
 ## [1.1.0-beta.1] - 2026-10-29
 
 Phase 5 of the road to 1.1.0: the groundwork that content packs, older Minecraft versions and

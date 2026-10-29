@@ -3,20 +3,23 @@ package com.jnhprojects.mcheli.client;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.client.hud.HudScripts;
+import com.jnhprojects.mcheli.client.particle.GlowParticle;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
+import com.jnhprojects.mcheli.client.render.FlareRenderer;
 import com.jnhprojects.mcheli.client.render.MeshCache;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import com.jnhprojects.mcheli.registry.ModEntities;
+import com.jnhprojects.mcheli.registry.ModParticles;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
 
 /** Client only wiring. Kept out of {@code MCHeli} so dedicated servers never load these classes. */
@@ -41,9 +44,10 @@ public final class ClientSetup {
             event.registerEntityRenderer(ModEntities.TORPEDO.get(), ProjectileRenderer::new);
             event.registerEntityRenderer(ModEntities.MARKER_ROCKET.get(), ProjectileRenderer::new);
             event.registerEntityRenderer(ModEntities.DISPENSED_ITEM.get(), ProjectileRenderer::new);
-            event.registerEntityRenderer(ModEntities.FLARE.get(), NoopRenderer::new);
+            event.registerEntityRenderer(ModEntities.FLARE.get(), FlareRenderer::new);
             event.registerEntityRenderer(ModEntities.A10.get(), A10Renderer::new);
         });
+        RegisterParticleProvidersEvent.BUS.addListener(event -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
         RegisterKeyMappingsEvent.BUS.addListener(event -> KeyBindings.ALL.forEach(event::register));
         RegisterClientReloadListenersEvent.BUS.addListener(event -> {
             event.registerReloadListener(MeshCache.INSTANCE);

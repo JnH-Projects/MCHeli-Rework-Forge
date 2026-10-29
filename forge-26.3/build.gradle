@@ -81,7 +81,9 @@ tasks.named('jar', Jar) {
     // zip (LegacyContent). The repository no longer holds it, but the jar is packed from
     // build/sourceSets/main, which can still have copies from older builds and from the IDE.
     def shipped = ['assets/mcheli/items/helicopter.json', 'assets/mcheli/items/plane.json',
-                   'assets/mcheli/items/tank.json', 'assets/mcheli/items/vehicle.json']
+                   'assets/mcheli/items/tank.json', 'assets/mcheli/items/vehicle.json',
+                   // Our own: the night glow sprite (generated, no EMB4 content) and its particle definition.
+                   'assets/mcheli/particles/glow.json', 'assets/mcheli/textures/particle/glow.png']
     exclude { FileTreeElement element ->
         String path = element.relativePath.pathString
         !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/') &&

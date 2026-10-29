@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.weapon;
 
+import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -21,6 +22,8 @@ import java.util.Set;
 public final class ExplosionEffect {
     /** The largest crash fireball drawn; beyond this the particle count gets out of hand. */
     public static final float MAX_CRASH_SIZE = 12.0F;
+    /** The widest explosion flash, in blocks; past this it washes out the whole screen. */
+    private static final float MAX_FLASH_RADIUS = 30.0F;
 
     private ExplosionEffect() {
     }
@@ -29,16 +32,23 @@ public final class ExplosionEffect {
      * Not in the original: a crashing vehicle goes up in a far bigger show than its fuel explosion
      * alone makes. The same shell of smoke as a missile hit in mid-air, a cluster of fireballs
      * around it, a plume of smoke that keeps climbing for seconds and burning fuel thrown about.
+     * The fire glows for several seconds afterwards, which at night lights up the smoke above it.
      */
     public static void crash(Level level, double x, double y, double z, float size) {
         play(level, x, y, z, size, false);
         RandomSource random = level.getRandom();
+        level.addAlwaysVisibleParticle(GlowParticleOptions.flash(GlowParticleOptions.FLASH, Math.min(size * 3.0F, MAX_FLASH_RADIUS), 20),
+                true, x, y + size * 0.3, z, 0.0, 0.0, 0.0);
         int fireballs = Math.max(3, (int) (size / 2.0F));
         for (int i = 0; i < fireballs; i++) {
             double r = size * 0.5 * random.nextDouble();
             double a = random.nextDouble() * Math.PI * 2.0;
-            level.addAlwaysVisibleParticle(ParticleTypes.EXPLOSION_EMITTER, true,
-                    x + Math.cos(a) * r, y + random.nextDouble() * size * 0.4, z + Math.sin(a) * r, 1.0, 0.0, 0.0);
+            double fx = x + Math.cos(a) * r;
+            double fy = y + random.nextDouble() * size * 0.4;
+            double fz = z + Math.sin(a) * r;
+            level.addAlwaysVisibleParticle(ParticleTypes.EXPLOSION_EMITTER, true, fx, fy, fz, 1.0, 0.0, 0.0);
+            level.addAlwaysVisibleParticle(GlowParticleOptions.fire(GlowParticleOptions.FIRE, size * (0.4F + random.nextFloat() * 0.3F),
+                    80 + random.nextInt(60)), true, fx, fy, fz, 0.0, 0.01, 0.0);
         }
         for (int i = 0; i < size * 4; i++) {
             level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true,
@@ -48,8 +58,32 @@ public final class ExplosionEffect {
         for (int i = 0; i < size * 10; i++) {
             double a = random.nextDouble() * Math.PI * 2.0;
             double speed = (0.2 + random.nextDouble() * 0.4) * size / 6.0;
+            double up = random.nextDouble() * speed;
             level.addAlwaysVisibleParticle(random.nextInt(4) == 0 ? ParticleTypes.LAVA : ParticleTypes.FLAME, true, x, y + 0.5, z,
-                    Math.cos(a) * speed, random.nextDouble() * speed, Math.sin(a) * speed);
+                    Math.cos(a) * speed, up, Math.sin(a) * speed);
+            if (i % 4 == 0) {
+                level.addAlwaysVisibleParticle(GlowParticleOptions.fire(GlowParticleOptions.EMBER, 0.5F + random.nextFloat() * 0.4F,
+                        20 + random.nextInt(20)), true, x, y + 0.5, z, Math.cos(a) * speed, up, Math.sin(a) * speed);
+            }
+        }
+    }
+
+    /**
+     * Not in the original: the light of the blast itself, a white hot flash inside a wider red
+     * glow, and a few embers thrown out. Faint by day; at night it lights up the smoke.
+     */
+    private static void flash(Level level, double x, double y, double z, float size) {
+        RandomSource random = level.getRandom();
+        float radius = Math.min(2.0F + size * 1.5F, MAX_FLASH_RADIUS);
+        level.addAlwaysVisibleParticle(GlowParticleOptions.flash(GlowParticleOptions.FLASH, radius, 8 + (int) size), true, x, y, z, 0.0, 0.0, 0.0);
+        level.addAlwaysVisibleParticle(GlowParticleOptions.flash(GlowParticleOptions.EMBER, Math.min(radius * 1.6F, MAX_FLASH_RADIUS),
+                14 + (int) (size * 2.0F)), true, x, y, z, 0.0, 0.0, 0.0);
+        int embers = Math.min((int) (size * 2.0F), 24);
+        for (int i = 0; i < embers; i++) {
+            double a = random.nextDouble() * Math.PI * 2.0;
+            double speed = 0.2 + random.nextDouble() * 0.3 * Math.min(size, 4.0F);
+            level.addAlwaysVisibleParticle(GlowParticleOptions.fire(GlowParticleOptions.EMBER, 0.3F + random.nextFloat() * 0.3F,
+                    15 + random.nextInt(15)), true, x, y, z, Math.cos(a) * speed, 0.1 + random.nextDouble() * speed, Math.sin(a) * speed);
         }
     }
 
@@ -63,6 +97,7 @@ public final class ExplosionEffect {
         }
         RandomSource random = level.getRandom();
         level.addAlwaysVisibleParticle(size >= 2.0F ? ParticleTypes.EXPLOSION_EMITTER : ParticleTypes.EXPLOSION, true, x, y, z, 1.0, 0.0, 0.0);
+        flash(level, x, y, z, size);
 
         int count = 0;
         int puffEvery = (int) Math.max(size, 4.0F);
