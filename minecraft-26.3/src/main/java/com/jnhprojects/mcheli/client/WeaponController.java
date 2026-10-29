@@ -23,8 +23,6 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -36,12 +34,6 @@ import org.jspecify.annotations.Nullable;
  */
 final class WeaponController {
     private WeaponController() {
-    }
-
-    static void init() {
-        TickEvent.ClientTickEvent.Post.BUS.addListener(event -> onClientTick());
-        InputEvent.InteractionKeyMappingTriggered.UseItem.BUS.addListener(WeaponController::onUseItem);
-        InputEvent.InteractionKeyMappingTriggered.PickBlock.BUS.addListener(WeaponController::onPickBlock);
     }
 
     private record Seat(AircraftEntity vehicle, VehicleWeapons weapons, int seat) {
@@ -60,16 +52,12 @@ final class WeaponController {
     }
 
     /** The use key is the trigger while the seat has a weapon, so it must not also use items. */
-    private static boolean onUseItem(InputEvent.InteractionKeyMappingTriggered.UseItem event) {
+    static boolean onUseItem() {
         Seat s = seat(Minecraft.getInstance().player);
-        if (s != null && s.weapons.selected(s.seat) >= 0) {
-            event.setSwingHand(false);
-            return true;
-        }
-        return false;
+        return s != null && s.weapons.selected(s.seat) >= 0;
     }
 
-    private static boolean onPickBlock(InputEvent.InteractionKeyMappingTriggered.PickBlock event) {
+    static boolean onPickBlock() {
         Seat s = seat(Minecraft.getInstance().player);
         if (s == null || s.weapons.sets().isEmpty()) {
             return false;
@@ -80,7 +68,7 @@ final class WeaponController {
         return true;
     }
 
-    private static void onClientTick() {
+    static void onClientTick() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         Seat s = seat(player);
