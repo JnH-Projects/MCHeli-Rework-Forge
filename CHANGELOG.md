@@ -17,12 +17,30 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Wrecks stay for 30 seconds instead of 25 and keep burning until they disappear: flames, a fire
   glow and rising embers that die down over the last five seconds. Sunk wrecks do not burn.
 - Screenshots of night glow in `docs/images/phase-6`, shown in the README.
+- Content packs: zips or folders in `<game dir>/mcheli/packs` that add vehicles and weapons, with
+  their models, textures and sounds and a `pack.properties` manifest. Packs are data only; one
+  holding anything else is refused. A pack can replace an original vehicle by using its name.
+- Servers send their packs to players when they join: each player downloads only the packs they
+  do not have yet and keeps them in `mcheli/cache`, so the next visit is instant. While connected,
+  players use exactly the server's packs. The original 1.0.3 content is never sent.
+- Server settings under `[packs]` in `mcheli-server.toml`: an allow list, and size limits per pack
+  (8 MB) and for all packs together (64 MB). Client setting `packs.cacheSize` (256 MB) caps the
+  download cache, deleting the packs used longest ago first.
+- Problems with a pack (a bad manifest, a refused file, a broken definition or line, an unknown
+  weapon) are written to the log and shown to operators in the chat on joining and after
+  `/mcheli reload`. A broken pack never stops the game from starting.
+- `/mcheli packs` lists the packs in use with their vehicle and weapon counts.
+- An example pack with our own helicopter, the Rework Scout (two paint schemes), in
+  `examples/rework-example-pack`, and a pack author guide, `docs/content/packs.md`.
 
 ### Changed
 
 - Vehicles no longer flash red when hit.
 - Hits no longer jolt a vehicle that someone is flying or driving, and explosions no longer push
   it. An empty vehicle still rocks a little from a nearby blast (a quarter of the old push).
+- `/mcheli reload` now reloads the content packs too, with the server's settings, and sends every
+  player the new pack list. Before, a dedicated server and its players each reread their own files.
+- The network protocol changed: players need the same version as the server.
 
 ## [1.1.0-beta.1] - 2026-10-29
 
