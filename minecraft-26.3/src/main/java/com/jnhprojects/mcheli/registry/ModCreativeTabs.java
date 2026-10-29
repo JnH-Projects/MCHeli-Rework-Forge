@@ -3,15 +3,15 @@ package com.jnhprojects.mcheli.registry;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.platform.Platform;
+import com.jnhprojects.mcheli.platform.Registered;
+import com.jnhprojects.mcheli.platform.Registration;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.eventbus.api.bus.BusGroup;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
 
@@ -20,21 +20,22 @@ import java.util.List;
  * read from the content registry whenever a tab is built, so reloaded content shows up.
  */
 public final class ModCreativeTabs {
-    private static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MCHeli.MOD_ID);
-
-    public static final RegistryObject<CreativeModeTab> HELICOPTERS = register("helicopters", "helicopter", "ah-64",
+    public static final Registered<CreativeModeTab> HELICOPTERS = register("helicopters", "helicopter", "ah-64",
             CreativeModeTabs.SPAWN_EGGS);
-    public static final RegistryObject<CreativeModeTab> PLANES = register("planes", "plane", "f-35b", HELICOPTERS.getKey());
-    public static final RegistryObject<CreativeModeTab> TANKS = register("tanks", "tank", "m1a2", PLANES.getKey());
-    public static final RegistryObject<CreativeModeTab> VEHICLES = register("vehicles", "vehicle", "mk15", TANKS.getKey());
+    public static final Registered<CreativeModeTab> PLANES = register("planes", "plane", "f-35b", key(HELICOPTERS));
+    public static final Registered<CreativeModeTab> TANKS = register("tanks", "tank", "m1a2", key(PLANES));
+    public static final Registered<CreativeModeTab> VEHICLES = register("vehicles", "vehicle", "mk15", key(TANKS));
 
     private ModCreativeTabs() {
     }
 
-    private static RegistryObject<CreativeModeTab> register(String name, String kind, String icon, ResourceKey<CreativeModeTab> after) {
-        return TABS.register(name, () -> CreativeModeTab.builder()
+    private static ResourceKey<CreativeModeTab> key(Registered<CreativeModeTab> tab) {
+        return ResourceKey.create(Registries.CREATIVE_MODE_TAB, tab.id());
+    }
+
+    private static Registered<CreativeModeTab> register(String name, String kind, String icon, ResourceKey<CreativeModeTab> after) {
+        return Registration.register(Registries.CREATIVE_MODE_TAB, name, key -> Platform.get().creativeTab(after)
                 .title(Component.translatable("itemGroup.mcheli." + name))
-                .withTabsBefore(after)
                 .icon(() -> {
                     AircraftDefinition def = MCHeli.content().any(icon);
                     return def != null ? AircraftItem.stackOf(def) : new ItemStack(ModItems.forKind(kind));
@@ -54,7 +55,7 @@ public final class ModCreativeTabs {
         return List.of(HELICOPTERS.get(), PLANES.get(), TANKS.get(), VEHICLES.get());
     }
 
-    public static void register(BusGroup modBus) {
-        TABS.register(modBus);
+    /** Declares the entries; the loader module registers them. */
+    public static void init() {
     }
 }
