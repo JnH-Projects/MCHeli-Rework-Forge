@@ -37,6 +37,12 @@ public final class LegacyRecipe {
     public static final String VEHICLE_COMPONENT = "mcheli:vehicle";
     /** Ingredient type matching one vehicle, since every vehicle of a kind shares an item. */
     public static final String VEHICLE_INGREDIENT = "mcheli:vehicle";
+    /**
+     * The keys naming a custom ingredient's type on Forge, NeoForge and Fabric. A vehicle
+     * ingredient carries all three, so the imported recipes work whichever loader reads them; each
+     * loader ignores the other two.
+     */
+    public static final List<String> INGREDIENT_TYPE_KEYS = List.of("type", "neoforge:ingredient_type", "fabric:type");
 
     /**
      * @param result      the crafted vehicle
@@ -179,7 +185,11 @@ public final class LegacyRecipe {
             if (!modItems.test(lower)) {
                 throw new InvalidRecipeException(lower + " does not exist (yet)");
             }
-            return "{\"type\": \"" + VEHICLE_INGREDIENT + "\", \"vehicle\": \"" + lower.substring("mcheli:".length()) + "\"}";
+            StringBuilder json = new StringBuilder("{");
+            for (String key : INGREDIENT_TYPE_KEYS) {
+                json.append('"').append(key).append("\": \"").append(VEHICLE_INGREDIENT).append("\", ");
+            }
+            return json.append("\"vehicle\": \"").append(lower.substring("mcheli:".length())).append("\"}").toString();
         }
         String mapped = LegacyItems.ingredient(lower, damage);
         if (mapped == null) {
