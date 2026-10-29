@@ -326,6 +326,13 @@ Set the time with `/time set midnight` and compare with `/time set noon`.
       effects unchanged. Another player on the same server still sees the glow.
 - [ ] Video settings, graphics set to Fabulous: the glow still draws and nothing crashes.
 
+### Vehicle hits
+
+- [ ] A vehicle hit by rounds or a rocket no longer flashes red.
+- [ ] Flying a plane or helicopter while another player (or a turret) shoots it: no jolt or
+      stutter on each hit; the HP still goes down. Same driving a tank.
+- [ ] A rocket exploding next to an empty parked vehicle rocks it slightly, much less than before.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did
