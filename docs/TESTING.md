@@ -5,12 +5,46 @@ hand with this plan before a pre-release is tagged.
 
 ## Setup
 
-1. `./gradlew build`, then copy `build/release/mcheli-26.3-<version>.jar` into the `mods` folder of
-   the Forge 26.3 profile and `MC1.7.10_mcheli_1.0.3.zip` into its `mcheli` folder.
-   Alternatively run `./gradlew :forge-26.3:runClient`, which imports the zip from `Mod/`.
+1. `./gradlew build`, then copy the jar for the loader under test from `build/release`
+   (`mcheli-<loader>-26.3-<version>.jar`) into the `mods` folder of a 26.3 profile for that loader,
+   and `MC1.7.10_mcheli_1.0.3.zip` into its `mcheli` folder. Fabric also needs Fabric API.
+   Alternatively run `./gradlew :<loader>-26.3:runClient`, which imports the zip from `Mod/`.
 2. Use a launcher profile with its own game directory. Mods for other loaders or Minecraft
-   versions in the same `mods` folder will prevent Forge from starting.
+   versions in the same `mods` folder will prevent the game from starting.
 3. Create a creative world with cheats enabled.
+
+The phase checklists below were written on Forge and are run in full there. Every other jar gets
+the smoke test, which touches each piece of loader glue once.
+
+## Smoke test (every jar)
+
+Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Minecraft version.
+
+- [ ] The game reaches the title screen. The log has `MCHeli Rework <version> on <loader>` and no
+      `mcheli` errors; on the first start it also has `Imported ... files` from the zip.
+- [ ] The four MCHeli creative tabs list the vehicles with icons and names, after the vanilla tabs.
+- [ ] Fly a helicopter (`ah-64`): it takes off, banks and lands. In first person the view rolls
+      with the hull and the eye sits in the cockpit; the hand is hidden in the pilot seat.
+- [ ] Other players and the rider model tilt with the hull (second player or F5).
+- [ ] Drive a tank (`m1a2`): it moves, the turret follows the view, the gun fires.
+- [ ] Fire a missile from a helicopter or jet: the use key fires without swinging the arm, the pick
+      block key switches weapons, the weapon HUD draws, the missile hits and explodes.
+- [ ] Right-clicking the hull outside the main hit box boards the vehicle (the arm swings).
+- [ ] Engine and rotor sounds play, including a content pack sound (the example pack).
+- [ ] `config/mcheli-client.toml` exists; setting `nightGlow = false` and restarting removes the
+      glow.
+- [ ] Join a dedicated server running the same jar: the server log has no `mcheli` errors, the
+      client downloads the server's content packs, `/mcheli status` and `/mcheli reload` work,
+      `serverconfig/mcheli-server.toml` is in the world folder.
+- [ ] Crafting: an AH-6X can be crafted from an AH-6 and redstone (the vehicle ingredient), and
+      the recipe book lists MCHeli recipes.
+
+### Across loaders
+
+- [ ] A world made on Forge 26.3 with vehicles in it opens on NeoForge and Fabric 26.3 with the
+      vehicles and items intact, and back.
+- [ ] A Fabric client joins a NeoForge server (both with the mod) and downloads its packs.
+- [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
 ## Phase 1 checklist
 
