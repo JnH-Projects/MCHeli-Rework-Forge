@@ -114,7 +114,13 @@ original files: only the new Java code and the rework's own translations. Player
 original zip from the CurseForge page themselves, and the mod converts it on their machine.
 
 This repository holds no original files either; the unit tests import the developer's own copy
-of the zip. The project metadata declares All Rights Reserved for the rework's own code.
+of the zip.
+
+The rework's own code is under the [MCHeli Rework Licence](LICENSE): play it anywhere, include
+official releases in free modpacks, read and build the source, and send pull requests.
+Redistributing the source, modified builds or forks, and selling the mod need written
+permission. Content packs you make are yours. Because the engine is a rework of EMB4's All Rights
+Reserved original, the code is source available rather than open source.
 
 ## Requirements
 
