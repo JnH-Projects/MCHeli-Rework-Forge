@@ -183,6 +183,8 @@ public final class Explosions {
             this.level = level;
         }
 
+        // Vanilla's own calculator reads the block's resistance the same deprecated way.
+        @SuppressWarnings("deprecation")
         @Override
         public Optional<Float> getBlockExplosionResistance(Explosion explosion, BlockGetter getter, BlockPos pos,
                                                            BlockState block, FluidState fluid) {
@@ -192,7 +194,7 @@ public final class Explosions {
             if (block.isAir()) {
                 return Optional.empty();
             }
-            float resistance = block.getExplosionResistance(getter, pos, explosion);
+            float resistance = block.getBlock().getExplosionResistance();
             return Optional.of(resistance * (level.getRandom().nextFloat() * 0.2F + 0.2F));
         }
 
