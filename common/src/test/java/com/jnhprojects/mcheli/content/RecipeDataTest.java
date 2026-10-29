@@ -46,10 +46,38 @@ class RecipeDataTest {
                     "RYR"
                   ],
                   "result": {
-                    "id": "mcheli:ah-6x"
+                    "id": "mcheli:helicopter",
+                    "components": {
+                      "mcheli:vehicle": "ah-6x",
+                      "minecraft:item_model": "mcheli:ah-6x"
+                    }
                   }
                 }
                 """, generated.files().get("ah-6x.json"));
+    }
+
+    @Test
+    void aVehicleIngredientMatchesThatVehicleOnly() {
+        assertEquals("""
+                {
+                  "type": "minecraft:crafting_shaped",
+                  "category": "misc",
+                  "key": {
+                    "R": "#c:dusts/redstone",
+                    "X": {"type": "mcheli:vehicle", "vehicle": "ah-6"}
+                  },
+                  "pattern": [
+                    "RXR"
+                  ],
+                  "result": {
+                    "id": "mcheli:helicopter",
+                    "components": {
+                      "mcheli:vehicle": "ah-6x",
+                      "minecraft:item_model": "mcheli:ah-6x"
+                    }
+                  }
+                }
+                """, generated.files().get("ah-6x_2.json"));
     }
 
     @Test
@@ -72,7 +100,11 @@ class RecipeDataTest {
                     "RXO"
                   ],
                   "result": {
-                    "id": "mcheli:macchi_mc72"
+                    "id": "mcheli:plane",
+                    "components": {
+                      "mcheli:vehicle": "macchi_mc72",
+                      "minecraft:item_model": "mcheli:macchi_mc72"
+                    }
                   }
                 }
                 """, generated.files().get("macchi_mc72.json"));
