@@ -3,3 +3,12 @@ plugins {
 }
 
 rootProject.name = 'mcheli-rework'
+
+// Version-free code: content, models, HUD scripts, flight maths. No Minecraft on its classpath.
+include 'common'
+
+// One module per Minecraft version, each compiling common's sources together with its own
+// rendering, networking, registration and event code. See docs/DEVELOPMENT.md.
+for (String platform : providers.gradleProperty('platforms').get().split(',')) {
+    include platform.trim()
+}
