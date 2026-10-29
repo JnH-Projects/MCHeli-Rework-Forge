@@ -27,6 +27,14 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
+Phase 5 in a development build (`1.1.0-beta.1`): a patrol boat hit by a torpedo cooks off and
+sinks.
+
+| | |
+|---|---|
+| ![A patrol boat exploding on a river after a torpedo hit, burning debris arcing over the shore](docs/images/phase-5/patrol-boat-cook-off.png) | ![The wreck of the patrol boat resting on the riverbed, listing and still smoking](docs/images/phase-5/patrol-boat-wreck.png) |
+| Torpedo hit: fuel and ammunition cook off in three blasts | The wreck settles on the bottom, still smoking |
+
 Phase 4 in a development build: the original's scripted HUDs, pilot gunner mode and lock-on.
 
 | | |
