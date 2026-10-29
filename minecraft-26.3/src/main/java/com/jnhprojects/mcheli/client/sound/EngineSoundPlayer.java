@@ -7,7 +7,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.event.TickEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +25,7 @@ public final class EngineSoundPlayer {
     private EngineSoundPlayer() {
     }
 
-    public static void init() {
-        TickEvent.ClientTickEvent.Post.BUS.addListener(event -> tick());
-    }
-
-    private static void tick() {
+    public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         LocalPlayer player = mc.player;
