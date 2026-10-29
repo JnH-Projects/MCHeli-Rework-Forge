@@ -44,9 +44,10 @@ import java.util.zip.ZipFile;
 public final class LegacyImporter {
     /**
      * Bump whenever the output changes, so existing installs import again. 2: recipes craft the
-     * generic vehicle items of 1.1.0.
+     * generic vehicle items of 1.1.0. 3: vehicle ingredients name
+     * their type for every loader.
      */
-    public static final int FORMAT = 2;
+    public static final int FORMAT = 3;
 
     private static final String ASSET_ROOT = "mcheli/assets/mcheli/";
     private static final Set<String> SKIPPED_EXTENSIONS = Set.of("xcf");
