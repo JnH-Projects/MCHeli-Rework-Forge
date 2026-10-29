@@ -13,7 +13,7 @@ import net.minecraftforge.network.SimpleChannel;
 
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    private static final int PROTOCOL_VERSION = 5;
+    private static final int PROTOCOL_VERSION = 6;
 
     private static final SimpleChannel CHANNEL = ChannelBuilder
             .named(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "main"))
@@ -36,6 +36,9 @@ public final class ModNetwork {
                     .addMain(LockWarningPacket.class,
                             StreamCodec.<RegistryFriendlyByteBuf, LockWarningPacket>ofMember(LockWarningPacket::encode, LockWarningPacket::decode),
                             LockWarningPacket::handle)
+                    .addMain(PackRequestPacket.class,
+                            StreamCodec.<RegistryFriendlyByteBuf, PackRequestPacket>ofMember(PackRequestPacket::encode, PackRequestPacket::decode),
+                            PackRequestPacket::handle)
                 .clientbound()
                     .addMain(WeaponStatePacket.class,
                             StreamCodec.<RegistryFriendlyByteBuf, WeaponStatePacket>ofMember(WeaponStatePacket::encode, WeaponStatePacket::decode),
@@ -43,9 +46,12 @@ public final class ModNetwork {
                     .addMain(ExplosionEffectPacket.class,
                             StreamCodec.<RegistryFriendlyByteBuf, ExplosionEffectPacket>ofMember(ExplosionEffectPacket::encode, ExplosionEffectPacket::decode),
                             ExplosionEffectPacket::handle)
-                    .addMain(ContentReloadPacket.class,
-                            StreamCodec.<RegistryFriendlyByteBuf, ContentReloadPacket>ofMember(ContentReloadPacket::encode, ContentReloadPacket::decode),
-                            ContentReloadPacket::handle)
+                    .addMain(PackListPacket.class,
+                            StreamCodec.<RegistryFriendlyByteBuf, PackListPacket>ofMember(PackListPacket::encode, PackListPacket::decode),
+                            PackListPacket::handle)
+                    .addMain(PackDataPacket.class,
+                            StreamCodec.<RegistryFriendlyByteBuf, PackDataPacket>ofMember(PackDataPacket::encode, PackDataPacket::decode),
+                            PackDataPacket::handle)
             .build();
 
     private ModNetwork() {
