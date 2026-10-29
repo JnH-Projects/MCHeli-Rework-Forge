@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.entity;
 
 import com.jnhprojects.mcheli.content.Vector3;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
