@@ -1,11 +1,10 @@
 package com.jnhprojects.mcheli.client.render;
 
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.model.Mesh;
 import com.jnhprojects.mcheli.model.MeshLoader;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import org.jspecify.annotations.Nullable;
@@ -19,8 +18,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Lazily loads vehicle models through the resource manager, so resource packs can replace them.
- * Models are parsed the first time a vehicle of that kind is drawn and dropped on resource reload.
+ * Lazily loads vehicle models, from the resource packs (so they can replace them) or else from the
+ * runtime roots of {@link RuntimeAssets}. Models are parsed the first time a vehicle of that kind
+ * is drawn, and dropped on resource reload and on content reload ({@link #clear}).
  */
 public final class MeshCache implements ResourceManagerReloadListener {
     public static final MeshCache INSTANCE = new MeshCache();
@@ -47,15 +47,13 @@ public final class MeshCache implements ResourceManagerReloadListener {
     }
 
     private static Optional<Mesh> load(String folder, String name, boolean required) {
-        ResourceManager resources = Minecraft.getInstance().getResourceManager();
         for (String extension : EXTENSIONS) {
             Identifier id = Identifier.fromNamespaceAndPath(MCHeli.MOD_ID,
                     (folder.isEmpty() ? "models/" : "models/" + folder + "/") + name + extension);
-            Optional<Resource> resource = resources.getResource(id);
-            if (resource.isEmpty()) {
-                continue;
-            }
-            try (InputStream in = resource.get().open()) {
+            try (InputStream in = RuntimeAssets.open(id)) {
+                if (in == null) {
+                    continue;
+                }
                 Mesh mesh = MeshLoader.load(id.toString(), in);
                 LOGGER.debug("Loaded {}", mesh);
                 return Optional.of(mesh);
@@ -70,9 +68,15 @@ public final class MeshCache implements ResourceManagerReloadListener {
         return Optional.empty();
     }
 
-    @Override
-    public void onResourceManagerReload(ResourceManager resourceManager) {
+    /** Forgets every model and glass split, so the next frame reads them again from disk. */
+    public void clear() {
         meshes.clear();
         GlassSplit.INSTANCE.clear();
+    }
+
+    @Override
+    public void onResourceManagerReload(ResourceManager resourceManager) {
+        clear();
+        RuntimeAssets.clearTextures();
     }
 }
