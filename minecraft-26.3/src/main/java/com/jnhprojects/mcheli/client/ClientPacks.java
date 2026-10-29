@@ -13,7 +13,7 @@ import com.jnhprojects.mcheli.network.PackListPacket;
 import com.jnhprojects.mcheli.network.PackRequestPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.fml.loading.FMLPaths;
+import com.jnhprojects.mcheli.platform.Platform;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ final class ClientPacks implements ClientAccess.PackReceiver {
 
     private static final Pattern CACHED = Pattern.compile("[0-9a-f]{64}\\.zip");
 
-    private final Path cache = FMLPaths.GAMEDIR.get().resolve(MCHeli.MOD_ID).resolve("cache");
+    private final Path cache = Platform.get().gameDir().resolve(MCHeli.MOD_ID).resolve("cache");
     private List<PackListPacket.Entry> wanted = List.of();
     private final Map<String, Download> downloads = new LinkedHashMap<>();
     /** Packs this class opened for the current server; closed when the next list replaces them. */
