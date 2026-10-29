@@ -4,6 +4,7 @@ import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
+import com.jnhprojects.mcheli.physics.GroundImpact;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
