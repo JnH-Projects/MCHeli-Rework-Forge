@@ -320,6 +320,8 @@ Set the time with `/time set midnight` and compare with `/time set noon`.
       through the flash (no dark square or cut out).
 - [ ] Shooting down a helicopter: a big flash when it hits the ground, then the wreck glows for
       several seconds and the embers thrown out glow as they fall.
+- [ ] The wreck keeps burning (flames, glow, rising embers) for 30 seconds, dies down over the
+      last five and then disappears. A boat wreck that sank does not glow under water.
 - [ ] In a cave or under a roof at noon, the glow is as bright as at night.
 - [ ] Nothing glows under water (torpedoes, rounds fired into water).
 - [ ] `effects.nightGlow = false` in `config/mcheli-client.toml`: no glow at all, the rest of the
