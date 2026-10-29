@@ -1,0 +1,27 @@
+// Rework Scout: a two seat light helicopter, the vehicle of the MCHeli Rework example pack.
+// The keys are the same as in the original definitions; see docs/content/aircraft.md.
+
+DisplayName = Rework Scout
+AddDisplayName = ja_JP, リワーク スカウト
+Category = C
+
+MaxHp = 60
+Speed = 0.65
+MaxFuel = 500
+FuelConsumption = 0.5
+
+// Civilian HUD from the imported content. Without it the game shows a plain text readout.
+HUD = civilian_aircraft, none
+
+// The default paint is textures/helicopters/rework-scout.png; this adds a second scheme.
+AddTexture = rework-scout-rescue
+
+// Main rotor: two copies of $blade0, 180 degrees apart, turning about Y at the mast.
+AddRotor = 2, 180,  0.00, 2.05,  0.20,  0.0, 1.0, 0.0
+// Tail rotor: two copies of $blade1 turning about X beside the fin.
+AddRotor = 2, 180,  0.10, 1.60, -3.55,  1.0, 0.0, 0.0
+
+AddSeat =  0.28, 0.62, 0.20
+AddSeat = -0.28, 0.62, 0.20
+
+BoundingBox = 0.0, 1.0, 0.2, 1.4, 1.6

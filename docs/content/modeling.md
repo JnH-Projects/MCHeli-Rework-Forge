@@ -3,7 +3,7 @@
 This guide covers the model side of a new vehicle: the part you build outside Minecraft. The
 vehicle itself (seats, rotors, wings, engine, weapons, flight values) is described by a definition
 file, see [aircraft.md](aircraft.md). The vehicle workshop planned for 1.1.0 (see
-[ROADMAP.md](../ROADMAP.md), phase 5) will let you do that second half in game by clicking on the
+[ROADMAP.md](../ROADMAP.md), phases 9 and 10) will let you do that second half in game by clicking on the
 model instead of typing coordinates. The model rules below are the same either way, so a model
 made today keeps working in the workshop.
 
@@ -116,11 +116,12 @@ definition or click in the workshop.
    * Materials: off (the game uses the PNG named in the definition)
 4. Save the texture as PNG.
 
-## Before 1.1.0
+## Getting it into the game
 
-1.0.0 has no supported way to add new vehicles: it loads only the imported 1.0.3 content. You can
-still build and texture a model now with this guide, and check it in Blender or Blockbench. It
-will load once vehicle packages arrive in 1.1.0.
+Since 1.1.0-beta.2 a model, its textures and a definition go into a content pack, which players
+install by dropping it into `mcheli/packs` and servers send to everyone who joins. See
+[packs.md](packs.md), and the example pack in `examples/rework-example-pack`, whose Rework Scout
+follows this guide.
 
 ## What the workshop will do with the model
 

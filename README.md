@@ -1,5 +1,7 @@
 # MCHeli Rework
 
+<img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
+
 Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** on **Forge 66.1**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
@@ -112,7 +114,13 @@ original files: only the new Java code and the rework's own translations. Player
 original zip from the CurseForge page themselves, and the mod converts it on their machine.
 
 This repository holds no original files either; the unit tests import the developer's own copy
-of the zip. The project metadata declares All Rights Reserved for the rework's own code.
+of the zip.
+
+The rework's own code is under the [MCHeli Rework Licence](LICENSE): play it anywhere, include
+official releases in free modpacks, read and build the source, and send pull requests.
+Redistributing the source, modified builds or forks, and selling the mod need written
+permission. Content packs you make are yours. Because the engine is a rework of EMB4's All Rights
+Reserved original, the code is source available rather than open source.
 
 ## Requirements
 
@@ -223,7 +231,8 @@ bottom right shows hit points, the weapon, ammunition, reload, heat, lock and fl
 | `/mcheli` | everyone | Where the vehicles were loaded from, and how many of each kind |
 | `/mcheli list [helicopter\|plane\|tank\|vehicle]` | everyone | The loaded vehicles by name |
 | `/mcheli give <players> <vehicle> [count]` | operators | Hands out vehicles, for example `/mcheli give @s ah-64` |
-| `/mcheli reload` | operators | Reads the vehicle and weapon files again without a restart |
+| `/mcheli packs` | everyone | The content packs in use, and any problems with them |
+| `/mcheli reload` | operators | Reads the vehicle and weapon files and the content packs again without a restart, and sends players the new packs |
 
 Each world has `serverconfig/mcheli-server.toml` (created on first start, edits apply while the
 server runs):
@@ -235,12 +244,24 @@ server runs):
 | `vehicles.damageFactor` | `1.0` | Multiplies the damage vehicles take; `0.5` makes them twice as tough |
 | `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
 | `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
+| `packs.allowList` | `[]` | Content packs the server loads, by id; empty loads all of them |
+| `packs.maxPackSize` | `8` | Largest content pack the server loads and sends to players, in MB |
+| `packs.maxTotalSize` | `64` | Most the server loads and sends in all, in MB |
 
 Each player also has `config/mcheli-client.toml`, which only changes what that player sees:
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
 | `effects.nightGlow` | `true` | Tracers, rocket motors, flares and explosions glow: faintly by day, brightly at night, in caves and under water |
+| `packs.cacheSize` | `256` | How much the content packs downloaded from servers may take up in `mcheli/cache`, in MB |
+
+## Content packs
+
+Content packs add vehicles and weapons: drop a pack (a zip or a folder) into
+`<game dir>/mcheli/packs`. On a server only the server needs it; players download the server's
+packs automatically when they join. [examples/rework-example-pack](examples/rework-example-pack)
+adds a small helicopter, the Rework Scout. To make your own, see
+[docs/content/packs.md](docs/content/packs.md).
 
 ## Documentation
 
@@ -249,7 +270,7 @@ Each player also has `config/mcheli-client.toml`, which only changes what that p
 * [Architecture](docs/ARCHITECTURE.md): how the mod is put together
 * [Development](docs/DEVELOPMENT.md): building, running, testing and releasing
 * [In-game test plan](docs/TESTING.md)
-* Content authoring: [modeling in Blockbench or Blender](docs/content/modeling.md), [vehicles](docs/content/aircraft.md), [weapons](docs/content/weapons.md), [HUD scripts](docs/content/hud.md)
+* Content authoring: [content packs](docs/content/packs.md), [modeling in Blockbench or Blender](docs/content/modeling.md), [vehicles](docs/content/aircraft.md), [weapons](docs/content/weapons.md), [HUD scripts](docs/content/hud.md)
 * [Contributing](CONTRIBUTING.md): rules for pull requests and bug reports
 
 ## Building from source

@@ -2,6 +2,8 @@ package com.jnhprojects.mcheli.content;
 
 import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
+import com.jnhprojects.mcheli.content.pack.ContentSource;
+import com.jnhprojects.mcheli.content.pack.PackProblem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -86,5 +88,49 @@ class ContentRegistryTest {
 
         assertEquals(1, view.size());
         assertEquals(2, registry.helicopters().size());
+    }
+
+    @Test
+    void aLaterSourceReplacesADefinitionOfAnyKind(@TempDir Path dir) throws IOException {
+        Path first = dir.resolve("first");
+        Path second = dir.resolve("second");
+        write(first.resolve(HelicopterDefinition.FOLDER).resolve("mule.txt"), "DisplayName = Mule\nAddSeat = 0, 1, 0\n");
+        write(first.resolve(HelicopterDefinition.FOLDER).resolve("scout.txt"), "DisplayName = Scout\nAddSeat = 0, 1, 0\n");
+        write(second.resolve(TankDefinition.FOLDER).resolve("mule.txt"), "DisplayName = Mule tank\nAddSeat = 0, 1, 0\n");
+
+        ContentRegistry registry = ContentRegistry.load(List.of(
+                new ContentSource(ContentSource.ORIGINAL, first), new ContentSource("tanks", second)));
+
+        assertNull(registry.helicopter("mule"));
+        assertEquals("tanks", registry.tank("mule").pack());
+        assertEquals(ContentSource.ORIGINAL, registry.helicopter("scout").pack());
+        assertTrue(registry.problems().isEmpty());
+    }
+
+    @Test
+    void problemsInAPackAreReportedButTheRestLoads(@TempDir Path dir) throws IOException {
+        Path pack = dir.resolve("pack");
+        write(pack.resolve(HelicopterDefinition.FOLDER).resolve("good.txt"),
+                "DisplayName = Good\nAddSeat = 0, 1, 0\nAddWeapon = no_such_gun, 0, 0, 0\n");
+        write(pack.resolve(HelicopterDefinition.FOLDER).resolve("bad.txt"), "DisplayName = Bad\nMaxHp = lots\n");
+
+        ContentRegistry registry = ContentRegistry.load(List.of(new ContentSource("mine", pack)));
+
+        assertEquals("mine", registry.helicopter("good").pack());
+        List<String> messages = registry.problems().stream().map(PackProblem::toString).toList();
+        assertTrue(messages.stream().anyMatch(m -> m.startsWith("mine: helicopters/bad.txt: line 2 (maxhp)")), messages::toString);
+        assertTrue(messages.stream().anyMatch(m -> m.contains("helicopters/good: unknown weapons [no_such_gun]")), messages::toString);
+    }
+
+    @Test
+    void aMissingFolderLoadsNothing(@TempDir Path dir) {
+        ContentRegistry registry = ContentRegistry.load(List.of(new ContentSource("gone", dir.resolve("gone"))));
+        assertTrue(registry.all().isEmpty());
+        assertTrue(registry.problems().isEmpty());
+    }
+
+    private static void write(Path file, String text) throws IOException {
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, text);
     }
 }

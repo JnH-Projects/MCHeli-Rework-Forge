@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.item;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.ServerConfig;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
@@ -47,11 +48,17 @@ public class AircraftItem extends Item {
         return kind;
     }
 
-    /** A stack that places {@code def}. */
+    /**
+     * A stack that places {@code def}. Vehicles from the import show the item model the import
+     * wrote for them; item models only load with the resources, so pack vehicles keep their kind's
+     * own model.
+     */
     public static ItemStack stackOf(AircraftDefinition def) {
         ItemStack stack = new ItemStack(ModItems.forKind(def.kind()));
         stack.set(ModDataComponents.VEHICLE.get(), def.name());
-        stack.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, def.name()));
+        if (def.pack().equals(ContentSource.ORIGINAL)) {
+            stack.set(DataComponents.ITEM_MODEL, Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, def.name()));
+        }
         return stack;
     }
 

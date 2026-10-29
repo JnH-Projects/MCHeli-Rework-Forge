@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli;
 
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.pack.ContentPack;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -18,19 +19,20 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Prediction;
 import net.minecraftforge.event.RegisterCommandsEvent;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * {@code /mcheli}: what content is loaded, and operator tools to hand out vehicles and reload the
- * definitions.
+ * definitions and content packs.
  * <pre>
  *   /mcheli                              content source and counts
  *   /mcheli list [helicopter|plane|...]  loaded vehicles
+ *   /mcheli packs                        content packs in use, and their problems
+|plane|...]  loaded vehicles
  *   /mcheli give &lt;players&gt; &lt;vehicle&gt; [count]   (operators)
- *   /mcheli reload                       re-read the definitions (operators)
+ *   /mcheli reload                       re-read the definitions and packs (operators)
  * </pre>
  */
 public final class McheliCommand {
@@ -53,6 +55,8 @@ public final class McheliCommand {
                         .then(Commands.argument("kind", StringArgumentType.word())
                                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(KINDS, builder))
                                 .executes(ctx -> list(ctx, StringArgumentType.getString(ctx, "kind")))))
+                .then(Commands.literal("packs")
+                        .executes(McheliCommand::packs))
                 .then(Commands.literal("give")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Commands.argument("targets", EntityArgument.players())
@@ -74,7 +78,29 @@ public final class McheliCommand {
         source.sendSuccess(() -> Component.translatable("commands.mcheli.status",
                 content.helicopters().size(), content.planes().size(), content.tanks().size(), content.vehicles().size(),
                 content.weapons().size(), MCHeli.legacyContent().assets().toString()), false);
+        List<ContentPack> packs = MCHeli.packs().active();
+        source.sendSuccess(() -> Component.translatable("commands.mcheli.status.packs", packs.size(),
+                packs.stream().map(ContentPack::id).collect(Collectors.joining(", "))), false);
         return content.all().size();
+    }
+
+    private static int packs(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        List<ContentPack> packs = MCHeli.packs().active();
+        if (packs.isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.packs.none", MCHeli.packs().folder().toString()), false);
+        } else {
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.packs.header", packs.size(), MCHeli.packs().folder().toString()), false);
+        }
+        ContentRegistry content = MCHeli.content();
+        for (ContentPack pack : packs) {
+            long vehicles = content.all().stream().filter(def -> def.pack().equals(pack.id())).count();
+            long weapons = content.weapons().stream().filter(def -> def.pack().equals(pack.id())).count();
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.packs.entry", pack.id(), pack.manifest().version(),
+                    pack.manifest().name(), vehicles, weapons, ContentPack.shortHash(pack.hash())), false);
+        }
+        MCHeli.packs().reportProblems(source::sendFailure);
+        return packs.size();
     }
 
     private static int list(CommandContext<CommandSourceStack> ctx, String kind) {
@@ -106,15 +132,10 @@ public final class McheliCommand {
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
-        try {
-            ContentRegistry fresh = ContentReload.reload(source.getServer());
-            source.sendSuccess(() -> Component.translatable("commands.mcheli.reload.success",
-                    fresh.all().size(), fresh.weapons().size()), true);
-            return fresh.all().size();
-        } catch (IOException e) {
-            MCHeli.LOGGER.error("Could not reload the MCHeli content", e);
-            source.sendFailure(Component.translatable("commands.mcheli.reload.failed", e.getMessage()));
-            return 0;
-        }
+        ContentRegistry fresh = ContentReload.reload(source.getServer());
+        source.sendSuccess(() -> Component.translatable("commands.mcheli.reload.success",
+                fresh.all().size(), fresh.weapons().size(), MCHeli.packs().active().size()), true);
+        MCHeli.packs().reportProblems(source::sendFailure);
+        return fresh.all().size();
     }
 }

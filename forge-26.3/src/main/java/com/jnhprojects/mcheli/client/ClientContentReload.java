@@ -1,34 +1,21 @@
 package com.jnhprojects.mcheli.client;
 
-import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.render.MeshCache;
-import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.registry.ModCreativeTabs;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 
-import java.io.IOException;
-
-/** The client half of {@code /mcheli reload}. */
+/**
+ * Makes the client show the content it now holds: after the server's pack list was applied, which
+ * also happens after {@code /mcheli reload}.
+ */
 final class ClientContentReload {
     private ClientContentReload() {
     }
 
-    static void run() {
+    /** Drops cached models and textures so edited and new files load, and rebuilds the creative tabs. */
+    static void refresh() {
         Minecraft mc = Minecraft.getInstance();
-        // In single player the integrated server already swapped the shared registry.
-        if (mc.getSingleplayerServer() == null) {
-            try {
-                MCHeli.content().replaceWith(ContentRegistry.load(MCHeli.legacyContent().assets()));
-            } catch (IOException e) {
-                MCHeli.LOGGER.error("Could not reload the MCHeli content", e);
-                if (mc.player != null) {
-                    mc.player.sendSystemMessage(Component.translatable("commands.mcheli.reload.failed", e.getMessage()));
-                }
-            }
-        }
-
         MeshCache.INSTANCE.clear();
         RuntimeAssets.refreshTextures();
         if (mc.level != null && mc.player != null) {

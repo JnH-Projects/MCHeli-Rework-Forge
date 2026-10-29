@@ -1,7 +1,7 @@
 # Architecture
 
 This document explains how MCHeli Rework is organized and why. It reflects the code as of
-`1.1.0-beta.1`.
+`1.1.0-beta.2`.
 
 ## Goals
 
@@ -18,17 +18,18 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
 ```
  ┌────────────────────────────────────────────────────────────────┐
  │ client          renderer, mesh cache, runtime assets, crew     │  client only
- │                 controller, sound, HUD renderer                │
+ │                 controller, sound, HUD renderer, pack download │
  ├────────────────────────────────────────────────────────────────┤  platform module
  │ entity          AircraftEntity and one subclass per kind       │  (forge-26.3)
  │ item            AircraftItem, VehicleIngredient                │
- │ network         PilotStatePacket, CrewActionPacket, ...        │  Minecraft + Forge
+ │ network         PilotStatePacket, CrewActionPacket, PackSync   │  Minecraft + Forge
  │ particle        GlowParticleOptions                            │
  │ registry        entities, items, components, particles, tabs   │
- │ (root)          MCHeli, configs, McheliCommand, reload         │
+ │ (root)          MCHeli, configs, McheliCommand, ContentPacks   │
  ├────────────────────────────────────────────────────────────────┤
  │ content         Definition, DefinitionReader, ContentRegistry, │  common module
- │                 aircraft/* definitions, recipe conversion      │
+ │                 aircraft/* definitions, recipe conversion,     │
+ │                 pack/* content packs                           │
  │ model           Mesh, MqoLoader, ObjLoader                     │  pure Java
  │ hud             HudScript, Expression, HudVariable             │
  │ physics         AircraftRotation, GroundImpact                 │
@@ -55,7 +56,7 @@ original, so existing resource paths and content packs keep working.
 MCHeli constructor
   ├─ LegacyContent.prepare                            import the original zip into mcheli/imported
   ├─ LegacyContent.registerPacks                      that folder as a required resource + data pack
-  ├─ ContentRegistry.load(mcheli/imported/assets/mcheli)  parse helicopters, planes, tanks, vehicles
+  ├─ ContentPacks.load(false)                         the import plus every pack in mcheli/packs
   ├─ registerConfig(SERVER, ServerConfig.SPEC)        serverconfig/mcheli-server.toml
   ├─ registerConfig(CLIENT, ClientConfig.SPEC)        config/mcheli-client.toml
   ├─ ModDataComponents.register                       mcheli:vehicle
@@ -65,6 +66,7 @@ MCHeli constructor
   ├─ ModCreativeTabs.register
   ├─ ModRecipes.register                              mcheli:vehicle ingredient, recipe book
   ├─ ModNetwork.register
+  ├─ PackSync.init                                    pack list on join, downloads
   ├─ McheliCommand.register                           /mcheli
   └─ ClientSetup.init (client only)                   renderers, keys, reload listener, controller
 ```
@@ -72,8 +74,8 @@ MCHeli constructor
 Definitions are still parsed in the constructor, but only because the 1.0.0 items have to be
 registered before Forge freezes the registries (see [Vehicle items](#vehicle-items)); nothing else
 depends on them existing that early any more. The files are read straight from the imported
-folder (see [Assets](#assets)). Models and textures, by contrast, go through the resource manager,
-so resource packs can replace them.
+folder and the content packs (see [Assets](#assets) and [Content packs](#content-packs)). Models
+and textures, by contrast, go through the resource manager, so resource packs can replace them.
 
 ## Content definitions
 
@@ -131,14 +133,60 @@ vehicle.
 
 ### Reloading content
 
-`/mcheli reload` (operators) runs `ContentReload`: it loads the imported folder again into a new
-registry and, if that worked, `replaceWith`s it into the live one, then sends
-`ContentReloadPacket` to every player. Vehicles in the world pick up their new definition on
-their next tick. On the client, `ClientContentReload` reloads the client's own registry (except
-in single player, where client and integrated server share it), clears the mesh cache and glass
-splits, uploads every vehicle texture again from disk (`RuntimeAssets.refreshTextures`), and
-rebuilds the creative tabs. Until content packs sync definitions (phase 6), a dedicated server and
-its clients each read their own files.
+`/mcheli reload` (operators) runs `ContentReload`: `ContentPacks` scans the import and the packs
+again with the server config applied, the result is `replaceWith`ed into the live registry, and
+every player gets the new `PackListPacket`. Vehicles in the world pick up their new definition on
+their next tick. Each client then rebuilds its own registry the way it does on joining (see
+[Content packs](#content-packs)), except in single player, where client and integrated server share
+it. `ClientContentReload.refresh` then clears the mesh cache and glass splits, uploads every
+vehicle texture again from disk (`RuntimeAssets.refreshTextures`) and rebuilds the creative tabs.
+
+### Content packs
+
+A content pack (`content.pack.ContentPack`) is a zip or folder with a `pack.properties` manifest
+and an `assets/mcheli` tree laid out like the import. Opening one walks every file: only
+definitions, models, textures and sounds are allowed (so a pack can never carry code), file names
+must be lower case, and the file count and unpacked size are capped while reading, not trusted
+from the zip. The content hash is SHA-256 over each file's path and its own SHA-256, so it depends
+on the files rather than on how they were zipped; servers and clients compare it to decide what
+to send. Zips are read in place through a zip file system and stay open while in use.
+
+`ContentRegistry.load` takes a list of `ContentSource`s, each a pack id and an `assets/mcheli`
+folder. Weapons load first from every source, so vehicles can use weapons from another pack;
+then each source's vehicles in order, a later definition replacing an earlier one of the same
+name whatever its kind. Every definition records its pack (`Definition.pack()`). Problems are
+collected as `PackProblem`s instead of thrown: a file that cannot be read, a rejected definition,
+a bad line, an unknown weapon. Those of the import are only logged, as before.
+
+`ContentPacks` (platform) owns `<game dir>/mcheli/packs`. The constructor loads the import plus
+every pack, so the vehicles exist before any world does. `ServerAboutToStartEvent`, the first
+moment the per-world server config exists, loads again with the allow list and size limits
+applied, and so does `/mcheli reload`. A replaced set of packs is closed one reload later, so the
+client of a single player game never reads from a zip that was just closed. Only the import's
+vehicles get a 1.0.0 item and an `item_model` component; item models only load with resources, so
+pack vehicles show their kind's generic item.
+
+```
+ server                                              client
+ ──────                                              ──────
+ player joins
+   ── PackListPacket(id, version, hash, size) ────▶ own mcheli/packs or mcheli/cache/<hash>.zip?
+   ◀─────────────── PackRequestPacket(hashes) ──── for the ones it has neither
+ PackSync, every tick, per player
+   ── PackDataPacket(hash, offset, 128 KiB) ──────▶ assembled in memory, size checked
+      (2 chunks a tick, one pack after another)      written as <hash>.download.zip, opened,
+                                                     hash checked, renamed to <hash>.zip
+                                                   all there: ClientPacks.apply
+                                                     import + the server's packs, in its order
+                                                     replaceWith, RuntimeAssets roots, refresh
+                                                     trim the cache to packs.cacheSize
+```
+
+The server only sends packs from its current list, by hash. `ClientPacks` uses exactly the
+server's packs while connected, so the vehicle a player simulates has the server's definition; a
+pack of the player's own counts as cached when its hash matches. The import is never sent. In
+single player and for a LAN host, the client points `RuntimeAssets` at the server's open packs
+instead. `RuntimeAssets.setRoots` swaps the folder list in one write, the pack loaded last first.
 
 ### Server config and command
 
@@ -442,11 +490,11 @@ convert again (1.1.0-beta.1 bumped it to 2 for the generic item recipes).
 
 ### Runtime assets
 
-Vehicle content can change while the game runs (`/mcheli reload` now, content packs and the
-workshop later), and a resource reload is slow and does not exist on a server. The client
-therefore reads vehicle assets through `client.RuntimeAssets`: the resource manager first, so
-resource packs keep the last word, then any number of runtime roots, folders laid out like
-`assets/mcheli` that content can register at any time.
+Vehicle content can change while the game runs (`/mcheli reload`, content packs arriving from a
+server, and the workshop later), and a resource reload is slow and does not exist on a server.
+The client therefore reads vehicle assets through `client.RuntimeAssets`: the resource manager
+first, so resource packs keep the last word, then the runtime roots, the `assets/mcheli` folders
+of the content packs in use.
 
 - **Models**: `MeshCache` opens them through `RuntimeAssets.open`; clearing the cache is enough
   for edited or new files to load on the next frame.

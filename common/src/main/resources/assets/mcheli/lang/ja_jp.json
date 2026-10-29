@@ -22,6 +22,10 @@
   "key.mcheli.vtol": "VTOLモード",
   "message.mcheli.content.import_failed": "MCHeli: 元の機体データを読み込めませんでした: %s。logs/latest.log を確認してください。",
   "message.mcheli.content.missing": "MCHeli: 機体データがありません。MCHeli の CurseForge ページから %s をダウンロードし、%s に置いてからゲームを再起動してください。",
+  "message.mcheli.pack.downloading": "MCHeli: サーバーからコンテンツパックを %s 個 (%s MB) ダウンロードしています",
+  "message.mcheli.pack.failed": "MCHeli: コンテンツパック %s をダウンロードできませんでした: %s",
+  "message.mcheli.pack.ready": "MCHeli: コンテンツパック %s 個のダウンロードが完了しました",
+  "message.mcheli.pack.too_large": "MCHeli: コンテンツパック %s は %s MB で、キャッシュの上限 (mcheli-client.toml の packs.cacheSize、%s MB) を超えています。このパックの機体は表示されません。",
   "pack.mcheli.content": "MCHeli コンテンツ",
   "pack.mcheli.content.description": "EMB4 氏の MCHeli 1.0.3 から読み込み"
 }

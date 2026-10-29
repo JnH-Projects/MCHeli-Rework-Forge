@@ -21,6 +21,9 @@ public final class ServerConfig {
     private static final ForgeConfigSpec.DoubleValue VEHICLE_DAMAGE_FACTOR;
     private static final ForgeConfigSpec.BooleanValue INFINITE_AMMO;
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DISABLED_VEHICLES;
+    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> PACK_ALLOW_LIST;
+    private static final ForgeConfigSpec.IntValue MAX_PACK_SIZE;
+    private static final ForgeConfigSpec.IntValue MAX_TOTAL_SIZE;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -51,6 +54,21 @@ public final class ServerConfig {
                 .define("infiniteAmmo", false);
         builder.pop();
 
+        builder.comment("Content packs from <game dir>/mcheli/packs. Players get the packs from the server when they join.",
+                        "Changes apply when the world starts or after /mcheli reload.")
+                .push("packs");
+        PACK_ALLOW_LIST = builder
+                .comment("Pack ids the server loads, such as \"rework-example\". Empty loads every pack in the folder.")
+                .defineListAllowEmpty("allowList", List.of(), o -> o instanceof String);
+        MAX_PACK_SIZE = builder
+                .comment("Largest pack the server loads and sends to players, in megabytes.")
+                .defineInRange("maxPackSize", 8, 1, 512);
+        MAX_TOTAL_SIZE = builder
+                .comment("Most the server loads and sends in all, in megabytes. Packs are taken in id order until",
+                        "the next one would go over.")
+                .defineInRange("maxTotalSize", 64, 1, 4096);
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -72,6 +90,27 @@ public final class ServerConfig {
 
     public static boolean infiniteAmmo() {
         return SPEC.isLoaded() ? INFINITE_AMMO.get() : INFINITE_AMMO.getDefault();
+    }
+
+    /** Whether the allow list lets the server load this pack. An empty list allows every pack. */
+    public static boolean isPackAllowed(String id) {
+        if (!SPEC.isLoaded() || PACK_ALLOW_LIST.get().isEmpty()) {
+            return true;
+        }
+        for (String allowed : PACK_ALLOW_LIST.get()) {
+            if (allowed.trim().toLowerCase(Locale.ROOT).equals(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static long maxPackBytes() {
+        return (long) (SPEC.isLoaded() ? MAX_PACK_SIZE.get() : MAX_PACK_SIZE.getDefault()) << 20;
+    }
+
+    public static long maxTotalPackBytes() {
+        return (long) (SPEC.isLoaded() ? MAX_TOTAL_SIZE.get() : MAX_TOTAL_SIZE.getDefault()) << 20;
     }
 
     public static boolean isDisabled(String vehicle) {

@@ -335,6 +335,32 @@ Set the time with `/time set midnight` and compare with `/time set noon`.
       stutter on each hit; the HP still goes down. Same driving a tank.
 - [ ] A rocket exploding next to an empty parked vehicle rocks it slightly, much less than before.
 
+### Content packs
+
+Copy `examples/rework-example-pack` into `<game dir>/mcheli/packs` first.
+
+- [ ] Single player: the Rework Scout is in the Helicopters tab (generic icon), places, renders
+      with its rotors turning and flies. `AddTexture` cycles to the red rescue paint.
+- [ ] `/mcheli packs` lists `rework-example 1.0.0` with 1 vehicle; `/mcheli` shows 1 content pack.
+- [ ] Zip the pack folder and replace the folder with the zip: same result after `/mcheli reload`.
+- [ ] Edit `rework-scout.txt` (for example `Speed = 1.2`), `/mcheli reload`: a Scout already in the
+      world flies with the new speed without being picked up.
+- [ ] Break the pack: add a `test.jar` at its top, `/mcheli reload`. The chat names the pack and the
+      file, the Scout is gone, everything else still works. Remove the jar, reload, it is back.
+- [ ] Put `MaxHp = lots` in the definition: the chat names the file and line, the Scout still loads.
+- [ ] Dedicated server with the pack, client without it: on joining, the chat says one pack is
+      downloading, then ready; the Scout renders and flies for the client.
+      `mcheli/cache/<hash>.zip` exists on the client. Rejoin: no download this time.
+- [ ] A second client with the pack in its own `mcheli/packs`: no download.
+- [ ] Client with a pack the server does not have: its vehicles are not in the tabs while connected.
+- [ ] Server `packs.allowList = ["something-else"]`, `/mcheli reload`: the Scout disappears for
+      everyone and operators are told why. Empty list again, reload: it is back for everyone.
+- [ ] Server `packs.maxPackSize = 1` with a pack over 1 MB: the pack is left out and reported.
+- [ ] Client `packs.cacheSize = 16` with a server pack over 16 MB: the chat says it is too large,
+      nothing is downloaded and the game keeps running.
+- [ ] Remove the pack from the server and restart it: a world with a Scout still loads; the Scout
+      stays in place, inert and invisible, and comes back when the pack does.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did

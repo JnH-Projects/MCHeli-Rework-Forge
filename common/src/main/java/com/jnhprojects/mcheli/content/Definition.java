@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 public abstract class Definition {
     private final String name;
     private final Map<String, Consumer<String>> handlers = new HashMap<>();
+    private String pack = "";
 
     protected Definition(String name) {
         this.name = name;
@@ -23,6 +24,18 @@ public abstract class Definition {
     /** File name without extension, lower case. Also used as the registry path. */
     public String name() {
         return name;
+    }
+
+    /**
+     * Id of the content pack the file came from, {@code original} for the imported 1.0.3 content,
+     * or empty for a definition built in code.
+     */
+    public String pack() {
+        return pack;
+    }
+
+    void setPack(String pack) {
+        this.pack = pack;
     }
 
     protected abstract void registerKeys(KeyTable keys);

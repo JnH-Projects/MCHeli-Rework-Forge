@@ -10,6 +10,7 @@ public final class ClientConfig {
     public static final ForgeConfigSpec SPEC;
 
     private static final ForgeConfigSpec.BooleanValue NIGHT_GLOW;
+    private static final ForgeConfigSpec.IntValue PACK_CACHE_SIZE;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -21,6 +22,14 @@ public final class ClientConfig {
                 .define("nightGlow", true);
         builder.pop();
 
+        builder.push("packs");
+        PACK_CACHE_SIZE = builder
+                .comment("How much the content packs downloaded from servers may take up in mcheli/cache, in megabytes.",
+                        "The packs used longest ago are deleted first; the current server's packs are always kept.",
+                        "A single pack larger than this is not downloaded.")
+                .defineInRange("cacheSize", 256, 16, 16384);
+        builder.pop();
+
         SPEC = builder.build();
     }
 
@@ -29,5 +38,9 @@ public final class ClientConfig {
 
     public static boolean nightGlow() {
         return SPEC.isLoaded() ? NIGHT_GLOW.get() : NIGHT_GLOW.getDefault();
+    }
+
+    public static long packCacheBytes() {
+        return (long) (SPEC.isLoaded() ? PACK_CACHE_SIZE.get() : PACK_CACHE_SIZE.getDefault()) << 20;
     }
 }
