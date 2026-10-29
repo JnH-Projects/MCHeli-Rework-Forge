@@ -14,6 +14,9 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
   A crashing vehicle goes up in a bigger flash and keeps burning with a glow for several seconds.
   The glow is faint by day and strongest at night, in caves and under water. Turn it off with
   `effects.nightGlow` in the new client config, `config/mcheli-client.toml`.
+- Wrecks stay for 30 seconds instead of 25 and keep burning until they disappear: flames, a fire
+  glow and rising embers that die down over the last five seconds. Sunk wrecks do not burn.
+- Screenshots of night glow in `docs/images/phase-6`, shown in the README.
 
 ### Changed
 
