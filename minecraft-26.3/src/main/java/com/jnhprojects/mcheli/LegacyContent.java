@@ -9,7 +9,6 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraftforge.event.AddPackFindersEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -76,22 +75,22 @@ public final class LegacyContent {
         return Optional.ofNullable(problem);
     }
 
-    /** Adds the imported folder to both the client resource packs and the server data packs. */
-    void registerPacks() {
-        AddPackFindersEvent.BUS.addListener(event -> {
-            if (!Files.isDirectory(packRoot)) {
-                return;
-            }
-            PackLocationInfo location = new PackLocationInfo(PACK_ID,
-                    Component.translatable("pack.mcheli.content"), PackSource.BUILT_IN, Optional.empty());
-            Pack.Metadata metadata = new Pack.Metadata(Component.translatable("pack.mcheli.content.description"),
-                    PackCompatibility.COMPATIBLE, FeatureFlagSet.of(), List.of());
-            // Required, so it is enabled in every world and cannot be switched off. It sits at the
-            // bottom so that regular resource packs can still replace its textures and models.
-            Pack pack = new Pack(location, new PathPackResources.PathResourcesSupplier(packRoot), metadata,
-                    new PackSelectionConfig(true, Pack.Position.BOTTOM, false));
-            event.addRepositorySource(onLoad -> onLoad.accept(pack));
-        });
+    /**
+     * The imported folder as a pack, for both the client resource packs and the server data packs.
+     * Empty when nothing was imported.
+     */
+    public Optional<Pack> pack() {
+        if (!Files.isDirectory(packRoot)) {
+            return Optional.empty();
+        }
+        PackLocationInfo location = new PackLocationInfo(PACK_ID,
+                Component.translatable("pack.mcheli.content"), PackSource.BUILT_IN, Optional.empty());
+        Pack.Metadata metadata = new Pack.Metadata(Component.translatable("pack.mcheli.content.description"),
+                PackCompatibility.COMPATIBLE, FeatureFlagSet.of(), List.of());
+        // Required, so it is enabled in every world and cannot be switched off. It sits at the
+        // bottom so that regular resource packs can still replace its textures and models.
+        return Optional.of(new Pack(location, new PathPackResources.PathResourcesSupplier(packRoot), metadata,
+                new PackSelectionConfig(true, Pack.Position.BOTTOM, false)));
     }
 
     private void importIfNeeded() throws IOException {
