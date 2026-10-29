@@ -11,7 +11,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.InputEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -28,14 +27,10 @@ final class VehiclePicker {
     private VehiclePicker() {
     }
 
-    static void init() {
-        InputEvent.InteractionKeyMappingTriggered.UseItem.BUS.addListener(VehiclePicker::onUseItem);
-    }
-
-    private static boolean onUseItem(InputEvent.InteractionKeyMappingTriggered.UseItem event) {
+    static boolean onUseItem(InteractionHand hand) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null || event.getHand() != InteractionHand.MAIN_HAND || player.getVehicle() instanceof AircraftEntity) {
+        if (player == null || hand != InteractionHand.MAIN_HAND || player.getVehicle() instanceof AircraftEntity) {
             return false;
         }
         // Vanilla already handles a click on the main box.
