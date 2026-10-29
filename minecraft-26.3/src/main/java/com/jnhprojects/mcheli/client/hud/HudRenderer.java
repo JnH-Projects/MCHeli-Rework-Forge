@@ -13,7 +13,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraftforge.event.TickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +57,9 @@ public final class HudRenderer {
         this.centerY = height / 2.0;
     }
 
-    public static void init() {
-        TickEvent.ClientTickEvent.Post.BUS.addListener(event -> {
-            LocalPlayer player = Minecraft.getInstance().player;
-            STATE.tick(player != null && player.getVehicle() instanceof AircraftEntity vehicle ? vehicle : null);
-        });
+    public static void tick() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        STATE.tick(player != null && player.getVehicle() instanceof AircraftEntity vehicle ? vehicle : null);
     }
 
     /** Fed by the pilot's mouse steering; moves the control stick indicator. */
