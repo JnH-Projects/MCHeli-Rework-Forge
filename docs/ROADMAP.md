@@ -181,6 +181,9 @@ The external content packs from phase 4, in the package format the workshop will
 - [ ] Server limits and an allow list in the config; clients cap the cache size
 - [ ] Pack author guide in `docs/content/packs.md`, with a small example pack in the repo made
       from our own assets (no EMB4 files)
+- [ ] Crash spin for shot down aircraft: planes and jets roll into a nose-down spiral instead of
+      just falling, and helicopters spin faster with some wobble. The spin direction comes from
+      the entity id so every client sees the same thing.
 
 ## Phase 7: older Minecraft versions (`1.1.0-beta.3`)
 
