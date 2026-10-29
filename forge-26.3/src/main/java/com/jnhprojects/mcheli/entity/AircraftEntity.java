@@ -17,6 +17,7 @@ import com.jnhprojects.mcheli.physics.GroundImpact;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.weapon.Explosions;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
+import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -95,6 +96,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final EntityDataAccessor<Integer> DATA_WEAPON_USE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TV_MISSILE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FLARE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SINKING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
 
     // Bits of DATA_PARTS, the same assignment the original used for its part status word.
     protected static final int PART_CANOPY = 0;
@@ -147,6 +149,10 @@ public abstract class AircraftEntity extends VehicleEntity {
     private float destroyedPitch;
     private float destroyedRoll;
     private boolean exploded;
+    /** Blasts still to come while a wrecked boat cooks off, and ticks until the next one. */
+    private int cookOffBlasts;
+    private int cookOffDelay;
+    private @Nullable Entity cookOffCause;
     private int alertCount;
 
     // Crashes, measured from position so they work whichever side simulates the vehicle.
@@ -182,6 +188,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_WEAPON_USE, 0);
         builder.define(DATA_TV_MISSILE, 0);
         builder.define(DATA_FLARE, false);
+        builder.define(DATA_SINKING, false);
     }
 
     // Definition
@@ -1282,6 +1289,9 @@ public abstract class AircraftEntity extends VehicleEntity {
      * slices are lowered by the same amount so boats sit in the water as they did in 1.0.3.
      */
     protected double waterDepth() {
+        if (entityData.get(DATA_SINKING)) {
+            return 0.0;
+        }
         AircraftDefinition def = definition();
         float offset = (def != null ? def.floatOffset : 0.0F) - LEGACY_MODEL_LIFT;
         AABB box = getBoundingBox();
@@ -1349,6 +1359,15 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     public int syncedWeaponUse() {
         return entityData.get(DATA_WEAPON_USE);
+    }
+
+    /**
+     * Whether {@code set} fires along the user's view instead of the hull: the shot direction and
+     * the muzzle positions are worked out as if the vehicle faced where the user looks. Static
+     * mounts do this; see {@link GroundVehicleEntity#aimsWithUser}.
+     */
+    public boolean aimsWithUser(WeaponSet set) {
+        return false;
     }
 
     /** {@code isInfinityAmmo}: creative players never run dry, nor does anyone when the server config says so. */
@@ -1511,7 +1530,9 @@ public abstract class AircraftEntity extends VehicleEntity {
                     entityData.set(DATA_HP, 0);
                     destroyVehicle();
                     timeSinceHit = 20;
-                    if (source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.FALL)) {
+                    if (isAfloat()) {
+                        startCookOff(source.getEntity());
+                    } else if (source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.FALL)) {
                         crashExplosion();
                     } else {
                         Explosions.explode(level, getX(), getY(), getZ(),
@@ -1577,6 +1598,78 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
     }
 
+    /** A floating vehicle sitting on the water, such as a patrol boat or a float plane at rest. */
+    private boolean isAfloat() {
+        AircraftDefinition def = definition();
+        return def != null && def.floats && waterDepth() > 0.0;
+    }
+
+    /**
+     * A boat destroyed on the water does not go up in one crash fireball; its fuel and magazine
+     * cook off in three blasts over about five seconds, then the hull sinks. Not in the original,
+     * which only had the crash explosion.
+     */
+    private void startCookOff(@Nullable Entity cause) {
+        exploded = true;
+        cookOffBlasts = 3;
+        cookOffDelay = 1;
+        cookOffCause = cause;
+    }
+
+    private void tickCookOff(ServerLevel level) {
+        if (cookOffBlasts <= 0 || --cookOffDelay > 0) {
+            return;
+        }
+        AircraftDefinition def = definition();
+        int blast = 4 - cookOffBlasts--;
+        float fuel = Mth.clamp(def != null ? def.maxFuel / 400.0F : 2.0F, 1.0F, 15.0F);
+        // The fuel tank first, then whatever the magazine still holds, then the hull goes up.
+        float size = switch (blast) {
+            case 1 -> fuel * 0.6F;
+            case 2 -> Math.max(munitionSize(), fuel * 0.4F);
+            default -> fuel;
+        };
+        size = Mth.clamp(size, 1.0F, 15.0F);
+        Vec3 at = cookOffPoint(def);
+        Explosions.explode(level, at.x, at.y, at.z,
+                new Explosions.Params(null, cookOffCause, size, size >= 2.0F ? size * 0.5F : 1.0F, true, true, 5, false, null));
+        // The blasts happen at the waterline, but the fire is above it, so show the full fireball.
+        Explosions.crashFireball(level, at.x, at.y, at.z, size);
+        if (cookOffBlasts > 0) {
+            // Three blasts inside five seconds: about 1.5 to 2.5 seconds apart.
+            cookOffDelay = 30 + random.nextInt(20);
+        } else {
+            entityData.set(DATA_SINKING, true);
+            cookOffCause = null;
+        }
+    }
+
+    /**
+     * How big the ammunition aboard goes up: each weapon's {@code Explosion} scaled by how full its
+     * magazine and reserve still are. Guns and empty racks add nothing.
+     */
+    private float munitionSize() {
+        if (weapons == null) {
+            return 0.0F;
+        }
+        float size = 0.0F;
+        for (WeaponSet set : weapons.sets()) {
+            int rounds = set.ammo() + set.restAmmo();
+            if (rounds > 0 && set.definition().explosion > 0) {
+                size += set.definition().explosion * Math.min(1.0F, (float) rounds / Math.max(set.maxAmmo(), 1));
+            }
+        }
+        return size;
+    }
+
+    /** A random spot on the hull: one of its hit boxes, or the middle of the body. */
+    private Vec3 cookOffPoint(@Nullable AircraftDefinition def) {
+        if (def == null || def.boundingBoxes.isEmpty() || random.nextInt(def.boundingBoxes.size() + 1) == 0) {
+            return position().add(0.0, def != null ? def.bodyHeight / 2.0 : 0.5, 0.0);
+        }
+        return toWorld(def.boundingBoxes.get(random.nextInt(def.boundingBoxes.size())).offset());
+    }
+
     /** Destroyed state each tick: the wreck spins, sets its crew alight and explodes on impact. */
     private void tickDestroyed() {
         if (!isDestroyed()) {
@@ -1594,9 +1687,10 @@ public abstract class AircraftEntity extends VehicleEntity {
                 roll += destroyedRoll;
             }
         }
-        if (level().isClientSide()) {
+        if (!(level() instanceof ServerLevel level)) {
             return;
         }
+        tickCookOff(level);
         if (ticksAlive % 20 == 0) {
             AircraftDefinition def = definition();
             for (int seat = 0; seat < seatIds.length; seat++) {
@@ -1681,6 +1775,8 @@ public abstract class AircraftEntity extends VehicleEntity {
         output.putBoolean("GunnerMode", isGunnerMode());
         output.putInt("Parts", partBits());
         output.putInt("DespawnCount", despawnCount);
+        output.putInt("CookOff", cookOffBlasts);
+        output.putBoolean("Sinking", entityData.get(DATA_SINKING));
         if (weapons != null) {
             output.putIntArray("WeaponsAmmo", weapons.saveAmmo());
         }
@@ -1705,6 +1801,10 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (hp() <= 0 && despawnCount <= 0) {
             despawnCount = 500;
         }
+        cookOffBlasts = input.getIntOr("CookOff", 0);
+        cookOffDelay = cookOffBlasts > 0 ? 20 : 0;
+        entityData.set(DATA_SINKING, input.getBooleanOr("Sinking", false));
+        exploded |= cookOffBlasts > 0 || entityData.get(DATA_SINKING);
         input.getIntArray("WeaponsAmmo").ifPresent(ammo -> {
             if (weapons != null) {
                 weapons.loadAmmo(ammo);
