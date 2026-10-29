@@ -1,10 +1,9 @@
 package com.jnhprojects.mcheli.client.render;
 
+import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.model.MeshGroup;
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.resources.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,11 +118,19 @@ final class GlassSplit {
     }
 
     private static Optional<Alpha> load(Identifier texture) {
-        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(texture);
-        if (resource.isEmpty()) {
+        try (InputStream in = RuntimeAssets.open(texture)) {
+            if (in == null) {
+                return Optional.empty();
+            }
+            return Optional.of(read(in));
+        } catch (IOException | RuntimeException e) {
+            LOGGER.warn("Could not read {} to find its glass; drawing it opaque", texture, e);
             return Optional.empty();
         }
-        try (InputStream in = resource.get().open(); NativeImage image = NativeImage.read(in)) {
+    }
+
+    private static Alpha read(InputStream in) throws IOException {
+        try (NativeImage image = NativeImage.read(in)) {
             int w = image.getWidth();
             int h = image.getHeight();
             byte[] values = new byte[w * h];
@@ -132,10 +139,7 @@ final class GlassSplit {
                     values[y * w + x] = (byte) (image.getPixel(x, y) >>> 24);
                 }
             }
-            return Optional.of(new Alpha(w, h, values));
-        } catch (IOException | RuntimeException e) {
-            LOGGER.warn("Could not read {} to find its glass; drawing it opaque", texture, e);
-            return Optional.empty();
+            return new Alpha(w, h, values);
         }
     }
 }
