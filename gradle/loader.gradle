@@ -1,0 +1,79 @@
+// Shared by every loader module: which sources go in, how resources are expanded and what the jar
+// may contain. Applied after the loader plugin, with these project properties set in the
+// module's gradle.properties: loader, minecraft_version, java_version.
+
+version = mod_version
+group = mod_group
+
+base {
+    // The loader and Minecraft version are part of the name, such as mcheli-fabric-26.3-1.1.0.jar.
+    archivesName = "mcheli-${loader}-${minecraft_version}"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
+
+// common holds the version-free code, minecraft-<version> the code shared by every loader on that
+// Minecraft version. Both are compiled into this module, so the mod stays one jar. common checks
+// on its own that it needs nothing from Minecraft; compiling minecraft-<version> under three
+// loaders keeps it free of any one loader's API.
+def shared = rootProject.file("minecraft-${minecraft_version}")
+sourceSets.main.java.srcDir(project(':common').file('src/main/java'))
+sourceSets.main.resources.srcDir(project(':common').file('src/main/resources'))
+sourceSets.main.java.srcDir(new File(shared, 'src/main/java'))
+sourceSets.main.resources.srcDir(new File(shared, 'src/main/resources'))
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = java_version as int
+    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
+}
+
+def expandProps = [
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_version            : version,
+        mod_authors            : mod_authors,
+        mod_license            : mod_license,
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        loader_version_range   : loader_version_range,
+        java_version           : java_version,
+]
+
+tasks.named('processResources', ProcessResources) {
+    inputs.properties(expandProps)
+    filesMatching(['META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'fabric.mod.json', 'pack.mcmeta']) {
+        expand expandProps
+    }
+}
+
+tasks.named('jar', Jar) {
+    // EMB4's content is never redistributed: players import it from their own copy of the original
+    // zip (LegacyContent). The repository no longer holds it, but the jar is packed from the
+    // resource output, which can still have copies from older builds and from the IDE.
+    def shipped = ['assets/mcheli/items/helicopter.json', 'assets/mcheli/items/plane.json',
+                   'assets/mcheli/items/tank.json', 'assets/mcheli/items/vehicle.json',
+                   // Our own: the night glow sprite (generated, no EMB4 content) and its particle definition.
+                   'assets/mcheli/particles/glow.json', 'assets/mcheli/textures/particle/glow.png']
+    exclude { FileTreeElement element ->
+        String path = element.relativePath.pathString
+        !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/') &&
+                !shipped.contains(path)
+    }
+    exclude 'data/mcheli/recipe/**'
+    includeEmptyDirs = false
+    // The licence travels with every copy of the jar.
+    from(rootProject.file('LICENSE'))
+    manifest {
+        attributes([
+                'Specification-Title'   : mod_id,
+                'Specification-Vendor'  : 'JnH Projects',
+                'Specification-Version' : '1',
+                'Implementation-Title'  : mod_name,
+                'Implementation-Version': version,
+                'Implementation-Vendor' : 'JnH Projects',
+                'Minecraft-Version'     : minecraft_version,
+                'Mod-Loader'            : loader,
+        ])
+    }
+}
