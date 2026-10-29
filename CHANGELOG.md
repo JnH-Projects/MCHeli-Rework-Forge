@@ -25,7 +25,8 @@ and items.
   that cannot be placed. Edits apply while the server runs.
 - Boats destroyed on the water (by a torpedo or anything else) cook off: three explosions with
   fireballs within about five seconds, the first from the fuel, the second from the ammunition
-  still aboard, the last and biggest sized by the fuel load like a crash. Then the wreck sinks.
+  still aboard, the last and biggest sized by the fuel load like a crash. Then the burning wreck
+  slowly goes under, stern first and listing, and settles on the bottom.
 - Content can now bring textures, models and sounds while the game runs, without a resource
   reload. Nothing uses this yet beyond `/mcheli reload`; content packs (beta.2) will.
 
