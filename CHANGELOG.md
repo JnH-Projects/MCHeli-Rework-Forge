@@ -5,6 +5,53 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.1.0-beta.1] - 2026-10-29
+
+Phase 5 of the road to 1.1.0: the groundwork that content packs, older Minecraft versions and
+the vehicle workshop build on. Betas are not uploaded to CurseForge; download them from the GitHub
+releases. Worlds from 1.0.0 load with their vehicles and items.
+
+### Added
+
+- `/mcheli` shows where the vehicles were loaded from and how many there are; `/mcheli list
+  [helicopter|plane|tank|vehicle]` lists them.
+- `/mcheli give <players> <vehicle> [count]` for operators, with the vehicle names suggested.
+- `/mcheli reload` for operators: reads the vehicle and weapon definitions again without
+  restarting. Vehicles already in the world switch to the new values on the spot and keep their
+  ammunition; models and textures edited on disk show up straight away, without F3 + T.
+- Server config, `serverconfig/mcheli-server.toml` in each world: whether explosions break blocks
+  and start fires, a damage multiplier for vehicles, infinite ammunition, and a list of vehicles
+  that cannot be placed. Edits apply while the server runs.
+- Boats destroyed on the water (by a torpedo or anything else) cook off: three explosions with
+  fireballs within about five seconds, the first from the fuel, the second from the ammunition
+  still aboard, the last and biggest sized by the fuel load like a crash. Then the burning wreck
+  slowly goes under, stern first and listing, and settles on the bottom.
+- Content can now bring textures, models and sounds while the game runs, without a resource
+  reload. Nothing uses this yet beyond `/mcheli reload`; content packs (beta.2) will.
+
+### Changed
+
+- Vehicle items: there is now one item per vehicle kind (Helicopter, Plane, Tank, Ground Vehicle)
+  that remembers which vehicle it places, instead of one item per vehicle. They look and are named
+  as before. Items from 1.0.0 still work and turn into the new ones as soon as they are in a
+  player's inventory; items in chests change when taken out. To give one by command, use
+  `/mcheli give` (plain `/give mcheli:ah-64` no longer exists for new items).
+- The imported content is converted again on the first start, since the crafting recipes now
+  make the new items. This takes a few seconds, once.
+- The source is split into a version-free `common` module and a module per Minecraft version
+  (`forge-26.3` for now), and a release attaches one jar per Minecraft version. Nothing changes for
+  players.
+
+### Fixed
+
+- Boats and other floating vehicles sat about a third of a block too deep, so the Zodiac was
+  almost under water. They now float as high as in the original.
+- Static launchers and guns that turn with the gunner's view, such as the Type 93 and Mk 32
+  torpedo tubes, only fired straight ahead. They fire where the gunner looks again.
+- On Windows, converting the content again could fail with "access denied" when another program
+  had the old `mcheli/imported` folder open, leaving the game without vehicles until the next
+  start. The old folder is now moved aside first, and the swap is retried.
+
 ## [1.0.0] - 2026-10-28
 
 First release. Everything from the alpha and beta versions, shipped as a code-only jar. The
@@ -317,4 +364,5 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.1
 [1.0.0]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.0.0

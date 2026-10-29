@@ -27,6 +27,14 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
+Phase 5 in a development build (`1.1.0-beta.1`): a patrol boat hit by a torpedo cooks off and
+sinks.
+
+| | |
+|---|---|
+| ![A patrol boat exploding on a river after a torpedo hit, burning debris arcing over the shore](docs/images/phase-5/patrol-boat-cook-off.png) | ![The wreck of the patrol boat resting on the riverbed, listing and still smoking](docs/images/phase-5/patrol-boat-wreck.png) |
+| Torpedo hit: fuel and ammunition cook off in three blasts | The wreck settles on the bottom, still smoking |
+
 Phase 4 in a development build: the original's scripted HUDs, pilot gunner mode and lock-on.
 
 | | |
@@ -196,6 +204,26 @@ Each seat fires the weapons its vehicle assigns to it; the pilot also fires a gu
 while that seat has no player. Creative players have unlimited ammunition. A small readout at the
 bottom right shows hit points, the weapon, ammunition, reload, heat, lock and flares.
 
+## Commands and server settings
+
+| Command | Who | What it does |
+|---------|-----|--------------|
+| `/mcheli` | everyone | Where the vehicles were loaded from, and how many of each kind |
+| `/mcheli list [helicopter\|plane\|tank\|vehicle]` | everyone | The loaded vehicles by name |
+| `/mcheli give <players> <vehicle> [count]` | operators | Hands out vehicles, for example `/mcheli give @s ah-64` |
+| `/mcheli reload` | operators | Reads the vehicle and weapon files again without a restart |
+
+Each world has `serverconfig/mcheli-server.toml` (created on first start, edits apply while the
+server runs):
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `explosions.breakBlocks` | `true` | Weapons and crashes break blocks (the `mobGriefing` rule applies too) |
+| `explosions.startFires` | `true` | Incendiary weapons and crashes start fires |
+| `vehicles.damageFactor` | `1.0` | Multiplies the damage vehicles take; `0.5` makes them twice as tough |
+| `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
+| `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
+
 ## Documentation
 
 * [Changelog](CHANGELOG.md)
@@ -212,7 +240,8 @@ bottom right shows hit points, the weapon, ammunition, reload, heat, lock and fl
 ./gradlew build
 ```
 
-The jar ends up in `build/libs`. Java 25 is required; Gradle downloads one automatically if it is
-not installed. `./gradlew runClient` and `runServer` import the content from
+The jars, one per Minecraft version, end up in `build/release`. Java 25 is required; Gradle
+downloads one automatically if it is not installed. `./gradlew :forge-26.3:runClient` and
+`:forge-26.3:runServer` import the content from
 `Mod/MC1.7.10_mcheli_1.0.3.zip`, which you have to download yourself. See
 [DEVELOPMENT.md](docs/DEVELOPMENT.md) for details.

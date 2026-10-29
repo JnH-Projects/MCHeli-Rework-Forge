@@ -1,7 +1,7 @@
 # Architecture
 
 This document explains how MCHeli Rework is organized and why. It reflects the code as of
-`1.0.0-alpha.2`.
+`1.1.0-beta.1`.
 
 ## Goals
 
@@ -17,23 +17,30 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
 
 ```
  ┌────────────────────────────────────────────────────────────────┐
- │ client          renderer, mesh cache, crew controller, sound,  │  client only
- │                 HUD renderer                                   │
+ │ client          renderer, mesh cache, runtime assets, crew     │  client only
+ │                 controller, sound, HUD renderer                │
+ ├────────────────────────────────────────────────────────────────┤  platform module
+ │ entity          AircraftEntity and one subclass per kind       │  (forge-26.3)
+ │ item            AircraftItem, VehicleIngredient                │
+ │ network         PilotStatePacket, CrewActionPacket, ...        │  Minecraft + Forge
+ │ registry        entities, items, components, creative tabs     │
+ │ (root)          MCHeli, ServerConfig, McheliCommand, reload    │
  ├────────────────────────────────────────────────────────────────┤
- │ entity          AircraftEntity and one subclass per kind       │
- │ item            AircraftItem                                   │  common
- │ network         PilotStatePacket, CrewActionPacket             │  (Minecraft + Forge)
- │ registry        entities, items, creative tabs                 │
- ├────────────────────────────────────────────────────────────────┤
- │ content         Definition, DefinitionReader, ContentRegistry, │
- │                 aircraft/* definitions                         │  pure Java
- │ model           Mesh, MqoLoader, ObjLoader                     │
+ │ content         Definition, DefinitionReader, ContentRegistry, │  common module
+ │                 aircraft/* definitions, recipe conversion      │
+ │ model           Mesh, MqoLoader, ObjLoader                     │  pure Java
  │ hud             HudScript, Expression, HudVariable             │
+ │ physics         AircraftRotation, GroundImpact                 │
  └────────────────────────────────────────────────────────────────┘
 ```
 
-Arrows only point down. `content`, `model` and `hud` import nothing from Minecraft or Forge (they use
-their own `Vector3` and float arrays), which is what makes them unit testable.
+Arrows only point down. The bottom half lives in the `common` Gradle module, which is compiled
+and tested with nothing from Minecraft or Forge on its classpath (only the JDK, SLF4J, JSpecify
+and JOML), so a stray import fails the build; `CommonBoundaryTest` also scans the sources. The top
+half is a platform module, one per Minecraft version, which compiles `common`'s sources together
+with its own into one jar. Ports to older versions (phase 7) add platform modules and leave
+`common` alone; see [DEVELOPMENT.md](DEVELOPMENT.md#common-and-platform-modules).
+
 `client` is only referenced from `MCHeli` behind a `Dist.CLIENT` check, so a dedicated server never
 loads a client class.
 
@@ -47,17 +54,22 @@ MCHeli constructor
   ├─ LegacyContent.prepare                            import the original zip into mcheli/imported
   ├─ LegacyContent.registerPacks                      that folder as a required resource + data pack
   ├─ ContentRegistry.load(mcheli/imported/assets/mcheli)  parse helicopters, planes, tanks, vehicles
+  ├─ registerConfig(SERVER, ServerConfig.SPEC)        serverconfig/mcheli-server.toml
+  ├─ ModDataComponents.register                       mcheli:vehicle
   ├─ ModEntities.register                             one entity type per kind
-  ├─ ModItems.register(content)                       one item per definition
+  ├─ ModItems.register(content)                       one item per kind, plus the 1.0.0 items
   ├─ ModCreativeTabs.register
+  ├─ ModRecipes.register                              mcheli:vehicle ingredient, recipe book
   ├─ ModNetwork.register
+  ├─ McheliCommand.register                           /mcheli
   └─ ClientSetup.init (client only)                   renderers, keys, reload listener, controller
 ```
 
-Definitions must be parsed in the constructor because every vehicle gets its own item, and Forge
-freezes the item registry before resources are available. The files are read straight from the
-imported folder (see [Assets](#assets)). Models and textures, by contrast, go through the resource
-manager, so resource packs can replace them.
+Definitions are still parsed in the constructor, but only because the 1.0.0 items have to be
+registered before Forge freezes the registries (see [Vehicle items](#vehicle-items)); nothing else
+depends on them existing that early any more. The files are read straight from the imported
+folder (see [Assets](#assets)). Models and textures, by contrast, go through the resource manager,
+so resource packs can replace them.
 
 ## Content definitions
 
@@ -83,7 +95,54 @@ Deliberate differences from the original loader:
 | Unknown keys were silently ignored | Unknown keys are collected and logged at debug | Shows which keys still need porting |
 | Read as UTF-8 only, mangling Shift-JIS | UTF-8 with a Windows-31J fallback | 15 shipped files are Shift-JIS |
 
-`ContentRegistry` holds the loaded definitions. It is immutable after startup.
+`ContentRegistry` holds the loaded definitions, and can change while the game runs: `add`
+replaces or adds one definition, `remove` drops one, and `replaceWith` swaps in a whole freshly
+loaded set. The maps sit in an immutable snapshot that writers copy and publish in one volatile
+write, so readers never lock and the render and server threads of a single player game always
+see a consistent set. Every change bumps `generation()`. `AircraftEntity.definition()` caches its
+definition together with the generation it was looked up at, and looks it up again when the
+number moves, rebuilding seats, parts and weapons while keeping the ammunition it carries.
+`MCHeli.content()` is always the same object; reloads change what it holds.
+
+### Vehicle items
+
+1.0.0 registered one item per vehicle at startup, and Forge freezes the item registry before a
+world loads, so a vehicle added later could never get an item. Since 1.1.0 there is one item per
+kind (`mcheli:helicopter`, `mcheli:plane`, `mcheli:tank`, `mcheli:vehicle`). A stack names its
+vehicle in the `mcheli:vehicle` data component and points its `minecraft:item_model` component at
+the item model the import wrote for that vehicle, so it looks and reads as before.
+`AircraftItem.stackOf(def)` is the one place that builds such a stack (creative tabs, `/mcheli
+give`, pick block, packing a vehicle up).
+
+Existing worlds keep their items through a migration rather than a data fixer: the 1.0.0 ids
+(`mcheli:ah-64` and so on) are still registered for the content present at startup, as
+`LegacyAircraftItem`. They place vehicles as before, are not listed in any tab, and replace
+themselves with the generic stack (count, name and other components kept) as soon as they tick in
+a player's inventory. A stack in a chest converts when a player takes it out.
+
+Recipes craft the generic item with both components set. A vehicle used as an ingredient (the
+AH-6X recipe takes an AH-6) becomes a `{"type": "mcheli:vehicle", "vehicle": "ah-6"}` ingredient,
+`VehicleIngredient`, registered as a Forge ingredient serializer, which only matches stacks of that
+vehicle.
+
+### Reloading content
+
+`/mcheli reload` (operators) runs `ContentReload`: it loads the imported folder again into a new
+registry and, if that worked, `replaceWith`s it into the live one, then sends
+`ContentReloadPacket` to every player. Vehicles in the world pick up their new definition on
+their next tick. On the client, `ClientContentReload` reloads the client's own registry (except
+in single player, where client and integrated server share it), clears the mesh cache and glass
+splits, uploads every vehicle texture again from disk (`RuntimeAssets.refreshTextures`), and
+rebuilds the creative tabs. Until content packs sync definitions (phase 6), a dedicated server and
+its clients each read their own files.
+
+### Server config and command
+
+`ServerConfig` is a Forge `SERVER` config, `serverconfig/mcheli-server.toml` in each world:
+explosions breaking blocks and starting fires, a damage factor for vehicles, infinite ammunition,
+and a list of disabled vehicles. Only the server applies these rules; the getters return the
+defaults (the 1.0.0 behaviour) when no world is loaded. `McheliCommand` registers `/mcheli`
+(content status), `/mcheli list [kind]`, and for operators `/mcheli give` and `/mcheli reload`.
 
 Recipes are data in 26.x, so the definitions' `AddRecipe` and `AddShapelessRecipe` lines are
 turned into `data/mcheli/recipe/<vehicle>.json` during the import by `content.recipe.LegacyRecipe`,
@@ -353,8 +412,29 @@ supply the original 1.0.3 zip, and the mod converts it on their machine:
 `content.LegacyImporter` is pure Java and does the conversion: lower-case paths (26.x identifiers
 forbid upper case and `#`), the singular `textures/item` and `textures/block` folders, JSON
 language files, `sounds.json` with the original grouping rule, an item model per item texture, and
-the recipes. It writes into `imported.tmp` and swaps the folder in only when it succeeds.
-Bumping `LegacyImporter.FORMAT` makes every install convert again.
+the recipes. It writes into `imported.tmp` and swaps the folder in only when it succeeds: the
+old import is first moved to `imported.old` and deleted last, and the renames are retried for a
+few seconds, because on Windows a just-deleted folder keeps its name while a file watcher or
+virus scanner still holds a handle in it. Bumping `LegacyImporter.FORMAT` makes every install
+convert again (1.1.0-beta.1 bumped it to 2 for the generic item recipes).
+
+### Runtime assets
+
+Vehicle content can change while the game runs (`/mcheli reload` now, content packs and the
+workshop later), and a resource reload is slow and does not exist on a server. The client
+therefore reads vehicle assets through `client.RuntimeAssets`: the resource manager first, so
+resource packs keep the last word, then any number of runtime roots, folders laid out like
+`assets/mcheli` that content can register at any time.
+
+- **Models**: `MeshCache` opens them through `RuntimeAssets.open`; clearing the cache is enough
+  for edited or new files to load on the next frame.
+- **Textures**: the renderer asks `RuntimeAssets.texture(id)` for every texture it binds. A
+  texture only a runtime root has is uploaded as a `DynamicTexture` on first use;
+  `refreshTextures` uploads every vehicle texture again from disk. A resource reload releases
+  ours so the texture manager takes over again.
+- **Sounds**: `RuntimeSoundInstance` (the engine loop extends it) plays through the sound manager
+  when a resource pack defines the event, and otherwise streams the OGG file a runtime root holds
+  for it through Forge's `SoundInstance.getStream` hook, with no `sounds.json` entry and no reload.
 
 `LegacyContent` adds the folder through `AddPackFindersEvent` for both pack types, as a required
 pack at the bottom of the list: it is enabled in every world, cannot be turned off, and regular
@@ -370,12 +450,13 @@ The repository holds none of the original files. The unit tests get them the way
 `TestResources` imports the zip from `Mod/` once into `build/legacy-content`, so the tests run
 against exactly what the importer produces. Where the zip is missing (CI), the content tests are
 skipped and only the tests that build their input in code run. As a guard, the `jar` task still
-excludes everything under `assets/mcheli` except `lang`, since `build/sourceSets/main` can hold
-copies from older builds.
+excludes everything under `assets/mcheli` except `lang` and the generic items' fallback models,
+since `build/sourceSets/main` can hold copies from older builds.
 
 ## Testing
 
-Unit tests live in `src/test` and run with `./gradlew test`. Apart from targeted cases, they load
+Unit tests live in `common/src/test` and run with `./gradlew :common:test` (or `build`). Platform
+code has no unit tests; it is covered in game. Apart from targeted cases, the tests load
 every shipped helicopter definition and model and check that each rotor part referenced by a
 definition exists in its model. New content is validated simply by adding it. In-game behavior is
 covered by the manual plan in [TESTING.md](TESTING.md).

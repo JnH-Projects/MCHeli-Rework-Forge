@@ -1,106 +1,18 @@
 plugins {
-    id 'java'
-    id 'idea'
-    id 'eclipse'
-    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+    id 'base'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
 }
 
-version = mod_version
-group = mod_group
+def platforms = providers.gradleProperty('platforms').get().split(',').collect { it.trim() }
 
-base {
-    archivesName = "mcheli-${minecraft_version}"
+// One jar per Minecraft version, gathered in one folder for the release workflow.
+def releaseJars = tasks.register('releaseJars', Sync) {
+    group = 'build'
+    description = 'Collects the jar of every platform module into build/release.'
+    platforms.each { platform -> from(project(":$platform").tasks.named('jar')) }
+    into layout.buildDirectory.dir('release')
 }
 
-// Minecraft 26.x ships Java 25 to players, so the mod targets it as well.
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
-
-// The original MCHeli 1.0.3 download. Players supply their own copy; development runs and the
-// import test use this one (git-ignored, see docs/DEVELOPMENT.md).
-def legacyZip = file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
-
-minecraft {
-    runs {
-        configureEach {
-            workingDir = layout.projectDirectory.dir('run')
-            systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
-            systemProperty 'mcheli.legacyZip', legacyZip
-        }
-
-        register('client')
-
-        register('server') {
-            args '--nogui'
-        }
-    }
-}
-
-repositories {
-    minecraft.mavenizer(it)
-    maven fg.forgeMaven
-    maven fg.minecraftLibsMaven
-    mavenCentral()
-}
-
-dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
-    annotationProcessor "net.minecraftforge:eventbus-validator:${eventbus_version}"
-
-    testImplementation platform("org.junit:junit-bom:${junit_version}")
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
-}
-
-tasks.named('test', Test) {
-    useJUnitPlatform()
-    systemProperty 'mcheli.resources', file('src/main/resources').absolutePath
-    // The content tests import the original zip once into build/legacy-content (TestResources)
-    // and are skipped where the zip is absent, such as on CI.
-    systemProperty 'mcheli.legacyZip', legacyZip
-    systemProperty 'mcheli.testContent', layout.buildDirectory.dir('legacy-content').get().asFile.absolutePath
-}
-
-def expandProps = [
-        mod_id               : mod_id,
-        mod_name             : mod_name,
-        mod_version          : version,
-        mod_authors          : mod_authors,
-        mod_license          : mod_license,
-        minecraft_version_range: minecraft_version_range,
-        forge_version_range  : forge_version_range,
-        loader_version_range : loader_version_range,
-]
-
-tasks.named('processResources', ProcessResources) {
-    inputs.properties(expandProps)
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand expandProps
-    }
-}
-
-tasks.named('jar', Jar) {
-    // EMB4's content is never redistributed: players import it from their own copy of the original
-    // zip (LegacyContent). The repository no longer holds it, but the jar is packed from
-    // build/sourceSets/main, which can still have copies from older builds and from the IDE.
-    exclude { FileTreeElement element ->
-        String path = element.relativePath.pathString
-        !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/')
-    }
-    exclude 'data/mcheli/recipe/**'
-    includeEmptyDirs = false
-    manifest {
-        attributes([
-                'Specification-Title'   : mod_id,
-                'Specification-Vendor'  : 'JnH Projects',
-                'Specification-Version' : '1',
-                'Implementation-Title'  : mod_name,
-                'Implementation-Version': version,
-                'Implementation-Vendor' : 'JnH Projects',
-        ])
-    }
+tasks.named('build') {
+    dependsOn releaseJars
 }

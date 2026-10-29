@@ -1,0 +1,48 @@
+plugins {
+    id 'java-library'
+}
+
+version = mod_version
+group = mod_group
+
+// The platform modules compile these sources again with their own toolchain. Building them on
+// their own here, with no Minecraft or loader on the classpath, is what keeps them version-free.
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+    // Minecraft's library mirror has everything the game ships; Maven Central is the fallback.
+    maven { url = 'https://libraries.minecraft.net/' }
+    mavenCentral()
+}
+
+dependencies {
+    // Provided at runtime by Minecraft on every supported version.
+    compileOnly "org.slf4j:slf4j-api:${slf4j_version}"
+    compileOnly "org.jspecify:jspecify:${jspecify_version}"
+    compileOnly "org.joml:joml:${joml_version}"
+
+    testImplementation "org.slf4j:slf4j-api:${slf4j_version}"
+    testImplementation "org.jspecify:jspecify:${jspecify_version}"
+    testImplementation "org.joml:joml:${joml_version}"
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
+}
+
+// The original MCHeli 1.0.3 download, kept by developers in Mod/ (git-ignored, see docs/DEVELOPMENT.md).
+def legacyZip = rootProject.file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    systemProperty 'mcheli.resources', file('src/main/resources').absolutePath
+    systemProperty 'mcheli.commonSources', file('src/main/java').absolutePath
+    // The content tests import the original zip once into build/legacy-content (TestResources)
+    // and are skipped where the zip is absent, such as on CI.
+    systemProperty 'mcheli.legacyZip', legacyZip
+    systemProperty 'mcheli.testContent', layout.buildDirectory.dir('legacy-content').get().asFile.absolutePath
+}

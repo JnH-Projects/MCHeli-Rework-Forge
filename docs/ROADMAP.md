@@ -131,7 +131,7 @@ Rules that hold for every beta:
 
 | Phase | Version | Theme | State |
 |-------|---------|-------|-------|
-| 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Planned |
+| 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Planned |
 | 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
 | 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
@@ -150,18 +150,19 @@ of back-porting four phases of work at the end.
 Engine changes that packs, ports and the workshop all depend on. Players mostly see the config
 and the command.
 
-- [ ] One generic vehicle item per kind, carrying the definition id in a data component, with a
-      data fixer so 1.0.0 worlds keep their items ([why](#one-generic-vehicle-item-per-kind))
-- [ ] `ContentRegistry` can add and replace definitions while the game runs
-- [ ] Runtime client assets: textures through `DynamicTexture`, sounds through a streaming
+- [x] One generic vehicle item per kind, carrying the definition id in a data component, with a
+      migration so 1.0.0 worlds keep their items ([why](#one-generic-vehicle-item-per-kind)): the
+      old item ids stay registered and convert themselves in a player's inventory
+- [x] `ContentRegistry` can add and replace definitions while the game runs
+- [x] Runtime client assets: textures through `DynamicTexture`, sounds through a streaming
       `SoundInstance`, models through `MeshCache`, all without a resource reload
-- [ ] In-game definition reload, built on the runtime registry
-- [ ] Server config (`mcheli.cfg` equivalent) and the `/mcheli` command
-- [ ] Source split: a `common` source set with the version-free code (`content`, `model`, `hud`,
+- [x] In-game definition reload, built on the runtime registry
+- [x] Server config (`mcheli.cfg` equivalent) and the `/mcheli` command
+- [x] Source split: a `common` source set with the version-free code (`content`, `model`, `hud`,
       the expression library, weapon and vehicle definitions, flight and damage maths) and one
       platform module per Minecraft version for rendering, networking, registration and events.
       Minecraft classes stay out of `common`, enforced by a test.
-- [ ] Multi-version Gradle build: one tag builds every platform module, and the release attaches
+- [x] Multi-version Gradle build: one tag builds every platform module, and the release attaches
       one jar per Minecraft version (`mcheli-<mc>-<version>.jar`). Release workflow and
       [DEVELOPMENT.md](DEVELOPMENT.md#releasing) updated; 26.3 is still the only module.
 
@@ -260,7 +261,8 @@ No new features after beta.6; a `1.1.0-rc.N` follows only if beta.6 testing find
 Every vehicle currently registers its own item at startup, and Forge freezes the registry before
 a world loads, so a vehicle created or received later could never get an item. The item carries
 the definition id in a data component instead; the entities already work this way (one entity
-type per kind, definition name synced). Existing worlds keep their items through a data fixer.
+type per kind, definition name synced). Existing worlds keep their items through a migration
+(see [ARCHITECTURE.md](ARCHITECTURE.md#vehicle-items)).
 
 ### Vehicle packages
 

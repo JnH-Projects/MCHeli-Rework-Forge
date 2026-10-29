@@ -50,7 +50,8 @@ jobs:
           if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then
             flags+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" build/libs/*.jar \
+          # One jar per Minecraft version, gathered by the releaseJars task.
+          gh release create "$GITHUB_REF_NAME" build/release/*.jar \
             --title "MCHeli Rework ${{ steps.version.outputs.version }}" \
             --notes-file release-notes.md \
             "${flags[@]}"

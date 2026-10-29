@@ -17,24 +17,53 @@ other process to finish and build again.
 ## Common tasks
 
 ```
-./gradlew build          # compile, run unit tests, produce build/libs/mcheli-26.3-<version>.jar
-./gradlew test           # unit tests only
-./gradlew runClient      # start a development client from ./run
-./gradlew runServer      # start a development dedicated server from ./run
+./gradlew build                    # compile and test every module, one jar per Minecraft version in build/release
+./gradlew :common:test             # unit tests (they all live in common)
+./gradlew :forge-26.3:runClient    # start a development client from ./run
+./gradlew :forge-26.3:runServer    # start a development dedicated server from ./run
 ```
 
-Project properties live in `gradle.properties` (`mod_version`, Forge and Minecraft versions).
+Shared properties live in the root `gradle.properties`: `mod_version`, the mod metadata, the list
+of platform modules (`platforms`) and the library versions `common` compiles against. Each
+platform module has its own `gradle.properties` with its Minecraft, loader and Java versions.
 `mods.toml` and `pack.mcmeta` are filled in from them at build time.
 
 ## Repository layout
 
 ```
-src/main/java/com/jnhprojects/mcheli   mod sources, see ARCHITECTURE.md
-src/main/resources                     the rework's own lang keys, damage type and metadata
-src/test/java                          unit tests
-docs/                                  documentation and content format guides
-.github/workflows                      CI and release pipelines
+common/                        version-free code, built and tested without Minecraft
+  src/main/java                content, model, hud, physics (see ARCHITECTURE.md)
+  src/main/resources           lang files shared by every platform
+  src/test/java                all unit tests, including the boundary test
+forge-26.3/                    the Minecraft 26.3 / Forge 66 platform module
+  src/main/java                rendering, networking, registration, entities, events
+  src/main/resources           mods.toml, pack.mcmeta, item models, damage type data
+  gradle.properties            Minecraft, Forge and Java versions for this module
+docs/                          documentation and content format guides
+.github/workflows              CI and release pipelines
 ```
+
+### Common and platform modules
+
+1.1.0 brings older Minecraft versions, so the code is split in two:
+
+- **`common`** holds everything that does not depend on the game version: definition parsing,
+  the content registry, model loading, the HUD expression language, recipe conversion, rotation
+  and impact maths. Its classpath has only the JDK, SLF4J, JSpecify and JOML (all shipped by every
+  supported Minecraft version), so a stray Minecraft import fails to compile, and
+  `CommonBoundaryTest` names the offending line.
+- **A platform module per Minecraft version** (`forge-26.3` today) holds the glue: entities,
+  rendering, networking, registration, config, commands. It compiles `common`'s sources together
+  with its own, so each version ships as one jar and runs as one module in development.
+
+A feature that is pure logic goes in `common` with a unit test; only the part that touches
+Minecraft goes in the platform module. Adding a version means adding a module directory, listing
+it in `platforms`, and porting the platform code; `common` should not need to change. The run
+folder `./run` is shared for now; later modules will get their own.
+
+IDEs import the project as three Gradle projects (root, `common`, `forge-26.3`). After pulling the
+split, re-import the Gradle project so the IDE picks up the new source folders and run
+configurations; the old root-level `run*.launch` files point at a project that no longer exists.
 
 `Mod/` holds the original `MC1.7.10_mcheli_1.0.3.zip`. It is git-ignored. Download it from the
 [MCHeli CurseForge page](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files)
@@ -54,8 +83,8 @@ locally with the zip before a release.
 ## Continuous integration
 
 `.github/workflows/build.yml` runs `./gradlew build` on every push to `main` and on every pull
-request. The jar is attached to the run as an artifact for 14 days; test reports are uploaded
-when the build fails.
+request, which builds and tests every module. The jars from `build/release` are attached to the
+run as an artifact for 14 days; test reports are uploaded when the build fails.
 
 ## Releasing
 
@@ -75,7 +104,9 @@ Releases are cut from tags. The release workflow refuses to publish when the tag
    ```
 
 `.github/workflows/release.yml` then builds and tests the tag, extracts the matching
-`CHANGELOG.md` section as release notes, and publishes a GitHub release with the jar. Versions
+`CHANGELOG.md` section as release notes, and publishes a GitHub release with one jar per
+Minecraft version (`mcheli-<minecraft>-<version>.jar`, gathered by the `releaseJars` task into
+`build/release`). One tag always releases every platform module at the same mod version. Versions
 containing a hyphen (`-alpha.N`, `-beta.N`, `-rc.N`) are marked as pre-releases.
 
 Every release, pre-releases included, is mirrored to the public repository and tagged there too.
@@ -87,17 +118,18 @@ releases page. See [the release channels](ROADMAP.md#release-channels).
 
 Neither the repository nor the jar may contain EMB4's files. Don't commit anything from the zip
 or from `run/mcheli/imported`. As a guard, the `jar` task excludes everything under
-`assets/mcheli` except `lang`. After a build, check with:
+`assets/mcheli` except `lang` and the four fallback item models of the generic vehicle items.
+After a build, check every jar with:
 
 ```
-unzip -l build/libs/mcheli-26.3-<version>.jar | grep -v "com/"
+for jar in build/release/*.jar; do unzip -l "$jar" | grep -v "com/"; done
 ```
 
-which should list only the manifest, `mods.toml`, `pack.mcmeta`, the two lang files and the
-damage type data.
+which should list only the manifest, `mods.toml`, `pack.mcmeta`, the two lang files, the four
+generic item models and the damage type data.
 
 When the conversion changes, change `content.LegacyImporter` and bump its `FORMAT`, so existing
 installs, the dev run and the tests all convert again. Keys the rework adds go into the lang files
-in `src/main/resources`; `LegacyImporterTest` fails if one reuses a key the import writes.
+in `common/src/main/resources`; `LegacyImporterTest` fails if one reuses a key the import writes.
 
-To force a fresh import, delete `run/mcheli/imported` (dev run) or `build/legacy-content` (tests).
+To force a fresh import, delete `run/mcheli/imported` (dev run) or `common/build/legacy-content` (tests).
