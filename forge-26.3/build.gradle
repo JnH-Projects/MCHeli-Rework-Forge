@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'idea'
     id 'eclipse'
-    id 'net.minecraftforge.gradle' version '[7.0.17,8)'
+    id 'net.minecraftforge.gradle'
 }
 
 version = mod_version
@@ -12,17 +12,23 @@ base {
     archivesName = "mcheli-${minecraft_version}"
 }
 
-// Minecraft 26.x ships Java 25 to players, so the mod targets it as well.
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
 
-// The original MCHeli 1.0.3 download. Players supply their own copy; development runs and the
-// import test use this one (git-ignored, see docs/DEVELOPMENT.md).
-def legacyZip = file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
+// The shared code is compiled into this module rather than depended on, so the mod stays one
+// jar and one module in development runs. The common project checks on its own that these
+// sources need nothing from Minecraft.
+def common = project(':common')
+sourceSets.main.java.srcDir(common.file('src/main/java'))
+sourceSets.main.resources.srcDir(common.file('src/main/resources'))
+
+// The original MCHeli 1.0.3 download. Players supply their own copy; development runs use this
+// one (git-ignored, see docs/DEVELOPMENT.md).
+def legacyZip = rootProject.file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
 
 minecraft {
     runs {
         configureEach {
-            workingDir = layout.projectDirectory.dir('run')
+            workingDir = rootProject.layout.projectDirectory.dir('run')
             systemProperty 'eventbus.api.strictRuntimeChecks', 'true'
             systemProperty 'mcheli.legacyZip', legacyZip
         }
@@ -45,24 +51,11 @@ repositories {
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     annotationProcessor "net.minecraftforge:eventbus-validator:${eventbus_version}"
-
-    testImplementation platform("org.junit:junit-bom:${junit_version}")
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
-}
-
-tasks.named('test', Test) {
-    useJUnitPlatform()
-    systemProperty 'mcheli.resources', file('src/main/resources').absolutePath
-    // The content tests import the original zip once into build/legacy-content (TestResources)
-    // and are skipped where the zip is absent, such as on CI.
-    systemProperty 'mcheli.legacyZip', legacyZip
-    systemProperty 'mcheli.testContent', layout.buildDirectory.dir('legacy-content').get().asFile.absolutePath
 }
 
 def expandProps = [
@@ -87,9 +80,12 @@ tasks.named('jar', Jar) {
     // EMB4's content is never redistributed: players import it from their own copy of the original
     // zip (LegacyContent). The repository no longer holds it, but the jar is packed from
     // build/sourceSets/main, which can still have copies from older builds and from the IDE.
+    def shipped = ['assets/mcheli/items/helicopter.json', 'assets/mcheli/items/plane.json',
+                   'assets/mcheli/items/tank.json', 'assets/mcheli/items/vehicle.json']
     exclude { FileTreeElement element ->
         String path = element.relativePath.pathString
-        !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/')
+        !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/') &&
+                !shipped.contains(path)
     }
     exclude 'data/mcheli/recipe/**'
     includeEmptyDirs = false
@@ -101,6 +97,7 @@ tasks.named('jar', Jar) {
                 'Implementation-Title'  : mod_name,
                 'Implementation-Version': version,
                 'Implementation-Vendor' : 'JnH Projects',
+                'Minecraft-Version'     : minecraft_version,
         ])
     }
 }
