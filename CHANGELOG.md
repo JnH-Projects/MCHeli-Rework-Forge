@@ -41,6 +41,8 @@ and items.
 
 ### Fixed
 
+- Boats and other floating vehicles sat about a third of a block too deep, so the Zodiac was
+  almost under water. They now float as high as in the original.
 - On Windows, converting the content again could fail with "access denied" when another program
   had the old `mcheli/imported` folder open, leaving the game without vehicles until the next
   start. The old folder is now moved aside first, and the swap is retried.
