@@ -9,7 +9,8 @@ A pack is data only. The game refuses a pack that holds anything but the file ty
 below, so installing or downloading one can never run code on your machine.
 
 The [example pack](../../examples/rework-example-pack) in this repository has one helicopter, the
-Rework Scout, and is the quickest way to start: copy it, rename it and change it.
+Rework Scout, and is the quickest way to start: copy it, rename it and change it. It is public
+domain (CC0 1.0), so what you build from it is entirely yours.
 
 ## Layout
 
