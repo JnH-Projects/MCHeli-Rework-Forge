@@ -313,7 +313,10 @@ only the two option values (a locked entity id and a fire mode) and repeats ever
 Damage enters through `AircraftEntity.hurtServer`, a port of `attackEntityFrom`. Projectile rays
 are clipped against the main hit box and every `BoundingBox` (`clipHitBoxes`); the box struck
 first lends its damage factor to the armour calculation. A vehicle at zero hit points is destroyed:
-it burns, spins down or falls, explodes on impact and despawns after 500 ticks.
+it burns, spins down or falls, explodes on impact and despawns after 600 ticks (30 seconds; the
+original used 500). Until then each client keeps the wreck burning (`wreckFire`): flames, a
+flickering `mcheli:glow` and embers, dying down over the last 100 ticks it has seen, and nothing
+under water.
 
 A hit neither tints the vehicle red nor calls `markHurt`: the vehicle a player drives is simulated
 on their client, and resending the server's motion on every hit snapped it back a step. For the
