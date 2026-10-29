@@ -1,5 +1,7 @@
 package com.jnhprojects.mcheli.entity;
 
+import com.jnhprojects.mcheli.network.PackDataPacket;
+import com.jnhprojects.mcheli.network.PackListPacket;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
@@ -12,23 +14,37 @@ import java.util.function.Supplier;
  */
 public final class ClientAccess {
     private static Supplier<@Nullable Entity> localPlayer = () -> null;
-    private static Runnable contentReloaded = () -> {
+    private static PackReceiver packs = new PackReceiver() {
+        @Override
+        public void onPackList(PackListPacket packet) {
+        }
+
+        @Override
+        public void onPackData(PackDataPacket packet) {
+        }
     };
 
     private ClientAccess() {
     }
 
-    public static void install(Supplier<@Nullable Entity> player, Runnable onContentReloaded) {
+    public static void install(Supplier<@Nullable Entity> player, PackReceiver receiver) {
         localPlayer = player;
-        contentReloaded = onContentReloaded;
+        packs = receiver;
     }
 
     public static @Nullable Entity localPlayer() {
         return localPlayer.get();
     }
 
-    /** The server reloaded the content. Runs on the client's main thread. */
-    public static void contentReloaded() {
-        contentReloaded.run();
+    /** Where the server's content pack packets go. Called on the client's main thread. */
+    public static PackReceiver packs() {
+        return packs;
+    }
+
+    /** The client half of the content pack sync. */
+    public interface PackReceiver {
+        void onPackList(PackListPacket packet);
+
+        void onPackData(PackDataPacket packet);
     }
 }
