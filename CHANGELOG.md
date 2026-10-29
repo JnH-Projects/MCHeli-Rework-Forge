@@ -5,12 +5,11 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.1] - 2026-10-29
 
-Phase 5 of the road to 1.1.0, to be released as `1.1.0-beta.1`: the groundwork that content
-packs, older Minecraft versions and the vehicle workshop build on. Betas are not uploaded to
-CurseForge; download them from the GitHub releases. Worlds from 1.0.0 load with their vehicles
-and items.
+Phase 5 of the road to 1.1.0: the groundwork that content packs, older Minecraft versions and
+the vehicle workshop build on. Betas are not uploaded to CurseForge; download them from the GitHub
+releases. Worlds from 1.0.0 load with their vehicles and items.
 
 ### Added
 
@@ -365,4 +364,5 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.1
 [1.0.0]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.0.0
