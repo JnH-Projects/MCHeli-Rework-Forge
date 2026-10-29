@@ -247,13 +247,29 @@ public final class VehicleWeapons {
         }
         shot.infiniteAmmo = vehicle.hasInfiniteAmmo(user);
         int mount = set.currentMount();
-        boolean fired = set.use(shot, (s, m, sh) -> {
-            Vec3 muzzle = muzzleOffset(s, m, 1.0F);
-            sh.x += muzzle.x;
-            sh.y += muzzle.y;
-            sh.z += muzzle.z;
-            return trigger.fire(s, m, sh);
-        });
+        // As the original did, face the vehicle where the user looks for the length of the shot.
+        boolean followUser = vehicle.aimsWithUser(set);
+        float hullYaw = vehicle.getYRot();
+        float hullPitch = vehicle.getXRot();
+        if (followUser) {
+            vehicle.setYRot(user.getYRot());
+            vehicle.setXRot(user.getXRot());
+        }
+        boolean fired;
+        try {
+            fired = set.use(shot, (s, m, sh) -> {
+                Vec3 muzzle = muzzleOffset(s, m, 1.0F);
+                sh.x += muzzle.x;
+                sh.y += muzzle.y;
+                sh.z += muzzle.z;
+                return trigger.fire(s, m, sh);
+            });
+        } finally {
+            if (followUser) {
+                vehicle.setYRot(hullYaw);
+                vehicle.setXRot(hullPitch);
+            }
+        }
         if (!fired) {
             return false;
         }
