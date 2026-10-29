@@ -182,7 +182,7 @@ The external content packs from phase 4, in the package format the workshop will
 - [ ] Pack author guide in `docs/content/packs.md`, with a small example pack in the repo made
       from our own assets (no EMB4 files)
 - [x] Night glow: tracers, rocket motors, flares and explosions glow, faint by day and bright at
-      night; a crash keeps burning with a glow. Client config `effects.nightGlow` turns it off.
+      night; a crash keeps burning with a glow and the wreck burns for 30 seconds. Client config `effects.nightGlow` turns it off.
 - [ ] Crash spin for shot down aircraft: planes and jets roll into a nose-down spiral instead of
       just falling, and helicopters spin faster with some wobble. The spin direction comes from
       the entity id so every client sees the same thing.
