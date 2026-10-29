@@ -15,7 +15,6 @@ public class AircraftRenderState extends EntityRenderState {
     public float yaw;
     public float pitch;
     public float roll;
-    public float hurtTime;
     /** Helicopter main rotor or plane propeller angle. */
     public float rotorAngle;
     public float throttle;
