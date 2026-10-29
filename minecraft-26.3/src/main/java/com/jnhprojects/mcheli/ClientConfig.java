@@ -1,19 +1,22 @@
 package com.jnhprojects.mcheli;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import com.jnhprojects.mcheli.config.ConfigSpec;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Per player look and feel, in {@code config/mcheli-client.toml}. Nothing here changes how the
  * game plays, so each player picks for themselves and the server never sees it.
  */
 public final class ClientConfig {
-    public static final ForgeConfigSpec SPEC;
+    public static final ConfigSpec SPEC;
 
-    private static final ForgeConfigSpec.BooleanValue NIGHT_GLOW;
-    private static final ForgeConfigSpec.IntValue PACK_CACHE_SIZE;
+    private static final ConfigSpec.BooleanValue NIGHT_GLOW;
+    private static final ConfigSpec.IntValue PACK_CACHE_SIZE;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ConfigSpec.Builder builder = ConfigSpec.builder();
 
         builder.push("effects");
         NIGHT_GLOW = builder
@@ -34,6 +37,16 @@ public final class ClientConfig {
     }
 
     private ClientConfig() {
+    }
+
+    /** Reads {@code config/mcheli-client.toml}, writing it with the defaults if it is new. */
+    public static void load(Path configDir) {
+        Path file = configDir.resolve(MCHeli.MOD_ID + "-client.toml");
+        try {
+            SPEC.load(file);
+        } catch (IOException e) {
+            MCHeli.LOGGER.warn("Could not read {}; using the defaults", file, e);
+        }
     }
 
     public static boolean nightGlow() {
