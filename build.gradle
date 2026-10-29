@@ -1,0 +1,18 @@
+plugins {
+    id 'base'
+    id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
+}
+
+def platforms = providers.gradleProperty('platforms').get().split(',').collect { it.trim() }
+
+// One jar per Minecraft version, gathered in one folder for the release workflow.
+def releaseJars = tasks.register('releaseJars', Sync) {
+    group = 'build'
+    description = 'Collects the jar of every platform module into build/release.'
+    platforms.each { platform -> from(project(":$platform").tasks.named('jar')) }
+    into layout.buildDirectory.dir('release')
+}
+
+tasks.named('build') {
+    dependsOn releaseJars
+}
