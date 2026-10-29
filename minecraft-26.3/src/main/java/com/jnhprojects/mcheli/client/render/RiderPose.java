@@ -4,10 +4,11 @@ import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderLivingEvent;
 import org.joml.Quaternionf;
 
 /**
@@ -24,13 +25,10 @@ public final class RiderPose {
     private RiderPose() {
     }
 
-    public static void init() {
-        RenderLivingEvent.Pre.BUS.addListener(RiderPose::onRenderLiving);
-    }
-
-    private static void onRenderLiving(RenderLivingEvent.Pre<?, ?, ?> event) {
+    /** Called before a living entity is drawn, with the pose the renderer is about to use. */
+    public static void beforeRender(LivingEntityRenderState renderState, PoseStack pose, float partialTicks) {
         // Render states carry no entity reference; players are the ones that keep their id.
-        if (!(event.getState() instanceof AvatarRenderState state)) {
+        if (!(renderState instanceof AvatarRenderState state)) {
             return;
         }
         ClientLevel level = Minecraft.getInstance().level;
@@ -38,7 +36,6 @@ public final class RiderPose {
         if (rider == null || !(rider.getVehicle() instanceof AircraftEntity vehicle)) {
             return;
         }
-        float partialTicks = event.getCameraState().cameraEntityPartialTicks;
         float yaw = vehicle.getYRot(partialTicks);
         float pitch = vehicle.getXRot(partialTicks);
         float roll = vehicle.roll(partialTicks);
@@ -47,6 +44,6 @@ public final class RiderPose {
         }
         Quaternionf tilt = AircraftRotation.orientation(yaw, pitch, roll).rotateY((float) Math.toRadians(yaw));
         Vec3 hip = rider.getVehicleAttachmentPoint(vehicle);
-        event.getPoseStack().rotateAround(tilt, (float) hip.x, (float) hip.y, (float) hip.z);
+        pose.rotateAround(tilt, (float) hip.x, (float) hip.y, (float) hip.z);
     }
 }
