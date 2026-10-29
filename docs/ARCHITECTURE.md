@@ -315,6 +315,11 @@ are clipped against the main hit box and every `BoundingBox` (`clipHitBoxes`); t
 first lends its damage factor to the armour calculation. A vehicle at zero hit points is destroyed:
 it burns, spins down or falls, explodes on impact and despawns after 500 ticks.
 
+A hit neither tints the vehicle red nor calls `markHurt`: the vehicle a player drives is simulated
+on their client, and resending the server's motion on every hit snapped it back a step. For the
+same reason `Explosions` does not push a driven vehicle, and pushes an empty one at a quarter of
+the mob knockback.
+
 Impacts are measured from the position each tick, so they work whichever side simulates the
 vehicle. Besides the original's tilt and submersion damage, flying into terrain or another vehicle
 at speed is a crash, and tanks and cars (`takesGroundImpacts`) are hurt by walls and long drops by
