@@ -24,15 +24,12 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 
 /**
  * Turns local player input into vehicle control, for whichever seat the player occupies.
@@ -68,17 +65,11 @@ final class CrewController {
     private CrewController() {
     }
 
-    static void init() {
-        TickEvent.ClientTickEvent.Post.BUS.addListener(event -> onClientTick());
-        ViewportEvent.ComputeCameraAngles.BUS.addListener(CrewController::onCameraAngles);
-        RenderHandEvent.BUS.addListener(CrewController::onRenderHand);
-    }
-
     /**
      * Like the original, the first person hand stays hidden in a vehicle: always for the pilot,
      * and for anyone else who looks through a camera or has a weapon to aim.
      */
-    private static boolean onRenderHand(RenderHandEvent event) {
+    static boolean hidesHand() {
         LocalPlayer player = Minecraft.getInstance().player;
         AircraftEntity vehicle = vehicleOf(player);
         if (vehicle == null) {
@@ -98,7 +89,7 @@ final class CrewController {
         return player != null && player.getVehicle() instanceof AircraftEntity vehicle && vehicle.definition() != null ? vehicle : null;
     }
 
-    private static void onClientTick() {
+    static void onClientTick() {
         ticks++;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -245,7 +236,7 @@ final class CrewController {
         return held;
     }
 
-    private static void onCameraAngles(ViewportEvent.ComputeCameraAngles event) {
+    static void onCameraAngles(CameraAngles event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         AircraftEntity vehicle = vehicleOf(player);
@@ -257,7 +248,7 @@ final class CrewController {
         if (seat < 0 || seat >= def.seatCount()) {
             return;
         }
-        float partialTicks = event.getPartialTick();
+        float partialTicks = event.partialTick();
         boolean firstPerson = mc.options.getCameraType().isFirstPerson();
 
         if (seat == 0 && vehicle.steersWithMouse() && !vehicle.isGunnerMode() && vehicle.getControllingPassenger() == player) {
@@ -271,13 +262,13 @@ final class CrewController {
         if (!(firstPerson && missile != null)) {
             // Every seat of every kind tilts with the hull, measured along the way the rider looks.
             event.setRoll(AircraftRotation.cameraRoll(vehicle.getYRot(partialTicks), vehicle.getXRot(partialTicks),
-                    vehicle.roll(partialTicks), event.getYaw(), event.getPitch()));
+                    vehicle.roll(partialTicks), event.yaw(), event.pitch()));
         }
         if (firstPerson && missile != null) {
-            placeCamera(event.getCamera(), missile.getPosition(partialTicks));
+            placeCamera(event.camera(), missile.getPosition(partialTicks));
         } else if (firstPerson) {
             Vector3 eye = eyePosition(vehicle, def, seat);
-            moveCamera(event.getCamera(), vehicle, def, eye != null ? eye : seatEye(vehicle, def, seat, player), seat, partialTicks);
+            moveCamera(event.camera(), vehicle, def, eye != null ? eye : seatEye(vehicle, def, seat, player), seat, partialTicks);
         }
     }
 
@@ -293,7 +284,7 @@ final class CrewController {
     }
 
     /** The phase one pilot model: mouse movement becomes aircraft rotation, the view stays on the nose. */
-    private static void steerWithMouse(AircraftEntity vehicle, LocalPlayer player, ViewportEvent.ComputeCameraAngles event,
+    private static void steerWithMouse(AircraftEntity vehicle, LocalPlayer player, CameraAngles event,
                                        float partialTicks, boolean firstPerson) {
         boolean freeLook = KeyBindings.FREE_LOOK.isDown();
         boolean ownPitch = vehicle.isHovering();
@@ -432,12 +423,17 @@ final class CrewController {
         }
     }
 
+    private static Method accessible(Method method) {
+        method.setAccessible(true);
+        return method;
+    }
+
     /** {@code Camera.setPosition} is protected. Looked up once; on failure the feature turns itself off. */
     private static @Nullable MethodHandle cameraSetter() {
         if (setCameraPosition == null && !cameraLookupFailed) {
             try {
                 setCameraPosition = MethodHandles.lookup().unreflect(
-                        ObfuscationReflectionHelper.findMethod(Camera.class, "setPosition", Vec3.class));
+                        accessible(Camera.class.getDeclaredMethod("setPosition", Vec3.class)));
             } catch (Exception e) {
                 MCHeli.LOGGER.warn("Camera.setPosition is not accessible; the first person eye stays where vanilla puts it", e);
                 cameraLookupFailed = true;
