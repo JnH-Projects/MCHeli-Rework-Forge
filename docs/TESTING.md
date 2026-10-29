@@ -5,9 +5,9 @@ hand with this plan before a pre-release is tagged.
 
 ## Setup
 
-1. `./gradlew build`, then copy `build/libs/mcheli-26.3-<version>.jar` into the `mods` folder of
+1. `./gradlew build`, then copy `build/release/mcheli-26.3-<version>.jar` into the `mods` folder of
    the Forge 26.3 profile and `MC1.7.10_mcheli_1.0.3.zip` into its `mcheli` folder.
-   Alternatively run `./gradlew runClient`, which imports the zip from `Mod/`.
+   Alternatively run `./gradlew :forge-26.3:runClient`, which imports the zip from `Mod/`.
 2. Use a launcher profile with its own game directory. Mods for other loaders or Minecraft
    versions in the same `mods` folder will prevent Forge from starting.
 3. Create a creative world with cheats enabled.
@@ -59,7 +59,8 @@ hand with this plan before a pre-release is tagged.
 ### Loading
 
 - [ ] The log contains `Loaded 33 helicopters, 51 planes, 12 tanks and 16 vehicles` and no
-      `mcheli` errors or warnings. A dedicated server (`./gradlew runServer`) starts as well.
+      `mcheli` errors or warnings. A dedicated server (`./gradlew :forge-26.3:runServer`) starts as
+      well.
 - [ ] Four creative tabs: helicopters (33), planes (51), tanks and cars (12), ground vehicles (16).
 - [ ] The new key bindings show under Controls, category MCHeli, without conflicts.
 
@@ -241,6 +242,68 @@ Use the built jar in a launcher profile, not `runClient`, since only that shows 
 - [ ] Deleting the zip after the import: the next start still has every vehicle.
 - [ ] A resource pack replacing `assets/mcheli/textures/helicopters/ah-64.png` wins over the import.
 - [ ] Dedicated server with the zip: clients with the zip join without a registry mismatch.
+
+## Phase 5 checklist (`1.1.0-beta.1`)
+
+Run each section in single player and again on a dedicated server (`./gradlew
+:forge-26.3:runServer`, a client joining it), unless it says otherwise.
+
+### Upgrading from 1.0.0
+
+Keep a copy of a 1.0.0 world with vehicles parked in it, items in the hotbar and items in a chest.
+
+- [ ] The first start of the beta logs `Importing MCHeli content` once (importer format 2); the
+      next start imports nothing. No `imported.old` or `imported.tmp` folder is left behind.
+- [ ] The parked vehicles load, fly and keep their damage and ammunition.
+- [ ] Hotbar items keep their icon and name, and within a second turn into the new item (F3 + H
+      shows `mcheli:helicopter` and a `mcheli:vehicle` component). They still place the vehicle.
+- [ ] Items in the chest are the old ones until taken out, then convert. A renamed item keeps its
+      name.
+
+### Vehicle items
+
+- [ ] Each creative tab lists every vehicle of its kind with the right icon and name, in both
+      English and Japanese.
+- [ ] Placing, packing up (punch an empty vehicle) and pick block (middle click) all give back the
+      same vehicle.
+- [ ] Crafting: the AH-6 recipe makes an AH-6; the AH-6X recipe from an AH-6 accepts only an AH-6,
+      not another helicopter, and the recipe book shows the AH-6 in that slot.
+- [ ] Two different helicopters never stack together.
+
+### Command
+
+- [ ] `/mcheli` prints the counts (33 helicopters, 51 planes, 12 tanks, 16 ground vehicles, 229
+      weapons) and the folder. `/mcheli list tank` lists the 12 tanks.
+- [ ] `/mcheli give @s ah-64 2` gives two AH-64s; tab completion suggests vehicle names; an
+      unknown name is refused. A non-operator on the server cannot use `give` or `reload`.
+
+### Reload
+
+- [ ] Edit `run/mcheli/imported/assets/mcheli/helicopters/ah-64.txt` (for example
+      `MaxHp = 1000`), run `/mcheli reload`: chat confirms, and a placed AH-64 shows the new HP
+      maximum without being replaced, and keeps its loaded ammunition.
+- [ ] Edit the AH-64 texture PNG, `/mcheli reload`: the new texture shows without F3 + T. F3 + T
+      afterwards still shows it, loaded the normal way.
+- [ ] Add a copy of a helicopter definition under a new file name, `/mcheli reload`: it appears
+      in `/mcheli list` and `/mcheli give` (its creative tab entry too, after reopening the
+      inventory). Remove it again and reload: placed copies stay as wrecks of an unknown vehicle
+      and do not crash the game.
+- [ ] A definition with a broken line still reloads; the line is reported in the log.
+
+### Server config
+
+- [ ] `serverconfig/mcheli-server.toml` is created in the world folder with comments.
+- [ ] `explosions.breakBlocks = false`: rockets and crashes no longer break blocks, but still hurt.
+      `startFires = false`: incendiary hits leave no fire.
+- [ ] `vehicles.damageFactor = 0.5`: a vehicle takes half the hits to destroy.
+- [ ] `vehicles.disabled = ["ah-64"]`: placing an AH-64 fails with a message; other vehicles work.
+- [ ] `weapons.infiniteAmmo = true`: a survival player never runs out.
+- [ ] Edits to the file apply without restarting the server.
+
+### Build
+
+- [ ] `./gradlew build` produces `build/release/mcheli-26.3-1.1.0-beta.1.jar`; it holds no EMB4
+      file (DEVELOPMENT.md, "Original content").
 
 ## Reporting problems
 
