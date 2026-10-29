@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.client.render;
 
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponPart;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
@@ -215,6 +216,6 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
     }
 
     private static Identifier texture(String folder, String name) {
-        return Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "textures/" + folder + "/" + name + ".png");
+        return RuntimeAssets.texture(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "textures/" + folder + "/" + name + ".png"));
     }
 }
