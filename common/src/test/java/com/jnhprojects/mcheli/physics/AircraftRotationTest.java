@@ -1,4 +1,4 @@
-package com.jnhprojects.mcheli.entity;
+package com.jnhprojects.mcheli.physics;
 
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
