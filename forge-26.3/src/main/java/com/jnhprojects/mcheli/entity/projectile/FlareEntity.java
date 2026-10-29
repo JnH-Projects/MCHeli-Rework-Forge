@@ -55,6 +55,11 @@ public class FlareEntity extends Entity {
         return entityData.get(DATA_FUSE);
     }
 
+    /** A smoke grenade rather than a burning flare. */
+    public boolean isSmoke() {
+        return fuse() > 0;
+    }
+
     @Override
     public void tick() {
         if (fuse() > 0 && tickCount >= fuse()) {
