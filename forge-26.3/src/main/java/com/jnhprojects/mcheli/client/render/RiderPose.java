@@ -1,7 +1,7 @@
 package com.jnhprojects.mcheli.client.render;
 
 import com.jnhprojects.mcheli.entity.AircraftEntity;
-import com.jnhprojects.mcheli.entity.AircraftRotation;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
