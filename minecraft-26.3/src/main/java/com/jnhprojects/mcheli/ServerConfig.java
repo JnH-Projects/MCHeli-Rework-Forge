@@ -1,32 +1,35 @@
 package com.jnhprojects.mcheli;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import com.jnhprojects.mcheli.config.ConfigSpec;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
 /**
  * Server rules, the part of the original {@code mcheli.cfg} that decides how the game plays.
- * Forge keeps the file per world in {@code serverconfig/mcheli-server.toml}, sends nothing to
- * clients (only the server applies these rules) and picks up edits while the server runs.
+ * The file lives per world in {@code serverconfig/mcheli-server.toml}, where Forge kept it, and is
+ * never sent to clients (only the server applies these rules). It is read when the world starts
+ * and again on {@code /mcheli reload}.
  *
  * <p>The values only exist while a world is loaded. Before that, and on clients, the getters return
  * the defaults, which match 1.0.0.
  */
 public final class ServerConfig {
-    public static final ForgeConfigSpec SPEC;
+    public static final ConfigSpec SPEC;
 
-    private static final ForgeConfigSpec.BooleanValue EXPLOSIONS_BREAK_BLOCKS;
-    private static final ForgeConfigSpec.BooleanValue EXPLOSIONS_START_FIRES;
-    private static final ForgeConfigSpec.DoubleValue VEHICLE_DAMAGE_FACTOR;
-    private static final ForgeConfigSpec.BooleanValue INFINITE_AMMO;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DISABLED_VEHICLES;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> PACK_ALLOW_LIST;
-    private static final ForgeConfigSpec.IntValue MAX_PACK_SIZE;
-    private static final ForgeConfigSpec.IntValue MAX_TOTAL_SIZE;
+    private static final ConfigSpec.BooleanValue EXPLOSIONS_BREAK_BLOCKS;
+    private static final ConfigSpec.BooleanValue EXPLOSIONS_START_FIRES;
+    private static final ConfigSpec.DoubleValue VEHICLE_DAMAGE_FACTOR;
+    private static final ConfigSpec.BooleanValue INFINITE_AMMO;
+    private static final ConfigSpec.StringListValue DISABLED_VEHICLES;
+    private static final ConfigSpec.StringListValue PACK_ALLOW_LIST;
+    private static final ConfigSpec.IntValue MAX_PACK_SIZE;
+    private static final ConfigSpec.IntValue MAX_TOTAL_SIZE;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ConfigSpec.Builder builder = ConfigSpec.builder();
 
         builder.push("explosions");
         EXPLOSIONS_BREAK_BLOCKS = builder
@@ -45,7 +48,7 @@ public final class ServerConfig {
         DISABLED_VEHICLES = builder
                 .comment("Vehicles that cannot be placed, by definition name (the file name, such as \"ah-64\").",
                         "Vehicles already in the world stay.")
-                .defineListAllowEmpty("disabled", List.of(), o -> o instanceof String);
+                .defineList("disabled", List.of());
         builder.pop();
 
         builder.push("weapons");
@@ -59,7 +62,7 @@ public final class ServerConfig {
                 .push("packs");
         PACK_ALLOW_LIST = builder
                 .comment("Pack ids the server loads, such as \"rework-example\". Empty loads every pack in the folder.")
-                .defineListAllowEmpty("allowList", List.of(), o -> o instanceof String);
+                .defineList("allowList", List.of());
         MAX_PACK_SIZE = builder
                 .comment("Largest pack the server loads and sends to players, in megabytes.")
                 .defineInRange("maxPackSize", 8, 1, 512);
@@ -73,6 +76,21 @@ public final class ServerConfig {
     }
 
     private ServerConfig() {
+    }
+
+    /** Reads the world's file, writing it with the defaults if it is new. */
+    public static void load(Path worldDir) {
+        Path file = worldDir.resolve("serverconfig").resolve(MCHeli.MOD_ID + "-server.toml");
+        try {
+            SPEC.load(file);
+        } catch (IOException e) {
+            MCHeli.LOGGER.warn("Could not read {}; using the defaults", file, e);
+        }
+    }
+
+    /** The world closed: back to the defaults. */
+    public static void unload() {
+        SPEC.unload();
     }
 
     public static boolean explosionsBreakBlocks() {
