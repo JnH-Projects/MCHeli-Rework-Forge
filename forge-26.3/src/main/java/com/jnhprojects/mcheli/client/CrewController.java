@@ -8,7 +8,7 @@ import com.jnhprojects.mcheli.content.aircraft.CameraPosition;
 import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponType;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
-import com.jnhprojects.mcheli.entity.AircraftRotation;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
