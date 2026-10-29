@@ -42,8 +42,11 @@ import java.util.zip.ZipFile;
  * written here. They ship in the mod jar, and Minecraft merges lang files across packs.
  */
 public final class LegacyImporter {
-    /** Bump whenever the output changes, so existing installs import again. */
-    public static final int FORMAT = 1;
+    /**
+     * Bump whenever the output changes, so existing installs import again. 2: recipes craft the
+     * generic vehicle items of 1.1.0.
+     */
+    public static final int FORMAT = 2;
 
     private static final String ASSET_ROOT = "mcheli/assets/mcheli/";
     private static final Set<String> SKIPPED_EXTENSIONS = Set.of("xcf");
