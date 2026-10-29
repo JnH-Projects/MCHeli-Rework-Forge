@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -118,13 +119,62 @@ public final class LegacyContent {
         try (OutputStream out = Files.newOutputStream(staging.resolve(MARKER))) {
             source.store(out, "Written by MCHeli Rework. Delete this folder to import again.");
         }
-        deleteTree(packRoot);
-        Files.move(staging, packRoot);
+        swapIn(staging);
 
         MCHeli.LOGGER.info("Imported {} files, {} sounds, {} item models and {} recipes into {}",
                 summary.files(), summary.sounds(), summary.itemModels(), summary.recipes(), packRoot);
         for (String skipped : summary.skippedRecipes()) {
             MCHeli.LOGGER.info("Recipe left out: {}", skipped);
+        }
+    }
+
+    /**
+     * Replaces the previous import with the fresh one in {@code staging}.
+     *
+     * <p>On Windows a folder that was just deleted keeps its name for a moment while another
+     * program (a file watcher, a virus scanner) still has a handle in it, and renaming onto that
+     * name fails with "access denied". So the old import is moved out of the way rather than
+     * deleted, the renames are retried for a few seconds, and the old copy is deleted last, on a
+     * best effort basis; a copy left behind is removed on the next import.
+     */
+    private void swapIn(Path staging) throws IOException {
+        Path old = folder.resolve("imported.old");
+        deleteQuietly(old);
+        if (Files.exists(packRoot)) {
+            try {
+                moveWithRetry(packRoot, old);
+            } catch (IOException e) {
+                deleteTree(packRoot);
+            }
+        }
+        moveWithRetry(staging, packRoot);
+        deleteQuietly(old);
+    }
+
+    private static void moveWithRetry(Path from, Path to) throws IOException {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                Files.move(from, to);
+                return;
+            } catch (FileSystemException e) {
+                if (attempt >= 15) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(50L * attempt);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private static void deleteQuietly(Path root) {
+        try {
+            deleteTree(root);
+        } catch (IOException e) {
+            MCHeli.LOGGER.warn("Could not delete {}; it is removed on the next import", root, e);
         }
     }
 
