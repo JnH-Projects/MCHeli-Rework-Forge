@@ -3,7 +3,9 @@ package com.jnhprojects.mcheli.network;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +16,10 @@ import java.util.List;
  * and then rebuilds its content from exactly this list, so both sides fly the same definitions.
  * The imported 1.0.3 content is never listed: every player imports their own copy.
  */
-public record PackListPacket(List<Entry> packs) {
+public record PackListPacket(List<Entry> packs) implements CustomPacketPayload {
+    public static final Type<PackListPacket> TYPE = ModNetwork.type("pack_list");
+    public static final StreamCodec<RegistryFriendlyByteBuf, PackListPacket> STREAM_CODEC = StreamCodec.ofMember(PackListPacket::encode, PackListPacket::decode);
+
     public static final int MAX_PACKS = 256;
 
     /**
@@ -45,7 +50,12 @@ public record PackListPacket(List<Entry> packs) {
         return new PackListPacket(List.copyOf(packs));
     }
 
-    public static void handle(PackListPacket msg, CustomPayloadEvent.Context ctx) {
+    public static void handle(PackListPacket msg) {
         ClientAccess.packs().onPackList(msg);
+    }
+
+    @Override
+    public Type<PackListPacket> type() {
+        return TYPE;
     }
 }
