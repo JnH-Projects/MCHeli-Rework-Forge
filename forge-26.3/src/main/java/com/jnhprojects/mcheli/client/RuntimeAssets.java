@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Vehicle textures, models and sounds that can change while the game runs, without a resource
@@ -26,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <p>Lookups try the resource manager first, so resource packs keep the last word, then the
  * runtime roots: folders laid out like {@code assets/mcheli} that content can add at any time.
- * Content packs (phase 6) and the workshop register their folders here.
+ * Content packs and, later, the workshop register their folders here.
  * <ul>
  *   <li>Textures found only in a runtime root are uploaded as a {@link DynamicTexture} the first
  *       time a vehicle draws them. {@link #refreshTextures} uploads every vehicle texture again
@@ -39,22 +38,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class RuntimeAssets {
     private static final Logger LOGGER = LoggerFactory.getLogger(RuntimeAssets.class);
 
-    private static final List<Path> ROOTS = new CopyOnWriteArrayList<>();
+    /** Searched in order, so the pack loaded last comes first. Replaced as a whole. */
+    private static volatile List<Path> roots = List.of();
     /** Every vehicle texture asked for, and whether we uploaded it ourselves. */
     private static final Map<Identifier, Boolean> TEXTURES = new ConcurrentHashMap<>();
 
     private RuntimeAssets() {
     }
 
-    /** Adds a folder laid out like {@code assets/mcheli}, searched after the resource packs. */
-    public static void addRoot(Path root) {
-        if (!ROOTS.contains(root)) {
-            ROOTS.add(root);
-        }
-    }
-
-    public static void removeRoot(Path root) {
-        ROOTS.remove(root);
+    /**
+     * Sets the folders laid out like {@code assets/mcheli} that are searched after the resource
+     * packs, the first one first. Content packs set theirs whenever the packs in use change.
+     */
+    public static void setRoots(List<Path> folders) {
+        roots = List.copyOf(folders);
     }
 
     /** Opens an {@code mcheli} asset from the resource packs, or else from a runtime root. */
@@ -83,11 +80,16 @@ public final class RuntimeAssets {
 
     /**
      * Uploads every texture vehicles have drawn so far again, read fresh from disk. Resource pack
-     * textures are replaced too, until the next resource reload loads them the normal way.
+     * textures are replaced too, until the next resource reload loads them the normal way. One that
+     * no longer exists anywhere, because its pack is gone, is released.
      */
     public static void refreshTextures() {
-        for (Identifier id : TEXTURES.keySet()) {
-            TEXTURES.put(id, upload(id));
+        for (Map.Entry<Identifier, Boolean> entry : TEXTURES.entrySet()) {
+            boolean ours = upload(entry.getKey());
+            if (!ours && entry.getValue()) {
+                Minecraft.getInstance().getTextureManager().release(entry.getKey());
+            }
+            entry.setValue(ours);
         }
     }
 
@@ -128,7 +130,7 @@ public final class RuntimeAssets {
     }
 
     private static @Nullable Path find(String path) {
-        for (Path root : ROOTS) {
+        for (Path root : roots) {
             Path file = root.resolve(path).normalize();
             if (file.startsWith(root) && Files.isRegularFile(file)) {
                 return file;
