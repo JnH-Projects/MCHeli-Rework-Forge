@@ -1533,8 +1533,9 @@ public abstract class AircraftEntity extends VehicleEntity {
                 entityData.set(DATA_HP, Math.max(hp() - (int) damage, 0));
             }
             setHurtDir(-getHurtDir());
+            // No markHurt(): it sends the server's motion to every client, which snaps a vehicle
+            // its pilot is flying back a step and looks like knockback on every hit.
             setHurtTime(10);
-            markHurt();
             if (hp() <= 0 || packUp) {
                 if (!packUp) {
                     entityData.set(DATA_HP, 0);
