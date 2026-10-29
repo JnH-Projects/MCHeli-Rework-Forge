@@ -17,7 +17,6 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Prediction;
-import net.minecraftforge.event.RegisterCommandsEvent;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,11 +42,7 @@ public final class McheliCommand {
     private McheliCommand() {
     }
 
-    public static void register() {
-        RegisterCommandsEvent.BUS.addListener(event -> register(event.getDispatcher()));
-    }
-
-    private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal(MCHeli.MOD_ID)
                 .executes(McheliCommand::status)
                 .then(Commands.literal("list")
