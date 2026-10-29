@@ -43,6 +43,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LinearInterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
@@ -108,6 +109,11 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final int EMPTY = -1;
     /** How far above its hit box the original drew a vehicle's model; see {@link #waterDepth}. */
     private static final float LEGACY_MODEL_LIFT = 0.35F;
+    /** How fast a cooked-off boat goes under, in blocks per tick (about 0.4 blocks a second). */
+    private static final double SINK_SPEED = 0.02;
+    /** The bow-up pitch and the list a sinking boat settles into, in degrees. */
+    private static final float SINK_PITCH = 14.0F;
+    private static final float SINK_LIST = 12.0F;
 
     protected final ControlInput input = new ControlInput();
     public final AnimationState animation = new AnimationState();
@@ -422,7 +428,11 @@ public abstract class AircraftEntity extends VehicleEntity {
             if (!(getControllingPassenger() instanceof Player) || isDestroyed()) {
                 input.clear();
             }
-            simulate();
+            if (entityData.get(DATA_SINKING)) {
+                sink();
+            } else {
+                simulate();
+            }
             float[] kick = weapons != null ? weapons.recoilKick() : null;
             if (kick != null) {
                 setXRot(getXRot() + kick[0]);
@@ -1641,6 +1651,25 @@ public abstract class AircraftEntity extends VehicleEntity {
         } else {
             entityData.set(DATA_SINKING, true);
             cookOffCause = null;
+        }
+    }
+
+    /**
+     * A cooked-off wreck going under, in place of the vehicle's own physics: it settles slowly,
+     * stern first with the bow raised and listing to one side, drifts to a stop and comes to rest
+     * on the bottom. Out of the water it simply falls.
+     */
+    private void sink() {
+        Vec3 m = getDeltaMovement();
+        double my = isInWater() ? Math.max(m.y - 0.003, -SINK_SPEED) : m.y - 0.04;
+        Vec3 motion = new Vec3(m.x * 0.9, my, m.z * 0.9);
+        move(MoverType.SELF, motion);
+        setDeltaMovement(onGround() ? motion.multiply(0.5, 0.0, 0.5) : motion);
+        if (!onGround()) {
+            // Which way it lists only has to be the same on every side, so take it from the id.
+            float list = (getId() & 1) == 0 ? SINK_LIST : -SINK_LIST;
+            setXRot(Mth.approach(getXRot(), -SINK_PITCH, 0.12F));
+            roll = Mth.approach(roll, list, 0.15F);
         }
     }
 
