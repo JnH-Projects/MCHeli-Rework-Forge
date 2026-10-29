@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.weapon;
 
+import com.jnhprojects.mcheli.ServerConfig;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.entity.projectile.FlareEntity;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
@@ -57,10 +58,10 @@ public final class Explosions {
         Vec3 center = new Vec3(x, y, z);
         boolean hit = damageEntities(level, center, p);
 
-        boolean breakBlocks = p.destroyBlocks && p.blockSize > 0.0F;
+        boolean breakBlocks = p.destroyBlocks && p.blockSize > 0.0F && ServerConfig.explosionsBreakBlocks();
         float radius = breakBlocks ? p.blockSize : Math.max(p.size, 0.5F);
         level.explode(p.exploder, explosionSource(level, p), new Calculator(p.inWater, level),
-                x, y, z, radius, p.flaming && breakBlocks,
+                x, y, z, radius, p.flaming && breakBlocks && ServerConfig.explosionsStartFires(),
                 breakBlocks ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE);
         ModNetwork.sendNear(level, x, y, z, EFFECT_RANGE, new ExplosionEffectPacket(x, y, z, p.size, p.inWater));
         if (!p.inWater) {
