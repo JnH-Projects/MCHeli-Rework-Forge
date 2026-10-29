@@ -1,7 +1,7 @@
 # Architecture
 
 This document explains how MCHeli Rework is organized and why. It reflects the code as of
-`1.1.0-beta.2`.
+`1.1.0-beta.3`.
 
 ## Goals
 
@@ -17,15 +17,19 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
 
 ```
  ┌────────────────────────────────────────────────────────────────┐
+ │ forge / neoforge / fabric   entry point, event wiring, packet  │  loader module
+ │                 channel, vehicle ingredient type, mixins       │  (forge-26.3, ...)
+ ├────────────────────────────────────────────────────────────────┤
  │ client          renderer, mesh cache, runtime assets, crew     │  client only
  │                 controller, sound, HUD renderer, pack download │
- ├────────────────────────────────────────────────────────────────┤  platform module
- │ entity          AircraftEntity and one subclass per kind       │  (forge-26.3)
+ ├────────────────────────────────────────────────────────────────┤  minecraft-<version>
+ │ entity          AircraftEntity and one subclass per kind       │  (minecraft-26.3)
  │ item            AircraftItem, VehicleIngredient                │
- │ network         PilotStatePacket, CrewActionPacket, PackSync   │  Minecraft + Forge
+ │ network         packets, ModNetwork, PackSync                  │  Minecraft, no loader
  │ particle        GlowParticleOptions                            │
  │ registry        entities, items, components, particles, tabs   │
- │ (root)          MCHeli, configs, McheliCommand, ContentPacks   │
+ │ platform        Platform, Registration                         │
+ │ (root)          MCHeli, CommonHooks, configs, McheliCommand    │
  ├────────────────────────────────────────────────────────────────┤
  │ content         Definition, DefinitionReader, ContentRegistry, │  common module
  │                 aircraft/* definitions, recipe conversion,     │
@@ -34,46 +38,73 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
  │ hud             HudScript, Expression, HudVariable             │
  │ physics         AircraftRotation, GroundImpact                 │
  │ effect          NightGlow                                      │
+ │ config          ConfigSpec (the TOML config format)            │
  └────────────────────────────────────────────────────────────────┘
 ```
 
-Arrows only point down. The bottom half lives in the `common` Gradle module, which is compiled
-and tested with nothing from Minecraft or Forge on its classpath (only the JDK, SLF4J, JSpecify
-and JOML), so a stray import fails the build; `CommonBoundaryTest` also scans the sources. The top
-half is a platform module, one per Minecraft version, which compiles `common`'s sources together
-with its own into one jar. Other versions and loaders (phases 7 and 8) add platform modules
-and leave `common` alone; see [DEVELOPMENT.md](DEVELOPMENT.md#common-and-platform-modules).
+Arrows only point down. The bottom layer lives in the `common` Gradle module, which is compiled
+and tested with nothing from Minecraft or a loader on its classpath (only the JDK, SLF4J,
+JSpecify and JOML), so a stray import fails the build; `CommonBoundaryTest` also scans the
+sources. The middle layer, `minecraft-<version>`, is everything that touches Minecraft but no
+loader. The top layer is a thin module per loader and Minecraft version, which compiles both
+lower layers together with its own glue into one jar. See
+[DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-`client` is only referenced from `MCHeli` behind a `Dist.CLIENT` check, so a dedicated server never
-loads a client class.
+The shared code reaches the loader in two ways only:
 
-Package root: `com.jnhprojects.mcheli`. Mod id and asset namespace: `mcheli`, the same as the
-original, so existing resource paths and content packs keep working.
+- **`Platform`**, installed by the loader module before anything else runs: the game and config
+  folders, the mod version, whether this is a client, sending a packet, and a creative tab
+  builder (vanilla's is not public on Fabric, and only Forge and NeoForge order tabs).
+- **`Registration`**, a list of registry entries (`Registered<T>`, like Forge's
+  `RegistryObject`) that the shared registry classes declare during `MCHeli.init`. Forge and
+  NeoForge register them from their `RegisterEvent`; Fabric registers them straight away.
+
+Everything else goes the other way: the loader module calls `CommonHooks` (server start and stop,
+ticks, player join and leave, commands, the imported pack) and `client.ClientHooks` (renderers,
+keys, reload listeners, HUD layer, ticks, camera, hand, use and pick block keys, rider pose) from
+its own events. Where a loader has no event, the loader module adds a mixin at the place Forge
+fires its event, so the shared code sees the same thing on every loader:
+
+| Hook | Forge | NeoForge | Fabric |
+|------|-------|----------|--------|
+| Camera angles and cockpit eye | `ViewportEvent.ComputeCameraAngles` | mixin on `GameRenderer` (NeoForge's event fires before vanilla sets the camera position) | mixin on `GameRenderer`, plus roll on `Camera` |
+| Hide the hand | `RenderHandEvent` | `RenderHandEvent` | mixin on `GameRenderer.renderItemInHand` |
+| Use and pick block keys | `InputEvent.InteractionKeyMappingTriggered` | the same | mixin on `Minecraft` |
+| Rider tilt | `RenderLivingEvent.Pre` | `RenderLivingEvent.Pre` | mixin on `LivingEntityRenderer.submit` |
+| Imported content pack | `AddPackFindersEvent` | `AddPackFindersEvent` | mixin on the `PackRepository` constructor |
+| Streamed sounds | `SoundInstance.getStream` | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
+
+NeoForge rolls the camera the other way round from Forge, so its mixin negates the roll.
+
+`client` is only referenced from the loader modules behind a physical client check, so a
+dedicated server never loads a client class.
+
+Package root: `com.jnhprojects.mcheli`, with the loader glue in `.forge`, `.neoforge` and
+`.fabric`. Mod id and asset namespace: `mcheli`, the same as the original, so existing resource
+paths and content packs keep working.
 
 ## Startup
 
 ```
-MCHeli constructor
-  ├─ LegacyContent.prepare                            import the original zip into mcheli/imported
-  ├─ LegacyContent.registerPacks                      that folder as a required resource + data pack
-  ├─ ContentPacks.load(false)                         the import plus every pack in mcheli/packs
-  ├─ registerConfig(SERVER, ServerConfig.SPEC)        serverconfig/mcheli-server.toml
-  ├─ registerConfig(CLIENT, ClientConfig.SPEC)        config/mcheli-client.toml
-  ├─ ModDataComponents.register                       mcheli:vehicle
-  ├─ ModEntities.register                             one entity type per kind
-  ├─ ModParticles.register                            mcheli:glow
-  ├─ ModItems.register(content)                       one item per kind, plus the 1.0.0 items
-  ├─ ModCreativeTabs.register
-  ├─ ModRecipes.register                              mcheli:vehicle ingredient, recipe book
-  ├─ ModNetwork.register
-  ├─ PackSync.init                                    pack list on join, downloads
-  ├─ McheliCommand.register                           /mcheli
-  └─ ClientSetup.init (client only)                   renderers, keys, reload listener, controller
+loader entry point (McheliForge, McheliNeoForge, McheliFabric)
+  ├─ Platform.install
+  ├─ MCHeli.init
+  │    ├─ LegacyContent.prepare                       import the original zip into mcheli/imported
+  │    ├─ ContentPacks.load(false)                    the import plus every pack in mcheli/packs
+  │    ├─ ModDataComponents.init                      mcheli:vehicle
+  │    ├─ ModEntities.init                            one entity type per kind
+  │    ├─ ModParticles.init                           mcheli:glow
+  │    ├─ ModItems.init(content)                      one item per kind, plus the 1.0.0 items
+  │    └─ ModCreativeTabs.init
+  ├─ register Registration's entries, and the mcheli:vehicle ingredient type
+  ├─ register ModNetwork's packets
+  ├─ wire events to CommonHooks                       imported pack, server config, packs, commands
+  └─ client only: ClientHooks.init and client events  client config, renderers, keys, HUD, input
 ```
 
-Definitions are still parsed in the constructor, but only because the 1.0.0 items have to be
-registered before Forge freezes the registries (see [Vehicle items](#vehicle-items)); nothing else
-depends on them existing that early any more. The files are read straight from the imported
+Definitions are still parsed during mod construction, but only because the 1.0.0 items have to be
+registered before the loader freezes the registries (see [Vehicle items](#vehicle-items)); nothing
+else depends on them existing that early any more. The files are read straight from the imported
 folder and the content packs (see [Assets](#assets) and [Content packs](#content-packs)). Models
 and textures, by contrast, go through the resource manager, so resource packs can replace them.
 
@@ -112,8 +143,8 @@ number moves, rebuilding seats, parts and weapons while keeping the ammunition i
 
 ### Vehicle items
 
-1.0.0 registered one item per vehicle at startup, and Forge freezes the item registry before a
-world loads, so a vehicle added later could never get an item. Since 1.1.0 there is one item per
+1.0.0 registered one item per vehicle at startup, and the loaders freeze the item registry before
+a world loads, so a vehicle added later could never get an item. Since 1.1.0 there is one item per
 kind (`mcheli:helicopter`, `mcheli:plane`, `mcheli:tank`, `mcheli:vehicle`). A stack names its
 vehicle in the `mcheli:vehicle` data component and points its `minecraft:item_model` component at
 the item model the import wrote for that vehicle, so it looks and reads as before.
@@ -127,9 +158,12 @@ themselves with the generic stack (count, name and other components kept) as soo
 a player's inventory. A stack in a chest converts when a player takes it out.
 
 Recipes craft the generic item with both components set. A vehicle used as an ingredient (the
-AH-6X recipe takes an AH-6) becomes a `{"type": "mcheli:vehicle", "vehicle": "ah-6"}` ingredient,
-`VehicleIngredient`, registered as a Forge ingredient serializer, which only matches stacks of that
-vehicle.
+AH-6X recipe takes an AH-6) becomes a `{"type": "mcheli:vehicle", "vehicle": "ah-6"}` ingredient that only matches stacks of
+that vehicle. Each loader names custom ingredients under its own key (`type` on Forge,
+`neoforge:ingredient_type` on NeoForge, `fabric:type` on Fabric), so the import writes all three
+and each loader ignores the other two; a world keeps working when it moves to another loader.
+`VehicleIngredient` holds the matching, and each loader module wraps it in its own ingredient
+class.
 
 ### Reloading content
 
@@ -190,11 +224,17 @@ instead. `RuntimeAssets.setRoots` swaps the folder list in one write, the pack l
 
 ### Server config and command
 
-`ServerConfig` is a Forge `SERVER` config, `serverconfig/mcheli-server.toml` in each world:
-explosions breaking blocks and starting fires, a damage factor for vehicles, infinite ammunition,
-and a list of disabled vehicles. Only the server applies these rules; the getters return the
+`ServerConfig` is `serverconfig/mcheli-server.toml` in each world, read when the world starts and
+on `/mcheli reload`: explosions breaking blocks and starting fires, a damage factor for vehicles,
+infinite ammunition, and a list of disabled vehicles. Only the server applies these rules; the getters return the
 defaults (the 1.0.0 behaviour) when no world is loaded. `McheliCommand` registers `/mcheli`
 (content status), `/mcheli list [kind]`, and for operators `/mcheli give` and `/mcheli reload`.
+
+Both configs use `config.ConfigSpec` from `common`, a small TOML reader and writer with the layout
+Forge's config spec wrote, so files from 1.0.0 and the first betas keep their values on every
+loader. A missing key or bad value falls back to its default, and the file is written back
+complete with comments. Unlike Forge's, it does not watch the file: edits apply on the next world
+start or `/mcheli reload`.
 
 Recipes are data in 26.x, so the definitions' `AddRecipe` and `AddShapelessRecipe` lines are
 turned into `data/mcheli/recipe/<vehicle>.json` during the import by `content.recipe.LegacyRecipe`,
@@ -202,7 +242,7 @@ following `MCH_ItemRecipe`. `LegacyItems` maps the 1.7.10 item names and damage 
 wool by colour, the common `c:` tags where an item became a family (iron, glass, dyes) so other
 mods' materials count, vanilla tags for logs, planks and boats. As in 1.7.10, a pattern letter the
 key does not define is an empty slot. `RecipeDataTest` converts the whole set and spot checks
-the output. `ModRecipes` puts every MCHeli recipe in a player's recipe book on login, standing in
+the output. `CommonHooks.playerLoggedIn` puts every MCHeli recipe in a player's recipe book on login, standing in
 for the drafting table's recipe list.
 
 ## Models
@@ -423,7 +463,7 @@ camera facing halos and tracer ribbons for `ProjectileRenderer` (rounds and rock
 particle that `ExplosionEffect` spawns for the flash, the embers and the lingering crash fire.
 How bright a glow gets comes from `effect.NightGlow` in `common`: the block light, sky light and
 the sky darkening at that spot, so it is faint at noon and full at night, in caves and under
-water. `ClientConfig`, a Forge `CLIENT` config, turns it off per player.
+water. `ClientConfig` (`config/mcheli-client.toml`) turns it off per player.
 
 **CrewController** also hides the first person hand through `RenderHandEvent` wherever the original
 did: for the pilot, and for anyone looking through a camera or with a weapon selected.
@@ -504,16 +544,18 @@ of the content packs in use.
   ours so the texture manager takes over again.
 - **Sounds**: `RuntimeSoundInstance` (the engine loop extends it) plays through the sound manager
   when a resource pack defines the event, and otherwise streams the OGG file a runtime root holds
-  for it through Forge's `SoundInstance.getStream` hook, with no `sounds.json` entry and no reload.
+  for it through the loader's sound stream hook (`SoundInstance.getStream` on Forge and NeoForge,
+  `getAudioStream` on Fabric), with no `sounds.json` entry and no reload.
 
-`LegacyContent` adds the folder through `AddPackFindersEvent` for both pack types, as a required
+`CommonHooks.packSource` adds the folder (through `AddPackFindersEvent`, or a mixin on Fabric) for
+both pack types, as a required
 pack at the bottom of the list: it is enabled in every world, cannot be turned off, and regular
 resource packs still override it. Minecraft merges lang files across packs, so the item names
 from the import and the rework's own keys in the jar's lang files sit side by side;
 `LegacyImporterTest` checks they never share a key.
 
 Without a zip or an earlier import, `ContentRegistry` is empty: the game starts with no vehicles
-and `ClientSetup` tells the player in the chat where the zip goes. A zip that fails to import is
+and `ClientHooks.loggedIn` tells the player in the chat where the zip goes. A zip that fails to import is
 logged and reported the same way.
 
 The repository holds none of the original files. The unit tests get them the way players do:
