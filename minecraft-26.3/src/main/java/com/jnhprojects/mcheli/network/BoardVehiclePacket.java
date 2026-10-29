@@ -2,10 +2,12 @@ package com.jnhprojects.mcheli.network;
 
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
  * Client to server: the player right-clicked a vehicle's hull outside its main hit box. The
@@ -13,7 +15,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  *
  * @param location where on the hull the click landed, in world coordinates
  */
-public record BoardVehiclePacket(int entityId, Vec3 location) {
+public record BoardVehiclePacket(int entityId, Vec3 location) implements CustomPacketPayload {
+    public static final Type<BoardVehiclePacket> TYPE = ModNetwork.type("board_vehicle");
+    public static final StreamCodec<RegistryFriendlyByteBuf, BoardVehiclePacket> STREAM_CODEC = StreamCodec.ofMember(BoardVehiclePacket::encode, BoardVehiclePacket::decode);
+
     /** The same slack vanilla allows on top of the player's reach for a click on an entity. */
     private static final double REACH_SLACK = 3.0;
 
@@ -28,8 +33,7 @@ public record BoardVehiclePacket(int entityId, Vec3 location) {
         return new BoardVehiclePacket(buf.readVarInt(), new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()));
     }
 
-    public static void handle(BoardVehiclePacket msg, CustomPayloadEvent.Context ctx) {
-        ServerPlayer sender = ctx.getSender();
+    public static void handle(BoardVehiclePacket msg, ServerPlayer sender) {
         if (sender == null || !(sender.level().getEntity(msg.entityId) instanceof AircraftEntity vehicle) || vehicle.isRemoved()) {
             return;
         }
@@ -45,5 +49,10 @@ public record BoardVehiclePacket(int entityId, Vec3 location) {
         if (onHull) {
             vehicle.interact(sender, InteractionHand.MAIN_HAND, msg.location.subtract(vehicle.position()));
         }
+    }
+
+    @Override
+    public Type<BoardVehiclePacket> type() {
+        return TYPE;
     }
 }
