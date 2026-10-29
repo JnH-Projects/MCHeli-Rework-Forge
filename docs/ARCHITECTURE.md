@@ -41,8 +41,8 @@ Arrows only point down. The bottom half lives in the `common` Gradle module, whi
 and tested with nothing from Minecraft or Forge on its classpath (only the JDK, SLF4J, JSpecify
 and JOML), so a stray import fails the build; `CommonBoundaryTest` also scans the sources. The top
 half is a platform module, one per Minecraft version, which compiles `common`'s sources together
-with its own into one jar. Ports to older versions (phase 7) add platform modules and leave
-`common` alone; see [DEVELOPMENT.md](DEVELOPMENT.md#common-and-platform-modules).
+with its own into one jar. Other versions and loaders (phases 7 and 8) add platform modules
+and leave `common` alone; see [DEVELOPMENT.md](DEVELOPMENT.md#common-and-platform-modules).
 
 `client` is only referenced from `MCHeli` behind a `Dist.CLIENT` check, so a dedicated server never
 loads a client class.
