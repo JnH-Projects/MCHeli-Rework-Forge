@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.registry;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.jnhprojects.mcheli.item.LegacyAircraftItem;
 import net.minecraft.world.item.Item;
@@ -38,7 +39,8 @@ public final class ModItems {
     public static void register(BusGroup modBus, ContentRegistry content) {
         for (AircraftDefinition def : content.all()) {
             String name = def.name();
-            if (BY_KIND.containsKey(name)) {
+            // Only the imported content existed in 1.0.0; pack vehicles never had their own item.
+            if (!def.pack().equals(ContentSource.ORIGINAL) || BY_KIND.containsKey(name)) {
                 // 1.0.0 could not have had such an item either: it would have clashed the same way.
                 continue;
             }
