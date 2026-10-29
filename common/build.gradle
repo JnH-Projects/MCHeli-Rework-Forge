@@ -45,4 +45,7 @@ tasks.named('test', Test) {
     // and are skipped where the zip is absent, such as on CI.
     systemProperty 'mcheli.legacyZip', legacyZip
     systemProperty 'mcheli.testContent', layout.buildDirectory.dir('legacy-content').get().asFile.absolutePath
+    // Our own example content pack, which needs nothing from the original.
+    systemProperty 'mcheli.examplePack', rootProject.file('examples/rework-example-pack').absolutePath
+    inputs.dir(rootProject.file('examples/rework-example-pack')).withPropertyName('examplePack')
 }
