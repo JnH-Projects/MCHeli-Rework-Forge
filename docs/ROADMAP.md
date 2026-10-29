@@ -132,7 +132,7 @@ Rules that hold for every beta:
 | Phase | Version | Theme | State |
 |-------|---------|-------|-------|
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
-| 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Planned |
+| 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | In progress |
 | 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
 | 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
 | 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning | Planned |
@@ -171,15 +171,15 @@ and the command.
 The external content packs from phase 4, in the package format the workshop will write later
 ([format](#vehicle-packages)).
 
-- [ ] Package format: definition, OBJ or MQO model, PNG textures, OGG sounds and a manifest (id,
+- [x] Package format: definition, OBJ or MQO model, PNG textures, OGG sounds and a manifest (id,
       author, version, content hash). Data only, never code.
-- [ ] Packs loaded from `<game dir>/mcheli/packs`; the 1.0.3 import becomes one more pack
-- [ ] Load errors reported per pack (log, and chat for operators); a broken pack never stops the
+- [x] Packs loaded from `<game dir>/mcheli/packs`; the 1.0.3 import becomes one more pack
+- [x] Load errors reported per pack (log, and chat for operators); a broken pack never stops the
       game from starting
-- [ ] Server to client sync: id and hash list on join, missing packs sent in chunks and cached in
+- [x] Server to client sync: id and hash list on join, missing packs sent in chunks and cached in
       `mcheli/cache/<hash>.zip` ([details](#multiplayer))
-- [ ] Server limits and an allow list in the config; clients cap the cache size
-- [ ] Pack author guide in `docs/content/packs.md`, with a small example pack in the repo made
+- [x] Server limits and an allow list in the config; clients cap the cache size
+- [x] Pack author guide in `docs/content/packs.md`, with a small example pack in the repo made
       from our own assets (no EMB4 files)
 - [x] Night glow: tracers, rocket motors, flares and explosions glow, faint by day and bright at
       night; a crash keeps burning with a glow and the wreck burns for 30 seconds. Client config `effects.nightGlow` turns it off.
