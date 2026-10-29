@@ -1,5 +1,7 @@
 # MCHeli Rework
 
+<img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
+
 Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** on **Forge 66.1**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
