@@ -5,8 +5,10 @@ import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.weapon.Resupply;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
  * A one-off request from a crew member: lower the gear, fold the wings, change seats and so on.
@@ -15,7 +17,9 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  * allowed to do it, and then applies the same conditions the original checked before switching.
  * The result reaches every client through synched data.
  */
-public record CrewActionPacket(int entityId, Action action) {
+public record CrewActionPacket(int entityId, Action action) implements CustomPacketPayload {
+    public static final Type<CrewActionPacket> TYPE = ModNetwork.type("crew_action");
+    public static final StreamCodec<RegistryFriendlyByteBuf, CrewActionPacket> STREAM_CODEC = StreamCodec.ofMember(CrewActionPacket::encode, CrewActionPacket::decode);
 
     public enum Action {
         /** Raise or lower the landing gear. Pilot only. */
@@ -61,8 +65,7 @@ public record CrewActionPacket(int entityId, Action action) {
         return new CrewActionPacket(entityId, actions[ordinal]);
     }
 
-    public static void handle(CrewActionPacket msg, CustomPayloadEvent.Context ctx) {
-        ServerPlayer sender = ctx.getSender();
+    public static void handle(CrewActionPacket msg, ServerPlayer sender) {
         if (sender == null || !(sender.getVehicle() instanceof AircraftEntity vehicle) || vehicle.getId() != msg.entityId) {
             return;
         }
@@ -130,5 +133,10 @@ public record CrewActionPacket(int entityId, Action action) {
             }
             case RESUPPLY -> Resupply.fromInventory(sender, vehicle);
         }
+    }
+
+    @Override
+    public Type<CrewActionPacket> type() {
+        return TYPE;
     }
 }
