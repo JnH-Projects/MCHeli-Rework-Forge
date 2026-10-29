@@ -104,6 +104,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     protected static final int PART_HATCH = 4;
 
     private static final int EMPTY = -1;
+    /** How far above its hit box the original drew a vehicle's model; see {@link #waterDepth}. */
+    private static final float LEGACY_MODEL_LIFT = 0.35F;
 
     protected final ControlInput input = new ControlInput();
     public final AnimationState animation = new AnimationState();
@@ -1274,10 +1276,14 @@ public abstract class AircraftEntity extends VehicleEntity {
      * Port of {@code getWaterDepth}: the share of the hit box that is in water, from 0 to 1, sampled
      * in five horizontal slices. {@code FloatOffset} raises the slices, so a hull with an offset rides
      * higher. The float physics only pushes up once this reaches 1, which sets the waterline.
+     *
+     * <p>The original drew the model {@value #LEGACY_MODEL_LIFT} above the bottom of the hit box
+     * (its {@code yOffset}, half the 0.7 default height); this port draws it at the bottom. The
+     * slices are lowered by the same amount so boats sit in the water as they did in 1.0.3.
      */
     protected double waterDepth() {
         AircraftDefinition def = definition();
-        float offset = def != null ? def.floatOffset : 0.0F;
+        float offset = (def != null ? def.floatOffset : 0.0F) - LEGACY_MODEL_LIFT;
         AABB box = getBoundingBox();
         double height = box.maxY - box.minY;
         double depth = 0.0;
