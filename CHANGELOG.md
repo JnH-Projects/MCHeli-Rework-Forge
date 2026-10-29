@@ -42,6 +42,10 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 - `/mcheli reload` now reloads the content packs too, with the server's settings, and sends every
   player the new pack list. Before, a dedicated server and its players each reread their own files.
 - The network protocol changed: players need the same version as the server.
+- The rework's own code is now under the MCHeli Rework Licence (`LICENSE`, also inside the jar)
+  instead of plain All Rights Reserved: free to play, to include in free modpacks, to read, build
+  and contribute to; redistributing the source or modified builds and selling the mod still need
+  permission. EMB4's original content is not affected.
 
 ## [1.1.0-beta.1] - 2026-10-29
 
