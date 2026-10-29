@@ -2,6 +2,8 @@ package com.jnhprojects.mcheli.entity;
 
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.aircraft.VehicleDefinition;
+import com.jnhprojects.mcheli.content.aircraft.WeaponMount;
+import com.jnhprojects.mcheli.weapon.WeaponSet;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
@@ -30,6 +32,18 @@ public class GroundVehicleEntity extends AircraftEntity implements EngineSoundSo
     @Override
     public @Nullable VehicleDefinition definition() {
         return (VehicleDefinition) super.definition();
+    }
+
+    /**
+     * {@code MCH_EntityVehicle.useCurrentWeapon}: the mount stays put while its {@code AddPart}
+     * tree turns with the gunner's view, so a weapon fires where the gunner looks. Only weapons
+     * with both yaw limits set aim like turrets instead. The original checked the first
+     * {@code AddWeapon} line of that weapon, and so does this.
+     */
+    @Override
+    public boolean aimsWithUser(WeaponSet set) {
+        WeaponMount mount = set.mounts().getFirst();
+        return mount.minYaw() == 0.0F || mount.maxYaw() == 0.0F;
     }
 
     @Override
