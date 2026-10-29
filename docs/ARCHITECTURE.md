@@ -23,14 +23,16 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
  │ entity          AircraftEntity and one subclass per kind       │  (forge-26.3)
  │ item            AircraftItem, VehicleIngredient                │
  │ network         PilotStatePacket, CrewActionPacket, ...        │  Minecraft + Forge
- │ registry        entities, items, components, creative tabs     │
- │ (root)          MCHeli, ServerConfig, McheliCommand, reload    │
+ │ particle        GlowParticleOptions                            │
+ │ registry        entities, items, components, particles, tabs   │
+ │ (root)          MCHeli, configs, McheliCommand, reload         │
  ├────────────────────────────────────────────────────────────────┤
  │ content         Definition, DefinitionReader, ContentRegistry, │  common module
  │                 aircraft/* definitions, recipe conversion      │
  │ model           Mesh, MqoLoader, ObjLoader                     │  pure Java
  │ hud             HudScript, Expression, HudVariable             │
  │ physics         AircraftRotation, GroundImpact                 │
+ │ effect          NightGlow                                      │
  └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -55,8 +57,10 @@ MCHeli constructor
   ├─ LegacyContent.registerPacks                      that folder as a required resource + data pack
   ├─ ContentRegistry.load(mcheli/imported/assets/mcheli)  parse helicopters, planes, tanks, vehicles
   ├─ registerConfig(SERVER, ServerConfig.SPEC)        serverconfig/mcheli-server.toml
+  ├─ registerConfig(CLIENT, ClientConfig.SPEC)        config/mcheli-client.toml
   ├─ ModDataComponents.register                       mcheli:vehicle
   ├─ ModEntities.register                             one entity type per kind
+  ├─ ModParticles.register                            mcheli:glow
   ├─ ModItems.register(content)                       one item per kind, plus the 1.0.0 items
   ├─ ModCreativeTabs.register
   ├─ ModRecipes.register                              mcheli:vehicle ingredient, recipe book
@@ -354,6 +358,16 @@ test on each transformed triangle. Both loaders keep the original's counter-cloc
 set the packet's `crash` flag for a larger show of our own: the same smoke shell drawn a little
 above the impact, a cluster of fireballs, a climbing plume of signal smoke and burning fuel,
 capped at size 12 to keep the particle count in check.
+
+**Night glow** is our own. `Glow` holds two additive pipelines that test depth but never write it
+(the lightning blend, so overlapping glows add up and never cut holes in the smoke behind them),
+falling back to the vanilla translucent OIT pipelines when Fabulous graphics are on. It draws
+camera facing halos and tracer ribbons for `ProjectileRenderer` (rounds and rocket motors) and
+`FlareRenderer` (burning flares, including crash debris), and is the layer of the `mcheli:glow`
+particle that `ExplosionEffect` spawns for the flash, the embers and the lingering crash fire.
+How bright a glow gets comes from `effect.NightGlow` in `common`: the block light, sky light and
+the sky darkening at that spot, so it is faint at noon and full at night, in caves and under
+water. `ClientConfig`, a Forge `CLIENT` config, turns it off per player.
 
 **CrewController** also hides the first person hand through `RenderHandEvent` wherever the original
 did: for the pilot, and for anyone looking through a camera or with a weapon selected.
