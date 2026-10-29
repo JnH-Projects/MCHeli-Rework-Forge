@@ -1,22 +1,18 @@
 package com.jnhprojects.mcheli.registry;
 
-import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.particle.GlowParticleOptions;
+import com.jnhprojects.mcheli.platform.Registered;
+import com.jnhprojects.mcheli.platform.Registration;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraftforge.eventbus.api.bus.BusGroup;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
 
 public final class ModParticles {
-    private static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE, MCHeli.MOD_ID);
-
     /** Ignores the particle limit: an explosion that loses its flash to the cap looks broken. */
-    public static final RegistryObject<ParticleType<GlowParticleOptions>> GLOW = PARTICLE_TYPES.register("glow",
-            () -> new ParticleType<>(true) {
+    public static final Registered<ParticleType<GlowParticleOptions>> GLOW = Registration.register(Registries.PARTICLE_TYPE, "glow",
+            key -> new ParticleType<>(true) {
                 @Override
                 public MapCodec<GlowParticleOptions> codec() {
                     return GlowParticleOptions.CODEC;
@@ -31,7 +27,7 @@ public final class ModParticles {
     private ModParticles() {
     }
 
-    public static void register(BusGroup modBus) {
-        PARTICLE_TYPES.register(modBus);
+    /** Declares the entries; the loader module registers them. */
+    public static void init() {
     }
 }
