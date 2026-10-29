@@ -5,8 +5,10 @@ import com.jnhprojects.mcheli.weapon.ServerFiring;
 import com.jnhprojects.mcheli.weapon.Shot;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
  * Client to server: the crew member's selected weapon fired on their side, so fire it for real.
@@ -15,7 +17,9 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  *
  * @param weapon the weapon the client fired, ignored unless it is still the seat's selection
  */
-public record FireWeaponPacket(int entityId, int weapon, int option1, int option2) {
+public record FireWeaponPacket(int entityId, int weapon, int option1, int option2) implements CustomPacketPayload {
+    public static final Type<FireWeaponPacket> TYPE = ModNetwork.type("fire_weapon");
+    public static final StreamCodec<RegistryFriendlyByteBuf, FireWeaponPacket> STREAM_CODEC = StreamCodec.ofMember(FireWeaponPacket::encode, FireWeaponPacket::decode);
 
     public static void encode(FireWeaponPacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);
@@ -28,8 +32,7 @@ public record FireWeaponPacket(int entityId, int weapon, int option1, int option
         return new FireWeaponPacket(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
     }
 
-    public static void handle(FireWeaponPacket msg, CustomPayloadEvent.Context ctx) {
-        ServerPlayer sender = ctx.getSender();
+    public static void handle(FireWeaponPacket msg, ServerPlayer sender) {
         if (sender == null || !(sender.getVehicle() instanceof AircraftEntity vehicle) || vehicle.getId() != msg.entityId) {
             return;
         }
@@ -42,5 +45,10 @@ public record FireWeaponPacket(int entityId, int weapon, int option1, int option
         shot.option1 = msg.option1;
         shot.option2 = msg.option2;
         weapons.use(sender, seat, shot, ServerFiring.INSTANCE);
+    }
+
+    @Override
+    public Type<FireWeaponPacket> type() {
+        return TYPE;
     }
 }
