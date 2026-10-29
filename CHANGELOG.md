@@ -32,6 +32,7 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 - `/mcheli packs` lists the packs in use with their vehicle and weapon counts.
 - An example pack with our own helicopter, the Rework Scout (two paint schemes), in
   `examples/rework-example-pack`, and a pack author guide, `docs/content/packs.md`.
+- A mod icon, shown in the mods list and the README.
 
 ### Changed
 
