@@ -1,6 +1,5 @@
 package com.jnhprojects.mcheli.client;
 
-import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
@@ -13,9 +12,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
-import net.minecraftforge.client.gui.overlay.ForgeLayeredDraw;
 
 /**
  * The vehicle HUD layer. In first person it runs the seat's HUD script (the {@code HUD} line of
@@ -34,17 +30,12 @@ final class WeaponHud {
     private WeaponHud() {
     }
 
-    static void init() {
-        AddGuiOverlayLayersEvent.BUS.addListener(event -> event.getLayeredDraw()
-                .add(ForgeLayeredDraw.POST_SLEEP_STACK, Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "weapons"), WeaponHud::draw));
-    }
-
     /** A pilot in gunner mode gets the gunner seat's HUD, as in the original. */
     private static int hudSeat(AircraftEntity vehicle, int seat) {
         return seat == 0 && vehicle.isGunnerMode() ? 1 : seat;
     }
 
-    private static void draw(GuiGraphicsExtractor g, DeltaTracker delta) {
+    static void draw(GuiGraphicsExtractor g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || !(player.getVehicle() instanceof AircraftEntity vehicle)) {
