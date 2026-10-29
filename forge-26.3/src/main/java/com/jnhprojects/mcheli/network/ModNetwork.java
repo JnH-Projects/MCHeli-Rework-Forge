@@ -4,6 +4,7 @@ import com.jnhprojects.mcheli.MCHeli;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.ChannelBuilder;
@@ -12,7 +13,7 @@ import net.minecraftforge.network.SimpleChannel;
 
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    private static final int PROTOCOL_VERSION = 4;
+    private static final int PROTOCOL_VERSION = 5;
 
     private static final SimpleChannel CHANNEL = ChannelBuilder
             .named(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "main"))
@@ -42,6 +43,9 @@ public final class ModNetwork {
                     .addMain(ExplosionEffectPacket.class,
                             StreamCodec.<RegistryFriendlyByteBuf, ExplosionEffectPacket>ofMember(ExplosionEffectPacket::encode, ExplosionEffectPacket::decode),
                             ExplosionEffectPacket::handle)
+                    .addMain(ContentReloadPacket.class,
+                            StreamCodec.<RegistryFriendlyByteBuf, ContentReloadPacket>ofMember(ContentReloadPacket::encode, ContentReloadPacket::decode),
+                            ContentReloadPacket::handle)
             .build();
 
     private ModNetwork() {
@@ -58,6 +62,12 @@ public final class ModNetwork {
 
     public static void sendToPlayer(ServerPlayer player, Object message) {
         CHANNEL.send(message, PacketDistributor.PLAYER.with(player));
+    }
+
+    public static void sendToAll(MinecraftServer server, Object message) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            sendToPlayer(player, message);
+        }
     }
 
     /** Sends to every player in {@code level} within {@code range} blocks of the point. */
