@@ -4,12 +4,14 @@ import com.jnhprojects.mcheli.client.ClientSetup;
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.network.ModNetwork;
 import com.jnhprojects.mcheli.registry.ModCreativeTabs;
+import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.registry.ModRecipes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -34,18 +36,24 @@ public final class MCHeli {
         legacyContent = LegacyContent.prepare(FMLPaths.GAMEDIR.get());
         legacyContent.registerPacks();
         content = loadContent(legacyContent.assets());
+        context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        ModDataComponents.register(modBus);
         ModEntities.register(modBus);
         ModItems.register(modBus, content);
         ModCreativeTabs.register(modBus);
-        ModRecipes.register();
+        ModRecipes.register(modBus);
         ModNetwork.register();
+        McheliCommand.register();
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             ClientSetup.init(modBus);
         }
     }
 
-    /** Vehicle definitions imported from the original zip. Available from mod construction onwards. */
+    /**
+     * Vehicle and weapon definitions, imported from the original zip. Available from mod
+     * construction onwards. Always the same object; a reload changes what it holds.
+     */
     public static ContentRegistry content() {
         return content;
     }
