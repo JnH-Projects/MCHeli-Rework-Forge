@@ -1,6 +1,5 @@
 package com.jnhprojects.mcheli.client.hud;
 
-import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
@@ -10,6 +9,7 @@ import com.jnhprojects.mcheli.entity.TankEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.hud.HudVariable;
 import com.jnhprojects.mcheli.hud.TextArg;
+import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.weapon.Guidance;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import com.jnhprojects.mcheli.weapon.WeaponSet;
@@ -19,7 +19,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.fml.ModList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -320,8 +319,7 @@ final class HudState {
             case RELOAD_SEC -> reloadSeconds;
             case MORTAR_DIST -> -1.0F;
             case MC_VER -> "26.3";
-            case MOD_VER -> ModList.getModContainerById(MCHeli.MOD_ID)
-                    .map(c -> c.getModInfo().getVersion().toString()).orElse("");
+            case MOD_VER -> Platform.get().modVersion();
             case MOD_NAME -> "MCHeli Rework";
             case YAW -> rotate360(vehicle.getYRot() + 180.0);
             case PITCH -> -vehicle.getXRot();
