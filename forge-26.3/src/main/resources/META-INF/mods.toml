@@ -21,7 +21,7 @@ MCHeli CurseForge page into the "mcheli" folder of the game directory.
 [[dependencies.${mod_id}]]
     modId="forge"
     mandatory=true
-    versionRange="${forge_version_range}"
+    versionRange="${loader_version_range}"
     ordering="NONE"
     side="BOTH"
 
