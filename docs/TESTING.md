@@ -305,6 +305,27 @@ Keep a copy of a 1.0.0 world with vehicles parked in it, items in the hotbar and
 - [ ] `./gradlew build` produces `build/release/mcheli-26.3-1.1.0-beta.1.jar`; it holds no EMB4
       file (DEVELOPMENT.md, "Original content").
 
+## Phase 6 checklist (`1.1.0-beta.2`)
+
+Run each section in single player and again on a dedicated server, unless it says otherwise.
+
+### Night glow
+
+Set the time with `/time set midnight` and compare with `/time set noon`.
+
+- [ ] Machine gun rounds trail a warm tracer at night; at noon only a faint shimmer shows.
+- [ ] Rockets and missiles show a glowing motor behind them for their whole flight.
+- [ ] A flare salvo lights up around each flare; smoke grenades do not glow.
+- [ ] A rocket hit gives a short bright flash and a few embers; the smoke behind stays visible
+      through the flash (no dark square or cut out).
+- [ ] Shooting down a helicopter: a big flash when it hits the ground, then the wreck glows for
+      several seconds and the embers thrown out glow as they fall.
+- [ ] In a cave or under a roof at noon, the glow is as bright as at night.
+- [ ] Nothing glows under water (torpedoes, rounds fired into water).
+- [ ] `effects.nightGlow = false` in `config/mcheli-client.toml`: no glow at all, the rest of the
+      effects unchanged. Another player on the same server still sees the glow.
+- [ ] Video settings, graphics set to Fabulous: the glow still draws and nothing crashes.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did
