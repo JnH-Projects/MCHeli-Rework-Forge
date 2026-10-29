@@ -1,4 +1,4 @@
-package com.jnhprojects.mcheli.entity;
+package com.jnhprojects.mcheli.physics;
 
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -69,7 +69,7 @@ public final class AircraftRotation {
         return (float) Math.toDegrees(Math.atan2(onLeft, onUp));
     }
 
-    static float wrap(float degrees) {
+    public static float wrap(float degrees) {
         float d = degrees % 360.0F;
         if (d >= 180.0F) {
             d -= 360.0F;
