@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.entity;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
