@@ -5,8 +5,6 @@ import com.jnhprojects.mcheli.content.pack.ContentPack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -39,17 +37,16 @@ public final class PackSync {
     private PackSync() {
     }
 
-    public static void init() {
-        PlayerEvent.PlayerLoggedInEvent.BUS.addListener(event -> {
-            if (event.getEntity() instanceof ServerPlayer player) {
-                ModNetwork.sendToPlayer(player, list());
-                if (seesProblems(player)) {
-                    MCHeli.packs().reportProblems(player::sendSystemMessage);
-                }
-            }
-        });
-        PlayerEvent.PlayerLoggedOutEvent.BUS.addListener(event -> TRANSFERS.remove(event.getEntity().getUUID()));
-        TickEvent.ServerTickEvent.Post.BUS.addListener(event -> pump(event.server()));
+    /** Sends a joining player the pack list, and operators any pack problems. */
+    public static void onLogin(ServerPlayer player) {
+        ModNetwork.sendToPlayer(player, list());
+        if (seesProblems(player)) {
+            MCHeli.packs().reportProblems(player::sendSystemMessage);
+        }
+    }
+
+    public static void onLogout(ServerPlayer player) {
+        TRANSFERS.remove(player.getUUID());
     }
 
     /** The packs the server uses now, as the client should load them. */
@@ -101,7 +98,7 @@ public final class PackSync {
         return null;
     }
 
-    private static void pump(MinecraftServer server) {
+    public static void pump(MinecraftServer server) {
         Iterator<Map.Entry<UUID, Deque<Transfer>>> it = TRANSFERS.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<UUID, Deque<Transfer>> entry = it.next();
