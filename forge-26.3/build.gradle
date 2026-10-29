@@ -91,6 +91,8 @@ tasks.named('jar', Jar) {
     }
     exclude 'data/mcheli/recipe/**'
     includeEmptyDirs = false
+    // The licence travels with every copy of the jar.
+    from(rootProject.file('LICENSE'))
     manifest {
         attributes([
                 'Specification-Title'   : mod_id,
