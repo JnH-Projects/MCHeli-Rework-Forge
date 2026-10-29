@@ -1,0 +1,61 @@
+MCHeli Rework Licence, version 1.0
+
+Copyright (c) 2026 JayMar921 (JnH Projects). All rights reserved, except as granted below.
+
+MCHeli Rework ("the Mod") is a rework of MCHeli 1.0.3 by EMB4 for newer versions of Minecraft.
+The original MCHeli and its content (models, textures, sounds, definitions and documentation)
+belong to EMB4, are not covered by this licence and are not included in this repository or in
+the Mod's releases.
+
+1. What you may do
+
+   a. Use. You may download the official releases of the Mod and use them, for free, in single
+      player, on servers (including public and paid servers) and in videos and streams.
+
+   b. Modpacks. You may include an unmodified official release in a modpack, on CurseForge,
+      Modrinth or elsewhere, as long as the modpack is free to download and credits the Mod.
+
+   c. Read and build. You may read the source code, build it, and run your own builds for
+      personal use, testing and development.
+
+   d. Contribute. You may fork this repository to propose changes through pull requests. By
+      sending a contribution you agree that it may be distributed under this licence, and under
+      any later version of it, as part of the Mod.
+
+   e. Learn. You may study how the Mod works and write your own code based on what you learned,
+      as long as you do not copy the Mod's source code into it.
+
+2. What you may not do without written permission
+
+   a. Redistribute the source code, or builds made from it, modified or not, except as allowed
+      in 1(b) and 1(d).
+
+   b. Publish the Mod, or a fork of it, as your own project or under another name.
+
+   c. Sell the Mod or charge for access to it, including putting it behind a paywall.
+
+   d. Remove or change the copyright notices or the credits to EMB4 and Fureniku.
+
+3. Content made for the Mod
+
+   Content packs, models, textures and sounds you make for the Mod are yours. This licence does
+   not apply to them. The example pack in examples/rework-example-pack is public domain (CC0 1.0,
+   see its own LICENSE file).
+
+4. No warranty
+
+   The Mod is provided "as is", without warranty of any kind. The authors are not liable for any
+   damage or loss arising from its use, including lost worlds or corrupted saves. Keep backups.
+
+5. Ending the licence
+
+   If you break these terms, your rights under this licence end automatically. They come back
+   if you fix the breach within 30 days of being told about it.
+
+6. Later versions
+
+   The copyright holder may publish new versions of this licence. Each release of the Mod is
+   covered by the version included with it.
+
+Questions and permission requests: open an issue at
+https://github.com/JnH-Projects/MCHeli-Rework-Forge/issues
