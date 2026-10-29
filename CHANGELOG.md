@@ -23,6 +23,9 @@ and items.
 - Server config, `serverconfig/mcheli-server.toml` in each world: whether explosions break blocks
   and start fires, a damage multiplier for vehicles, infinite ammunition, and a list of vehicles
   that cannot be placed. Edits apply while the server runs.
+- Boats destroyed on the water (by a torpedo or anything else) cook off: three explosions with
+  fireballs within about five seconds, the first from the fuel, the second from the ammunition
+  still aboard, the last and biggest sized by the fuel load like a crash. Then the wreck sinks.
 - Content can now bring textures, models and sounds while the game runs, without a resource
   reload. Nothing uses this yet beyond `/mcheli reload`; content packs (beta.2) will.
 
@@ -43,6 +46,8 @@ and items.
 
 - Boats and other floating vehicles sat about a third of a block too deep, so the Zodiac was
   almost under water. They now float as high as in the original.
+- Static launchers and guns that turn with the gunner's view, such as the Type 93 and Mk 32
+  torpedo tubes, only fired straight ahead. They fire where the gunner looks again.
 - On Windows, converting the content again could fail with "access denied" when another program
   had the old `mcheli/imported` folder open, leaving the game without vehicles until the next
   start. The old folder is now moved aside first, and the swap is retried.
