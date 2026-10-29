@@ -5,6 +5,8 @@ import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.content.aircraft.VehicleDefinition;
+import com.jnhprojects.mcheli.content.pack.ContentSource;
+import com.jnhprojects.mcheli.content.pack.PackProblem;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -23,16 +25,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
  * Loaded vehicle and weapon definitions, keyed by file name.
  *
+ * <p>Definitions come from one or more {@linkplain ContentSource sources}: the imported 1.0.3
+ * content and the content packs. A definition in a later source replaces the one with the same
+ * name from an earlier source, whatever its kind.
+ *
  * <p>The registry can change while the game runs: a definition can be added or replaced
  * ({@link #add}), and the whole set can be swapped for a freshly loaded one ({@link #replaceWith})
- * when an operator reloads the content. Every change bumps {@link #generation()}, which is how
- * vehicles already in the world notice that their definition object is stale.
+ * when an operator reloads the content or a server sends its packs. Every change bumps
+ * {@link #generation()}, which is how vehicles already in the world notice that their definition
+ * object is stale.
  *
  * <p>Readers never lock. The maps live in an immutable snapshot that writers copy, change and
  * publish in one volatile write, so the render thread and the server thread of a single player
@@ -50,70 +58,142 @@ public final class ContentRegistry {
 
     /** A registry with nothing in it, for when no content could be found. */
     public static ContentRegistry empty() {
-        return new ContentRegistry(new Snapshot(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of()));
+        return new ContentRegistry(new Snapshot(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), List.of()));
     }
 
     /**
+     * Loads the imported 1.0.3 content alone.
+     *
      * @param assetRoot the {@code assets/mcheli} folder; when it does not exist, nothing is loaded
      */
-    public static ContentRegistry load(Path assetRoot) throws IOException {
-        Map<String, Set<String>> unhandled = new TreeMap<>();
-        Map<String, WeaponDefinition> weapons = loadFolder(assetRoot.resolve(WeaponDefinition.FOLDER), WeaponDefinition::new, unhandled);
-        Map<String, HelicopterDefinition> helicopters =
-                loadFolder(assetRoot.resolve(HelicopterDefinition.FOLDER), HelicopterDefinition::new, unhandled);
-        Map<String, PlaneDefinition> planes = loadFolder(assetRoot.resolve(PlaneDefinition.FOLDER), PlaneDefinition::new, unhandled);
-        Map<String, TankDefinition> tanks = loadFolder(assetRoot.resolve(TankDefinition.FOLDER), TankDefinition::new, unhandled);
-        Map<String, VehicleDefinition> vehicles = loadFolder(assetRoot.resolve(VehicleDefinition.FOLDER), VehicleDefinition::new, unhandled);
-
-        for (Map<String, ? extends AircraftDefinition> kind : List.of(helicopters, planes, tanks, vehicles)) {
-            for (AircraftDefinition def : kind.values()) {
-                dropUnknownWeapons(def, weapons);
-            }
-        }
-
-        LOGGER.info("Loaded {} helicopters, {} planes, {} tanks, {} vehicles and {} weapons",
-                helicopters.size(), planes.size(), tanks.size(), vehicles.size(), weapons.size());
-        if (!unhandled.isEmpty()) {
-            LOGGER.debug("Definition keys not implemented yet: {}", unhandled.keySet());
-        }
-        return new ContentRegistry(new Snapshot(helicopters, planes, tanks, vehicles, weapons, unhandled));
-    }
-
-    private static <T extends Definition> Map<String, T> loadFolder(
-            Path folder, Function<String, T> factory, Map<String, Set<String>> unhandled) throws IOException {
-        Map<String, T> out = new LinkedHashMap<>();
-        if (!Files.isDirectory(folder)) {
-            return out;
-        }
-
-        List<Path> files;
-        try (Stream<Path> stream = Files.list(folder)) {
-            files = stream.filter(p -> p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".txt"))
-                    .sorted()
-                    .toList();
-        }
-
-        for (Path file : files) {
-            String fileName = file.getFileName().toString().toLowerCase(Locale.ROOT);
-            String name = fileName.substring(0, fileName.length() - 4);
-            DefinitionReader.Result<T> result = DefinitionReader.read(file, factory.apply(name));
-            for (String problem : result.problems()) {
-                LOGGER.warn("{}/{}: {}", folder.getFileName(), fileName, problem);
-            }
-            for (String key : result.unhandledKeys()) {
-                unhandled.computeIfAbsent(key, k -> new TreeSet<>()).add(name);
-            }
-            if (result.isValid()) {
-                out.put(name, result.definition());
-            }
-        }
-        return out;
+    public static ContentRegistry load(Path assetRoot) {
+        return load(List.of(new ContentSource(ContentSource.ORIGINAL, assetRoot)));
     }
 
     /**
-     * The original silently skipped AddWeapon lines naming a weapon it had not loaded. The shipped
-     * AH-64, KV-2 and M26 do that, so it is only worth a debug line.
+     * Loads every source, in order. Weapons come first, from all sources, so a vehicle can use a
+     * weapon from another pack. Never throws: a file or folder that cannot be read is logged and
+     * listed in {@link #problems()}, and everything else still loads.
      */
+    public static ContentRegistry load(List<ContentSource> sources) {
+        Loader loader = new Loader();
+        for (ContentSource source : sources) {
+            loader.folder(source, WeaponDefinition.FOLDER, WeaponDefinition::new, loader::weapon);
+        }
+        for (ContentSource source : sources) {
+            loader.folder(source, HelicopterDefinition.FOLDER, HelicopterDefinition::new, loader::vehicle);
+            loader.folder(source, PlaneDefinition.FOLDER, PlaneDefinition::new, loader::vehicle);
+            loader.folder(source, TankDefinition.FOLDER, TankDefinition::new, loader::vehicle);
+            loader.folder(source, VehicleDefinition.FOLDER, VehicleDefinition::new, loader::vehicle);
+        }
+        return new ContentRegistry(loader.finish(sources.size()));
+    }
+
+    /** Collects definitions across sources; one per {@link #load(List)} call. */
+    private static final class Loader {
+        private final Map<String, WeaponDefinition> weapons = new LinkedHashMap<>();
+        private final Map<String, AircraftDefinition> vehicles = new LinkedHashMap<>();
+        private final Map<String, Set<String>> unhandled = new TreeMap<>();
+        private final List<PackProblem> problems = new ArrayList<>();
+
+        <T extends Definition> void folder(ContentSource source, String folder, Function<String, T> factory, Consumer<T> sink) {
+            Path dir = source.assets().resolve(folder);
+            if (!Files.isDirectory(dir)) {
+                return;
+            }
+
+            List<Path> files;
+            try (Stream<Path> stream = Files.list(dir)) {
+                files = stream.filter(p -> p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".txt"))
+                        .sorted()
+                        .toList();
+            } catch (IOException e) {
+                problem(source, folder + ": could not be read: " + e);
+                return;
+            }
+
+            for (Path file : files) {
+                String fileName = file.getFileName().toString().toLowerCase(Locale.ROOT);
+                String name = fileName.substring(0, fileName.length() - 4);
+                DefinitionReader.Result<T> result;
+                try {
+                    result = DefinitionReader.read(file, factory.apply(name));
+                } catch (IOException e) {
+                    problem(source, folder + "/" + fileName + ": could not be read: " + e);
+                    continue;
+                }
+                for (String problem : result.problems()) {
+                    LOGGER.warn("{}: {}/{}: {}", source.pack(), folder, fileName, problem);
+                    // The import's own quirks are EMB4's and known; only pack authors can act on theirs.
+                    if (!source.isOriginal()) {
+                        problems.add(new PackProblem(source.pack(), folder + "/" + fileName + ": " + problem));
+                    }
+                }
+                for (String key : result.unhandledKeys()) {
+                    unhandled.computeIfAbsent(key, k -> new TreeSet<>()).add(name);
+                }
+                if (result.isValid()) {
+                    T def = result.definition();
+                    def.setPack(source.pack());
+                    sink.accept(def);
+                }
+            }
+        }
+
+        void weapon(WeaponDefinition weapon) {
+            replaced(weapons.put(weapon.name(), weapon), weapon, WeaponDefinition.FOLDER);
+        }
+
+        void vehicle(AircraftDefinition def) {
+            replaced(vehicles.put(def.name(), def), def, def.folder());
+        }
+
+        private static void replaced(@Nullable Definition previous, Definition def, String folder) {
+            if (previous != null && !previous.pack().equals(def.pack())) {
+                LOGGER.info("{} replaces {}/{} from {}", def.pack(), folder, def.name(), previous.pack());
+            }
+        }
+
+        private void problem(ContentSource source, String message) {
+            LOGGER.warn("{}: {}", source.pack(), message);
+            problems.add(new PackProblem(source.pack(), message));
+        }
+
+        Snapshot finish(int sources) {
+            Map<String, HelicopterDefinition> helicopters = new LinkedHashMap<>();
+            Map<String, PlaneDefinition> planes = new LinkedHashMap<>();
+            Map<String, TankDefinition> tanks = new LinkedHashMap<>();
+            Map<String, VehicleDefinition> other = new LinkedHashMap<>();
+            for (AircraftDefinition def : vehicles.values()) {
+                List<String> dropped = def.retainWeapons(weapons.keySet());
+                if (!dropped.isEmpty()) {
+                    // The original silently skipped AddWeapon lines naming a weapon it had not
+                    // loaded, and the shipped AH-64, KV-2 and M26 do that. In a pack it is a typo.
+                    if (def.pack().equals(ContentSource.ORIGINAL)) {
+                        LOGGER.debug("{}/{}: unknown weapons {}", def.folder(), def.name(), dropped);
+                    } else {
+                        LOGGER.warn("{}: {}/{}: unknown weapons {}", def.pack(), def.folder(), def.name(), dropped);
+                        problems.add(new PackProblem(def.pack(), def.folder() + "/" + def.name() + ": unknown weapons " + dropped));
+                    }
+                }
+                switch (def) {
+                    case HelicopterDefinition h -> helicopters.put(h.name(), h);
+                    case PlaneDefinition p -> planes.put(p.name(), p);
+                    case TankDefinition t -> tanks.put(t.name(), t);
+                    case VehicleDefinition v -> other.put(v.name(), v);
+                    default -> throw new IllegalArgumentException("Unknown vehicle kind " + def.kind());
+                }
+            }
+
+            LOGGER.info("Loaded {} helicopters, {} planes, {} tanks, {} vehicles and {} weapons from {} sources",
+                    helicopters.size(), planes.size(), tanks.size(), other.size(), weapons.size(), sources);
+            if (!unhandled.isEmpty()) {
+                LOGGER.debug("Definition keys not implemented yet: {}", unhandled.keySet());
+            }
+            return new Snapshot(helicopters, planes, tanks, other, weapons, unhandled, problems);
+        }
+    }
+
     private static void dropUnknownWeapons(AircraftDefinition def, Map<String, WeaponDefinition> weapons) {
         List<String> dropped = def.retainWeapons(weapons.keySet());
         if (!dropped.isEmpty()) {
@@ -240,10 +320,19 @@ public final class ContentRegistry {
         return snapshot.unhandledKeys;
     }
 
+    /**
+     * What went wrong loading the content packs: files that could not be read, rejected
+     * definitions, bad lines and unknown weapons. The import's own known quirks are only logged.
+     */
+    public List<PackProblem> problems() {
+        return snapshot.problems;
+    }
+
     /** One consistent state of the registry. Never changed once published. */
     private record Snapshot(Map<String, HelicopterDefinition> helicopters, Map<String, PlaneDefinition> planes,
                             Map<String, TankDefinition> tanks, Map<String, VehicleDefinition> vehicles,
-                            Map<String, WeaponDefinition> weapons, Map<String, Set<String>> unhandledKeys) {
+                            Map<String, WeaponDefinition> weapons, Map<String, Set<String>> unhandledKeys,
+                            List<PackProblem> problems) {
         Snapshot {
             helicopters = Collections.unmodifiableMap(helicopters);
             planes = Collections.unmodifiableMap(planes);
@@ -251,6 +340,7 @@ public final class ContentRegistry {
             vehicles = Collections.unmodifiableMap(vehicles);
             weapons = Collections.unmodifiableMap(weapons);
             unhandledKeys = Collections.unmodifiableMap(unhandledKeys);
+            problems = List.copyOf(problems);
         }
 
         @Nullable AircraftDefinition any(String name) {
@@ -269,27 +359,27 @@ public final class ContentRegistry {
 
         Snapshot without(String name) {
             return new Snapshot(remove(helicopters, name), remove(planes, name), remove(tanks, name), remove(vehicles, name),
-                    weapons, unhandledKeys);
+                    weapons, unhandledKeys, problems);
         }
 
         Snapshot withHelicopters(Map<String, HelicopterDefinition> map) {
-            return new Snapshot(map, planes, tanks, vehicles, weapons, unhandledKeys);
+            return new Snapshot(map, planes, tanks, vehicles, weapons, unhandledKeys, problems);
         }
 
         Snapshot withPlanes(Map<String, PlaneDefinition> map) {
-            return new Snapshot(helicopters, map, tanks, vehicles, weapons, unhandledKeys);
+            return new Snapshot(helicopters, map, tanks, vehicles, weapons, unhandledKeys, problems);
         }
 
         Snapshot withTanks(Map<String, TankDefinition> map) {
-            return new Snapshot(helicopters, planes, map, vehicles, weapons, unhandledKeys);
+            return new Snapshot(helicopters, planes, map, vehicles, weapons, unhandledKeys, problems);
         }
 
         Snapshot withVehicles(Map<String, VehicleDefinition> map) {
-            return new Snapshot(helicopters, planes, tanks, map, weapons, unhandledKeys);
+            return new Snapshot(helicopters, planes, tanks, map, weapons, unhandledKeys, problems);
         }
 
         Snapshot withWeapons(Map<String, WeaponDefinition> map) {
-            return new Snapshot(helicopters, planes, tanks, vehicles, map, unhandledKeys);
+            return new Snapshot(helicopters, planes, tanks, vehicles, map, unhandledKeys, problems);
         }
 
         private static <T> Map<String, T> remove(Map<String, T> map, String name) {
