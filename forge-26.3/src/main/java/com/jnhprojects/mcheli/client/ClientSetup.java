@@ -25,7 +25,7 @@ public final class ClientSetup {
     }
 
     public static void init(BusGroup modBus) {
-        ClientAccess.install(() -> Minecraft.getInstance().player);
+        ClientAccess.install(() -> Minecraft.getInstance().player, ClientContentReload::run);
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> {
             event.registerEntityRenderer(ModEntities.HELICOPTER.get(), AircraftRenderer::new);
             event.registerEntityRenderer(ModEntities.PLANE.get(), AircraftRenderer::new);
