@@ -28,7 +28,7 @@ public final class ClientSetup {
     }
 
     public static void init(BusGroup modBus) {
-        ClientAccess.install(() -> Minecraft.getInstance().player, ClientContentReload::run);
+        ClientAccess.install(() -> Minecraft.getInstance().player, ClientPacks.INSTANCE);
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> {
             event.registerEntityRenderer(ModEntities.HELICOPTER.get(), AircraftRenderer::new);
             event.registerEntityRenderer(ModEntities.PLANE.get(), AircraftRenderer::new);
@@ -56,6 +56,7 @@ public final class ClientSetup {
         // Without the original zip there are no vehicles, so say so where the player will see it.
         ClientPlayerNetworkEvent.LoggingIn.BUS.addListener(event ->
                 MCHeli.legacyContent().problem().ifPresent(event.getPlayer()::sendSystemMessage));
+        ClientPlayerNetworkEvent.LoggingOut.BUS.addListener(event -> ClientPacks.INSTANCE.loggedOut());
         CrewController.init();
         WeaponController.init();
         VehiclePicker.init();
