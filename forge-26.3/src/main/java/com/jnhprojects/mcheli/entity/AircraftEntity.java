@@ -12,6 +12,7 @@ import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.physics.GroundImpact;
 import com.jnhprojects.mcheli.registry.ModItems;
@@ -149,8 +150,14 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Damage factor of the extra hit box the last projectile ray struck, {@code lastBBDamageFactor}. */
     private float hitBoxFactor = 1.0F;
     private int timeSinceHit;
+    /** How long a wreck stays, burning, before it disappears: 30 seconds. */
+    private static final int WRECK_TICKS = 600;
+    /** The wreck fire dies down over the last five seconds. */
+    private static final int WRECK_FADE_TICKS = 100;
     /** Ticks until a destroyed wreck disappears; above zero means destroyed. Server only. */
     private int despawnCount;
+    /** Ticks the client has seen this vehicle as a wreck, for the fire to die down on time. */
+    private int wreckTicks;
     private float destroyedYaw;
     private float destroyedPitch;
     private float destroyedRoll;
@@ -1572,10 +1579,10 @@ public abstract class AircraftEntity extends VehicleEntity {
         return false;
     }
 
-    /** {@code destroyAircraft}: the wreck tumbles, burns and disappears after 25 seconds. Server only. */
+    /** {@code destroyAircraft}: the wreck tumbles, burns and disappears after 30 seconds. Server only. */
     private void destroyVehicle() {
         AircraftDefinition def = definition();
-        despawnCount = def != null && def.targetDrone ? 50 : 500;
+        despawnCount = def != null && def.targetDrone ? 50 : WRECK_TICKS;
         destroyedPitch = random.nextFloat() - 0.5F;
         destroyedRoll = (random.nextFloat() - 0.5F) * 0.5F;
         destroyedYaw = 0.0F;
@@ -1754,6 +1761,37 @@ public abstract class AircraftEntity extends VehicleEntity {
             if (random.nextInt(3) == 0) {
                 level().addParticle(ParticleTypes.FLAME, at.x + random.nextGaussian() * 0.5, at.y, at.z + random.nextGaussian() * 0.5, 0.0, 0.05, 0.0);
             }
+            wreckFire(def);
+        }
+    }
+
+    /**
+     * Not in the original: the wreck keeps burning until it disappears, with a fire glow that
+     * lights up the smoke at night and dies down over the last few seconds. Nothing burns under
+     * water. Client only.
+     */
+    private void wreckFire(AircraftDefinition def) {
+        wreckTicks++;
+        if (isInWater()) {
+            return;
+        }
+        float left = Math.clamp((float) (WRECK_TICKS - wreckTicks) / WRECK_FADE_TICKS, 0.15F, 1.0F);
+        Vec3 centre = position().add(0.0, def.bodyHeight / 2.0, 0.0);
+        if (wreckTicks % 8 == 0) {
+            // Each glow outlives the gap to the next, so the fire never goes dark in between.
+            float size = Math.clamp(def.bodyWidth * 0.8F, 2.0F, 8.0F) * left;
+            level().addAlwaysVisibleParticle(GlowParticleOptions.fire(GlowParticleOptions.FIRE, size, 24), true,
+                    centre.x, centre.y, centre.z, 0.0, 0.02, 0.0);
+        }
+        if (random.nextFloat() < left) {
+            double spread = def.bodyWidth * 0.4;
+            level().addParticle(ParticleTypes.FLAME, centre.x + random.nextGaussian() * spread, centre.y,
+                    centre.z + random.nextGaussian() * spread, 0.0, 0.04, 0.0);
+        }
+        if (random.nextInt(10) == 0) {
+            level().addAlwaysVisibleParticle(GlowParticleOptions.fire(GlowParticleOptions.EMBER, 0.3F + random.nextFloat() * 0.3F,
+                    20 + random.nextInt(20)), true, centre.x, centre.y, centre.z,
+                    (random.nextDouble() - 0.5) * 0.15, 0.1 + random.nextDouble() * 0.15, (random.nextDouble() - 0.5) * 0.15);
         }
     }
 
@@ -1829,7 +1867,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         entityData.set(DATA_GUNNER_MODE, input.getBooleanOr("GunnerMode", false));
         despawnCount = input.getIntOr("DespawnCount", 0);
         if (hp() <= 0 && despawnCount <= 0) {
-            despawnCount = 500;
+            despawnCount = WRECK_TICKS;
         }
         cookOffBlasts = input.getIntOr("CookOff", 0);
         cookOffDelay = cookOffBlasts > 0 ? 20 : 0;
