@@ -6,7 +6,6 @@ import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.EngineSoundSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 
@@ -18,7 +17,7 @@ import net.minecraft.util.RandomSource;
  * stretches to the definition's {@code SoundRange}, and the pitch bends slightly as the vehicle
  * approaches or leaves, which is what the original did.
  */
-final class EngineSound extends AbstractTickableSoundInstance {
+final class EngineSound extends RuntimeSoundInstance {
     private static final float MAX_DOPPLER = 0.2F;
 
     private final AircraftEntity vehicle;
