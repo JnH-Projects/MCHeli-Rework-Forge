@@ -131,7 +131,7 @@ Rules that hold for every beta:
 
 | Phase | Version | Theme | State |
 |-------|---------|-------|-------|
-| 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | In testing |
+| 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Planned |
 | 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
 | 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
