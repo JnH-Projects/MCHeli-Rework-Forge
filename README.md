@@ -224,6 +224,12 @@ server runs):
 | `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
 | `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
 
+Each player also has `config/mcheli-client.toml`, which only changes what that player sees:
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `effects.nightGlow` | `true` | Tracers, rocket motors, flares and explosions glow: faintly by day, brightly at night, in caves and under water |
+
 ## Documentation
 
 * [Changelog](CHANGELOG.md)
