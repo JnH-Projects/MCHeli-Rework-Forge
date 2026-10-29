@@ -64,7 +64,7 @@ class RecipeDataTest {
                   "category": "misc",
                   "key": {
                     "R": "#c:dusts/redstone",
-                    "X": {"type": "mcheli:vehicle", "vehicle": "ah-6"}
+                    "X": {"type": "mcheli:vehicle", "neoforge:ingredient_type": "mcheli:vehicle", "fabric:type": "mcheli:vehicle", "vehicle": "ah-6"}
                   },
                   "pattern": [
                     "RXR"
