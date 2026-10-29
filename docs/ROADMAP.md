@@ -210,19 +210,19 @@ The external content packs from phase 4, in the package format the workshop will
 [supported versions](#supported-versions)). This phase splits the code so the loaders share
 almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.21.1.
 
-- [ ] Three layers: `common` (pure Java, as now), shared code per Minecraft version (rendering,
+- [x] Three layers: `common` (pure Java, as now), shared code per Minecraft version (rendering,
       entities, sounds, HUD, which are the same on every loader), and a thin module per loader
       (registration, events, networking, config)
-- [ ] NeoForge and Fabric on 26.3, with the same features and checklists as Forge
+- [x] NeoForge and Fabric on 26.3, with the same features and checklists as Forge
 - [ ] 1.21.1 (Java 21) on Forge, NeoForge and Fabric: older rendering (no render states), older
       networking, item models from the item JSON instead of `item_model`
 - [ ] Content packs and their sync work across loaders on the same Minecraft version (a Fabric
       client on a NeoForge server)
 - [ ] Legacy importer checked on 1.21.1 (pack format numbers and the asset layout differ)
-- [ ] Jar names carry the loader and the Minecraft version, such as
+- [x] Jar names carry the loader and the Minecraft version, such as
       `mcheli-fabric-1.21.1-1.1.0-beta.3.jar`; the release workflow publishes every jar
-- [ ] CI builds and tests every module on every pull request
-- [ ] [TESTING.md](TESTING.md) gets a short smoke test per jar: import, fly a helicopter, drive a
+- [x] CI builds and tests every module on every pull request
+- [x] [TESTING.md](TESTING.md) gets a short smoke test per jar: import, fly a helicopter, drive a
       tank, fire a missile, join a dedicated server
 
 ## Phase 8: 1.20.1 (`1.1.0-beta.4`)
