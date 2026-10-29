@@ -1,6 +1,8 @@
 package com.jnhprojects.mcheli.entity;
 
+import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.ModSounds;
+import com.jnhprojects.mcheli.ServerConfig;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.BoundingBoxDefinition;
@@ -9,6 +11,9 @@ import com.jnhprojects.mcheli.content.aircraft.RideRack;
 import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
+import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
+import com.jnhprojects.mcheli.physics.GroundImpact;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.weapon.Explosions;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
@@ -114,6 +119,7 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     private @Nullable AircraftDefinition cachedDefinition;
     private String cachedName = "";
+    private int cachedGeneration;
 
     protected @Nullable PartState canopy;
     protected @Nullable PartState landingGear;
@@ -178,13 +184,24 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     // Definition
 
-    /** Looks the definition up by name. Returns {@code null} for vehicles whose content was removed. */
+    /**
+     * Looks the definition up by name. Returns {@code null} for vehicles whose content was removed.
+     * After a content reload the next call picks up the new definition object.
+     */
     public @Nullable AircraftDefinition definition() {
         String name = typeName();
-        if (!name.equals(cachedName)) {
+        int generation = MCHeli.content().generation();
+        if (!name.equals(cachedName) || generation != cachedGeneration) {
+            boolean reloaded = name.equals(cachedName);
             cachedName = name;
+            cachedGeneration = generation;
+            AircraftDefinition previous = cachedDefinition;
             cachedDefinition = name.isEmpty() ? null : lookup(name);
-            if (cachedDefinition != null) {
+            if (cachedDefinition != null && cachedDefinition != previous) {
+                if (reloaded && weapons != null) {
+                    // The same vehicle with new numbers: keep the rounds it carries.
+                    savedAmmo = weapons.saveAmmo();
+                }
                 onDefinitionChanged(cachedDefinition);
             }
         }
@@ -1328,9 +1345,9 @@ public abstract class AircraftEntity extends VehicleEntity {
         return entityData.get(DATA_WEAPON_USE);
     }
 
-    /** {@code isInfinityAmmo}: creative players never run dry. */
+    /** {@code isInfinityAmmo}: creative players never run dry, nor does anyone when the server config says so. */
     public boolean hasInfiniteAmmo(@Nullable Entity user) {
-        return user instanceof Player player && player.getAbilities().instabuild;
+        return ServerConfig.infiniteAmmo() || user instanceof Player player && player.getAbilities().instabuild;
     }
 
     /** Where the pilot looks relative to the hull: the turret's traverse. */
@@ -1477,6 +1494,7 @@ public abstract class AircraftEntity extends VehicleEntity {
                         damage *= boxFactor;
                     }
                 }
+                damage *= ServerConfig.vehicleDamageFactor();
                 entityData.set(DATA_HP, Math.max(hp() - (int) damage, 0));
             }
             setHurtDir(-getHurtDir());
@@ -1611,14 +1629,14 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     @Override
     protected Item getDropItem() {
-        Item item = ModItems.aircraft(typeName());
-        return item != null ? item : Items.AIR;
+        AircraftDefinition def = definition();
+        return def != null ? ModItems.forKind(def.kind()) : Items.AIR;
     }
 
     @Override
     public @Nullable ItemStack getPickResult() {
-        Item item = ModItems.aircraft(typeName());
-        return item != null ? new ItemStack(item) : null;
+        AircraftDefinition def = definition();
+        return def != null ? AircraftItem.stackOf(def) : null;
     }
 
     // Dimensions and syncing
