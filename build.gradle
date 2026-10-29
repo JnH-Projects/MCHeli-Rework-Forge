@@ -1,15 +1,24 @@
 plugins {
     id 'base'
     id 'net.minecraftforge.gradle' version '[7.0.17,8)' apply false
+    id 'net.neoforged.moddev' version '2.0.148' apply false
+    // Loom 1.19 needs Gradle 9.8. The plain plugin is for unobfuscated Minecraft (26.x), the remap
+    // one for versions that still ship obfuscated (1.21.1 and older).
+    id 'net.fabricmc.fabric-loom' version '1.19.3' apply false
+    id 'net.fabricmc.fabric-loom-remap' version '1.19.3' apply false
 }
 
 def platforms = providers.gradleProperty('platforms').get().split(',').collect { it.trim() }
 
-// One jar per Minecraft version, gathered in one folder for the release workflow.
+// One jar per loader and Minecraft version, gathered in one folder for the release workflow.
 def releaseJars = tasks.register('releaseJars', Sync) {
     group = 'build'
-    description = 'Collects the jar of every platform module into build/release.'
-    platforms.each { platform -> from(project(":$platform").tasks.named('jar')) }
+    description = 'Collects the jar of every loader module into build/release.'
+    platforms.each { platform ->
+        // On the obfuscated versions (1.x) Fabric's shippable jar is the remapped one.
+        def jarTask = platform.startsWith('fabric-1.') ? 'remapJar' : 'jar'
+        from(project(":$platform").tasks.named(jarTask))
+    }
     into layout.buildDirectory.dir('release')
 }
 
