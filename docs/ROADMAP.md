@@ -132,7 +132,7 @@ Rules that hold for every beta:
 | Phase | Version | Theme | State |
 |-------|---------|-------|-------|
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
-| 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | In progress |
+| 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Released |
 | 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
 | 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
 | 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning | Planned |
@@ -183,9 +183,6 @@ The external content packs from phase 4, in the package format the workshop will
       from our own assets (no EMB4 files)
 - [x] Night glow: tracers, rocket motors, flares and explosions glow, faint by day and bright at
       night; a crash keeps burning with a glow and the wreck burns for 30 seconds. Client config `effects.nightGlow` turns it off.
-- [ ] Crash spin for shot down aircraft: planes and jets roll into a nose-down spiral instead of
-      just falling, and helicopters spin faster with some wobble. The spin direction comes from
-      the entity id so every client sees the same thing.
 
 ## Phase 7: older Minecraft versions (`1.1.0-beta.3`)
 
@@ -208,6 +205,9 @@ phase; otherwise it moves to 1.2.0 so it does not hold the release back.
 
 Gameplay carried over from phase 4, built once in `common` with per-version glue.
 
+- [ ] Crash spin for shot down aircraft (moved from phase 6): planes and jets roll into a
+      nose-down spiral instead of just falling, and helicopters spin faster with some wobble. The
+      spin direction comes from the entity id so every client sees the same thing.
 - [ ] Night vision, thermal view and zoom
 - [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, parachute, chain towing,
       container, fuel, wrench, Stinger and Javelin, smoke grenades

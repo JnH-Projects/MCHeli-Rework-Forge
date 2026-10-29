@@ -5,7 +5,12 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.2] - 2026-10-29
+
+Phase 6 of the road to 1.1.0: content packs that servers send to their players, night glow and
+burning wrecks. Betas are not uploaded to CurseForge; download them from the GitHub releases.
+Worlds from 1.1.0-beta.1 and 1.0.0 load as before. Players and servers need the same version,
+since the network protocol changed.
 
 ### Added
 
@@ -406,5 +411,6 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.2]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.2
 [1.1.0-beta.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.1
 [1.0.0]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.0.0
