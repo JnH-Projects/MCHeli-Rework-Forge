@@ -2,8 +2,10 @@ package com.jnhprojects.mcheli.network;
 
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
  * Sent by the pilot every tick. Position, yaw and pitch already travel through the vanilla
@@ -12,7 +14,9 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  * @param keys the pilot's key state as packed by {@link AircraftEntity.ControlInput#write()}, so
  *             other players see wheels steer and tracks turn
  */
-public record PilotStatePacket(int entityId, float throttle, float reverse, float roll, boolean hovering, byte keys) {
+public record PilotStatePacket(int entityId, float throttle, float reverse, float roll, boolean hovering, byte keys) implements CustomPacketPayload {
+    public static final Type<PilotStatePacket> TYPE = ModNetwork.type("pilot_state");
+    public static final StreamCodec<RegistryFriendlyByteBuf, PilotStatePacket> STREAM_CODEC = StreamCodec.ofMember(PilotStatePacket::encode, PilotStatePacket::decode);
 
     public static void encode(PilotStatePacket msg, FriendlyByteBuf buf) {
         buf.writeVarInt(msg.entityId);
@@ -27,8 +31,7 @@ public record PilotStatePacket(int entityId, float throttle, float reverse, floa
         return new PilotStatePacket(buf.readVarInt(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readBoolean(), buf.readByte());
     }
 
-    public static void handle(PilotStatePacket msg, CustomPayloadEvent.Context ctx) {
-        ServerPlayer sender = ctx.getSender();
+    public static void handle(PilotStatePacket msg, ServerPlayer sender) {
         if (sender == null) {
             return;
         }
@@ -41,5 +44,10 @@ public record PilotStatePacket(int entityId, float throttle, float reverse, floa
                 && Float.isFinite(msg.roll)) {
             aircraft.acceptPilotState(msg.throttle, msg.reverse, msg.roll, msg.hovering, msg.keys);
         }
+    }
+
+    @Override
+    public Type<PilotStatePacket> type() {
+        return TYPE;
     }
 }
