@@ -451,6 +451,20 @@ Install Sodium and Iris for 26.3 with a shader pack (Complementary or BSL).
 - [ ] The fuel can, wrench and parachute are in the MCHeli Equipment tab with icons and names, and
       craft with the original recipes.
 
+### Hull boxes and collisions
+
+- [ ] F3+B: cyan boxes outline the hull of an `ec665`, an `f-35b` and an `s-75`, next to the white
+      main box. The `mh-6` and the other vehicles without `BoundingBox` lines only show the main box.
+- [ ] Fire the gun at the tail, the nose and the rotor mast of a parked helicopter: every round stops
+      on the hull (no tracer behind it), and the helicopter takes damage.
+- [ ] Fire from a helicopter's own guns: no round stops inside the firing helicopter.
+- [ ] Drive a tank into the side of a parked plane: it stops at the wing or fuselage, not at the
+      plane's feet. At speed both take crash damage.
+- [ ] Land a helicopter on top of a parked truck: it rests there.
+- [ ] A vehicle that fits a carrier's rack (a car and a truck with a rack) can still drive onto the
+      rack, and `J` loads it.
+- [ ] Two vehicles placed into each other can drive apart.
+
 ### Zoom and night vision
 
 - [ ] Gunner seat or gunner mode in an AH-64 (`H`): Z zooms 2x, 4x, then back to 1x; the HUD's zoom
