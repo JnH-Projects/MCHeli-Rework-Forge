@@ -8,11 +8,14 @@ import com.jnhprojects.mcheli.content.aircraft.VehicleDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.content.pack.PackProblem;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
+import com.jnhprojects.mcheli.model.HullFill;
+import com.jnhprojects.mcheli.model.MeshLoader;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -91,6 +94,9 @@ public final class ContentRegistry {
 
     /** Collects definitions across sources; one per {@link #load(List)} call. */
     private static final class Loader {
+        /** The client tries the same formats in the same order. */
+        private static final String[] MODEL_EXTENSIONS = {".mqo", ".obj"};
+
         private final Map<String, WeaponDefinition> weapons = new LinkedHashMap<>();
         private final Map<String, AircraftDefinition> vehicles = new LinkedHashMap<>();
         private final Map<String, Set<String>> unhandled = new TreeMap<>();
@@ -135,8 +141,32 @@ public final class ContentRegistry {
                 if (result.isValid()) {
                     T def = result.definition();
                     def.setPack(source.pack());
+                    if (def instanceof AircraftDefinition vehicle) {
+                        fillHull(source, vehicle);
+                    }
                     sink.accept(def);
                 }
+            }
+        }
+
+        /**
+         * Reads the vehicle's model from the same source, as the client will, and fills the gaps
+         * its {@code BoundingBox} lines leave (see {@link HullFill}). Server and client build the
+         * same boxes from the same file, so hits agree. A missing or broken model only means no
+         * extra boxes; the client reports it when it draws the vehicle.
+         */
+        private static void fillHull(ContentSource source, AircraftDefinition def) {
+            for (String extension : MODEL_EXTENSIONS) {
+                Path file = source.assets().resolve("models").resolve(def.folder()).resolve(def.name() + extension);
+                if (!Files.isRegularFile(file)) {
+                    continue;
+                }
+                try (InputStream in = Files.newInputStream(file)) {
+                    def.setGeneratedBoxes(HullFill.fill(MeshLoader.load(file.getFileName().toString(), in).groups(), def.boundingBoxes));
+                } catch (IOException | RuntimeException e) {
+                    LOGGER.debug("{}: no hull boxes from {}: {}", source.pack(), file, e.toString());
+                }
+                return;
             }
         }
 
