@@ -19,6 +19,7 @@ eclipse/
 
 # Run directories
 run/
+run-*/
 run-data/
 logs/
 *.log
