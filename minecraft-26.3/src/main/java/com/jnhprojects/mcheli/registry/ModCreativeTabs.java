@@ -16,8 +16,9 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * One tab per vehicle kind, listing a stack for each loaded definition of that kind. The list is
- * read from the content registry whenever a tab is built, so reloaded content shows up.
+ * One tab per vehicle kind, listing a stack for each loaded definition of that kind, and one for
+ * the equipment. The vehicle lists are read from the content registry whenever a tab is built, so
+ * reloaded content shows up.
  */
 public final class ModCreativeTabs {
     public static final Registered<CreativeModeTab> HELICOPTERS = register("helicopters", "helicopter", "ah-64",
@@ -25,6 +26,12 @@ public final class ModCreativeTabs {
     public static final Registered<CreativeModeTab> PLANES = register("planes", "plane", "f-35b", key(HELICOPTERS));
     public static final Registered<CreativeModeTab> TANKS = register("tanks", "tank", "m1a2", key(PLANES));
     public static final Registered<CreativeModeTab> VEHICLES = register("vehicles", "vehicle", "mk15", key(TANKS));
+    public static final Registered<CreativeModeTab> EQUIPMENT = Registration.register(Registries.CREATIVE_MODE_TAB, "equipment",
+            key -> Platform.get().creativeTab(key(VEHICLES))
+                    .title(Component.translatable("itemGroup.mcheli.equipment"))
+                    .icon(() -> new ItemStack(ModItems.WRENCH.get()))
+                    .displayItems((params, output) -> ModItems.EQUIPMENT.forEach(item -> output.accept(item.get())))
+                    .build());
 
     private ModCreativeTabs() {
     }
