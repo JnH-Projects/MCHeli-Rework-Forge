@@ -47,7 +47,11 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
         /** Pay the selected weapon's {@code Item} cost from the inventory for one resupply. */
         RESUPPLY,
         /** Hand the controls to the autopilot and man the weapons, or take them back. Pilot only. */
-        GUNNER_MODE
+        GUNNER_MODE,
+        /** Turn night vision on for the sender, in vehicles with {@code EnableNightVision}. */
+        NIGHT_VISION_ON,
+        /** Turn the sender's night vision off again. */
+        NIGHT_VISION_OFF
     }
 
     public static void encode(CrewActionPacket msg, FriendlyByteBuf buf) {
@@ -132,6 +136,7 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
                 }
             }
             case RESUPPLY -> Resupply.fromInventory(sender, vehicle);
+            case NIGHT_VISION_ON, NIGHT_VISION_OFF -> vehicle.setNightVision(sender, msg.action == Action.NIGHT_VISION_ON);
         }
     }
 
