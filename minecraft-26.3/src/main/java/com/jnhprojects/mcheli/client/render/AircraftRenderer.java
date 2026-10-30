@@ -40,6 +40,7 @@ import java.util.List;
  */
 public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T, AircraftRenderState> {
     private static final int HULL_COLOR = 0xFF00E0FF;
+    private static final int GENERATED_COLOR = 0xFFFFC000;
 
     public AircraftRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -48,18 +49,20 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
 
     /**
      * With F3+B on, outlines the hull boxes next to vanilla's main box: what projectiles hit and
-     * what other vehicles collide with.
+     * what other vehicles collide with. The definition's own boxes are cyan, the ones generated
+     * from the model amber.
      */
-    private static void showHull(AircraftEntity entity, float partialTicks) {
+    private static void showHull(AircraftEntity entity, AircraftDefinition def, float partialTicks) {
         List<AABB> hull = entity.hullBoxes();
         if (hull.size() < 2) {
             return;
         }
         Vec3 offset = entity.getPosition(partialTicks).subtract(entity.position());
+        int listed = def.boundingBoxes.size();
         try (Gizmos.TemporaryCollection ignored = Minecraft.getInstance().levelRenderer.collectPerFrameRenderThreadGizmos()) {
-            // The first is the main box, which vanilla draws itself.
-            for (AABB box : hull.subList(1, hull.size())) {
-                Gizmos.cuboid(box.move(offset), GizmoStyle.stroke(HULL_COLOR));
+            // The first is the main box, which vanilla draws itself; then the listed boxes, then the generated ones.
+            for (int i = 1; i < hull.size(); i++) {
+                Gizmos.cuboid(hull.get(i).move(offset), GizmoStyle.stroke(i <= listed ? HULL_COLOR : GENERATED_COLOR));
             }
         }
     }
@@ -82,7 +85,7 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
             return;
         }
         if (Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
-            showHull(entity, partialTicks);
+            showHull(entity, def, partialTicks);
         }
 
         state.rotorAngle = switch (entity) {
