@@ -49,6 +49,9 @@ public abstract class ProjectileEntity extends Entity {
     private static final EntityDataAccessor<String> DATA_WEAPON = SynchedEntityData.defineId(ProjectileEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> DATA_TARGET = SynchedEntityData.defineId(ProjectileEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BOMBLET = SynchedEntityData.defineId(ProjectileEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Who fired, for clients: their rounds must not stop on their own vehicle. */
+    private static final EntityDataAccessor<Integer> DATA_SHOOTER = SynchedEntityData.defineId(ProjectileEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_USER = SynchedEntityData.defineId(ProjectileEntity.class, EntityDataSerializers.INT);
 
     /** Beyond 5820 blocks from whoever fired it, a projectile is dropped. */
     private static final double MAX_RANGE_SQ = 3.38724E7;
@@ -67,6 +70,8 @@ public abstract class ProjectileEntity extends Entity {
     public double acceleration = 1.0;
     public double accelerationFactor = 1.0;
     private int age;
+    /** Client only: the round hit something here and waits, hidden, for the server to remove it. */
+    private boolean spent;
 
     public Vec3 prevMotion = Vec3.ZERO;
     /** Position two ticks ago, used to spread trail particles over the distance covered. */
@@ -84,6 +89,8 @@ public abstract class ProjectileEntity extends Entity {
         builder.define(DATA_WEAPON, "");
         builder.define(DATA_TARGET, 0);
         builder.define(DATA_BOMBLET, false);
+        builder.define(DATA_SHOOTER, 0);
+        builder.define(DATA_USER, 0);
     }
 
     /**
@@ -154,8 +161,7 @@ public abstract class ProjectileEntity extends Entity {
         explosionPowerInWater = def.explosionInWater;
         power = def.power;
         piercing = def.piercing;
-        this.shooter = shooter;
-        this.user = user;
+        setOwners(shooter, user);
     }
 
     /** The same, inherited from a parent projectile, for bomblets. */
@@ -164,13 +170,14 @@ public abstract class ProjectileEntity extends Entity {
         explosionPowerInWater = parent.explosionPowerInWater;
         power = parent.power;
         piercing = parent.piercing;
-        shooter = parent.shooter;
-        user = parent.user;
+        setOwners(parent.shooter, parent.user);
     }
 
     public void setOwners(@Nullable Entity shooter, @Nullable Entity user) {
         this.shooter = shooter;
         this.user = user;
+        entityData.set(DATA_SHOOTER, shooter != null ? shooter.getId() : 0);
+        entityData.set(DATA_USER, user != null ? user.getId() : 0);
     }
 
     public @Nullable Entity user() {
@@ -223,6 +230,9 @@ public abstract class ProjectileEntity extends Entity {
 
     @Override
     public void tick() {
+        if (spent) {
+            return;
+        }
         if (level().isClientSide() && age == 0) {
             int targetId = entityData.get(DATA_TARGET);
             if (targetId > 0) {
@@ -536,8 +546,21 @@ public abstract class ProjectileEntity extends Entity {
         return best != null ? new Impact(bestAt, best, null, Direction.UP) : null;
     }
 
+    /** Clients only learn who fired through synched data; look them up once it has arrived. */
+    private void resolveOwners() {
+        if (shooter == null && entityData.get(DATA_SHOOTER) > 0) {
+            shooter = level().getEntity(entityData.get(DATA_SHOOTER));
+        }
+        if (user == null && entityData.get(DATA_USER) > 0) {
+            user = level().getEntity(entityData.get(DATA_USER));
+        }
+    }
+
     /** {@code canBeCollidedEntity}: never the shooter, its crew, or rounds fired by the same side. */
     public boolean canHit(Entity entity) {
+        if (level().isClientSide()) {
+            resolveOwners();
+        }
         if (!entity.isPickable() || entity == user || entity == shooter) {
             return false;
         }
@@ -603,6 +626,13 @@ public abstract class ProjectileEntity extends Entity {
         if (!(level() instanceof ServerLevel server)) {
             if (weapon != null && (weapon.explosion == 0 || weapon.modeNum >= 2) && hit.block() != null) {
                 debris(hit);
+            }
+            if (piercing <= 0) {
+                // The server decides what the hit does; until its removal arrives the round stays
+                // where it struck instead of flying on through the hull.
+                spent = true;
+                setPos(hit.location());
+                setDeltaMovement(Vec3.ZERO);
             }
             return;
         }
@@ -725,6 +755,11 @@ public abstract class ProjectileEntity extends Entity {
             return true;
         }
         return false;
+    }
+
+    /** Client only: whether the round already hit something and should no longer be drawn. */
+    public boolean isSpent() {
+        return spent;
     }
 
     @Override
