@@ -30,6 +30,18 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
+Phase 8 in a development build (`1.1.0-beta.4`): hit boxes that cover the whole vehicle, and shot
+down planes that spiral in.
+
+| | |
+|---|---|
+| ![The MD-90 with F3+B on: cyan boxes from its definition along the fuselage and wings, amber boxes from its model filling the nose, fin and tail](docs/images/phase-8/md-90-hull-boxes.png) | ![An EC665 Tiger seen from above with F3+B on, its hull covered in amber and cyan boxes and none in the rotor disc](docs/images/phase-8/ec665-hull-boxes.png) |
+| The MD-90's hull: the definition's boxes (cyan) and the ones made from its model (amber) | The EC665's hull; the rotor disc stays clear |
+| ![The S-75 sight with an SA-2 selected, locked onto a plane overhead](docs/images/phase-8/sa-2-lock-on-plane.png) | ![The SA-2 bursting on the plane in a cloud of smoke and debris](docs/images/phase-8/sa-2-hits-plane.png) |
+| An S-75 locks onto a plane | The SA-2 bursts on it |
+| ![Burning debris trailing down from the sky behind the plane as it spirals towards the ground](docs/images/phase-8/plane-crash-spin.png) | ![The wreck exploding on the ground in a desert village, debris arcing out](docs/images/phase-8/plane-crash-site.png) |
+| The plane rolls into a nose-down spiral | It goes up where it comes down |
+
 Phase 6 in a development build (`1.1.0-beta.2`): night glow. Tracers, rocket motors, flares and
 explosions light up the dark, and a wreck keeps burning until it disappears.
 
