@@ -5,6 +5,48 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+Phase 8 of the road to 1.1.0, toward `1.1.0-beta.4`: the first of the equipment carried over from
+phase 4. From this beta on, betas ship one jar, Forge for Minecraft 26.3; the other loaders and
+1.21.1 come back for 1.1.0. Players and servers need the same version, since the network protocol
+changed.
+
+### Added
+
+- Fuel. Vehicles with a `MaxFuel` burn their `FuelConsumption` while the throttle is open, and the
+  engine winds down when the tank runs dry. The HUD's `fuel` and `low_fuel` values are live, so the
+  original fuel gauges and low fuel warnings work. Fuel trucks top up every vehicle within their
+  `FuelSupplyRange`. Server config `vehicles.infiniteFuel` turns fuel use off.
+- The fuel can (`mcheli:fuel`): right-click a vehicle to pour in up to 100 units, right-click in
+  the air with coal or charcoal in the inventory to fill it again. The original poured it through
+  the vehicle's inventory screen, which is not ported yet.
+- The wrench (`mcheli:wrench`): right-click a vehicle to repair 10 hit points, once a second; with
+  Shift it switches the vehicle to its next paint scheme.
+- The parachute (`mcheli:parachute`): use it in mid-air to float down, hold W to glide forward.
+- An Equipment creative tab for the three, and the original's crafting recipes for them. Their
+  icons and names come from the imported content, like the vehicles'.
+- Zoom: through a camera, a gunner sight, gunner mode or a UAV, Z doubles the zoom up to the
+  vehicle's `CameraZoom` and then goes back to 1x. Elsewhere Z still folds wings and hatches, as in
+  the original. The HUD's `cam_zoom` follows it.
+- Night vision on K for vehicles with `EnableNightVision`. The HUD's `cam_mode` follows it.
+- Crash spin: a shot down plane or jet rolls into a nose-down spiral, and a helicopter spins up
+  faster than before with some wobble, until it is close to the ground. The direction comes from
+  the entity, so everyone sees the same spin.
+
+### Changed
+
+- Ejection seats come down on a parachute instead of with slow falling.
+- Vehicles are placed with a full tank (the original placed them empty, to be filled from the
+  inventory screen), and vehicles saved by earlier versions load with a full tank.
+- The Z key is called "Zoom / Fold Wings / Hatch" in the controls.
+
+### Fixed
+
+- With an Iris shader pack, tracers, rocket motors, flares and explosion glows no longer turn into
+  long purple and teal lines running to the horizon. The glow pipelines are now handed to Iris,
+  which draws them with its emissive entity and translucent particle programs.
+
 ## [1.1.0-beta.3] - 2026-10-30
 
 Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge, and on Minecraft
