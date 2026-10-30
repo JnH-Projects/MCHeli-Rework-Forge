@@ -7,7 +7,9 @@ import com.jnhprojects.mcheli.client.hud.HudScripts;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
 import com.jnhprojects.mcheli.client.render.FlareRenderer;
+import com.jnhprojects.mcheli.client.render.Glow;
 import com.jnhprojects.mcheli.client.render.MeshCache;
+import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
@@ -41,6 +43,8 @@ public final class ClientHooks {
     /** The weapon HUD's layer, drawn above the vanilla HUD. */
     public static final Identifier HUD_LAYER = Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "weapons");
 
+    private static boolean shaderProgramsAssigned;
+
     private ClientHooks() {
     }
 
@@ -72,6 +76,7 @@ public final class ClientHooks {
         renderers.register(ModEntities.DISPENSED_ITEM.get(), ProjectileRenderer::new);
         renderers.register(ModEntities.FLARE.get(), FlareRenderer::new);
         renderers.register(ModEntities.A10.get(), A10Renderer::new);
+        renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
     }
 
     public static List<KeyMapping> keyMappings() {
@@ -85,6 +90,11 @@ public final class ClientHooks {
     }
 
     public static void clientTickEnd() {
+        if (!shaderProgramsAssigned) {
+            // On the first tick rather than at construction, so Iris has surely loaded by now.
+            shaderProgramsAssigned = true;
+            Glow.assignShaderPrograms();
+        }
         CrewController.onClientTick();
         WeaponController.onClientTick();
         HudRenderer.tick();
@@ -167,6 +177,11 @@ public final class ClientHooks {
         public void setRoll(float roll) {
             this.roll = roll;
         }
+    }
+
+    /** The field of view for this frame, narrowed while the player zooms through a sight. */
+    public static float fov(float fov) {
+        return VehicleCamera.fov(fov);
     }
 
     /** Whether to skip drawing the first person hand this frame. */
