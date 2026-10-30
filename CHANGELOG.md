@@ -5,12 +5,13 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.4] - 2026-10-30
 
-Phase 8 of the road to 1.1.0, toward `1.1.0-beta.4`: the first of the equipment carried over from
-phase 4. From this beta on, betas ship one jar, Forge for Minecraft 26.3; the other loaders and
-1.21.1 come back for 1.1.0. Players and servers need the same version, since the network protocol
-changed.
+Phase 8 of the road to 1.1.0: fuel, the first equipment carried over from phase 4, hit boxes that
+cover the whole vehicle, and crash spins. Betas are not uploaded to CurseForge. From this beta on,
+betas ship one jar, Forge for Minecraft 26.3; the other loaders and 1.21.1 come back for 1.1.0.
+Worlds from 1.1.0-beta.3 load as before. Players and servers need the same version, since the
+network protocol changed.
 
 ### Added
 
@@ -514,6 +515,8 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.4]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.4
+[1.1.0-beta.3]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.3
 [1.1.0-beta.2]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.2
 [1.1.0-beta.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.1
 [1.0.0]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.0.0
