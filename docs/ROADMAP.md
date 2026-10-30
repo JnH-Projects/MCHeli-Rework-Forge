@@ -12,7 +12,7 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-11 | `1.1.0-beta.1` to `beta.7` | Content packs, NeoForge and Fabric, 1.21.1 and 1.20.1, equipment, workshop ([plan](#road-to-110)) | In progress |
+| 5-11 | `1.1.0-beta.1` to `beta.7` | Content packs, NeoForge and Fabric, 1.21.1, equipment, workshop, 1.20.1 ([plan](#road-to-110)) | In progress |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
@@ -84,7 +84,7 @@ textures (back faces are culled again). See the [test plan](TESTING.md#phase-4-c
       the recipe book from the first login
 - [x] Code-only jar: the original content is imported from the player's own copy of the 1.0.3 zip
 
-The rest of the original phase 4 list moved to 1.1.0 (phase 9 below), so 1.0.0 can ship.
+The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 can ship.
 
 ## 1.0.0 release criteria
 
@@ -125,7 +125,7 @@ Rules that hold for every beta:
 - A world saved by 1.0.0 or an earlier beta loads in the next one. Breaking a save format needs
   a data fixer or a migration, and a line under `Changed` in the changelog.
 - The jar still holds no EMB4 file, on every Minecraft version.
-- A phase is done when the build is green for every supported Minecraft version, its checklist
+- A phase is done when the build is green for every module it builds, its checklist
   in [TESTING.md](TESTING.md) passes in single player and on a dedicated server, and
   `CHANGELOG.md`, the docs and [ARCHITECTURE.md](ARCHITECTURE.md) describe what changed.
 
@@ -134,17 +134,19 @@ Rules that hold for every beta:
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Released |
 | 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Released |
-| 8 | `1.1.0-beta.4` | 1.20.1 | Planned |
-| 9 | `1.1.0-beta.5` | Equipment and the rest of phase 4 | Planned |
-| 10 | `1.1.0-beta.6` | Workshop: model, parts and tuning | Planned |
-| 11 | `1.1.0-beta.7` | Workshop: textures, sounds and sharing | Planned |
+| 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 (Forge 26.3 only) | In progress |
+| 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning (Forge 26.3 only) | Planned |
+| 10 | `1.1.0-beta.6` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
+| 11 | `1.1.0-beta.7` | Every loader, 1.21.1 and 1.20.1 | Planned |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
 sits on them. Content packs come before the workshop, since the workshop's output is a pack.
-The ports come right after packs, while the code is still close to 1.0.0; from then on each
-feature is built once in shared code and only its Minecraft glue is written per version and
-loader, instead of back-porting several phases of work at the end.
+The loader split and 1.21.1 come right after packs, while the code is still close to 1.0.0;
+from then on each feature is built once in shared code and only its Minecraft glue is written per
+version and loader. Betas 4 to 6 build only the Forge 26.3 jar, since six modules on three
+toolchains made every build slow; phase 11 writes the glue for the rest, adds 1.20.1 and ships
+every jar again.
 
 ### Supported versions
 
@@ -225,38 +227,31 @@ almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.
 - [x] [TESTING.md](TESTING.md) gets a short smoke test per jar: import, fly a helicopter, drive a
       tank, fire a missile, join a dedicated server
 
-## Phase 8: 1.20.1 (`1.1.0-beta.4`)
+## Phase 8: equipment and the rest of phase 4 (`1.1.0-beta.4`)
 
-The largest modpack version, and the furthest from 26.3.
+Gameplay carried over from phase 4, built once in shared code with per-loader glue. Built and
+tested on Forge 26.3 only; the other loaders and versions get it in phase 11.
 
-- [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
-      methods)
-- [ ] 1.20.1 on Forge and Fabric. NeoForge's 1.20.1 is a fork of Forge 47, so the Forge jar is
-      tested there instead of built twice
-- [ ] Vehicle items keep their vehicle in NBT, since data components only arrived in 1.20.5
-- [ ] Rendering, networking and registration for 1.20.1
-- [ ] Legacy importer and content packs checked on 1.20.1
-- [ ] Same smoke tests as phase 7, for every 1.20.1 jar
-
-## Phase 9: equipment and the rest of phase 4 (`1.1.0-beta.5`)
-
-Gameplay carried over from phase 4, built once in `common` with per-version glue.
-
-- [ ] Crash spin for shot down aircraft (moved from phase 6): planes and jets roll into a
+- [x] Glows under Iris shaders: the custom glow pipelines are handed to Iris, so tracers, motors,
+      flares and explosions no longer streak to the horizon with a shader pack on
+- [x] Crash spin for shot down aircraft (moved from phase 6): planes and jets roll into a
       nose-down spiral instead of just falling, and helicopters spin faster with some wobble. The
       spin direction comes from the entity id so every client sees the same thing.
-- [ ] Night vision, thermal view and zoom
-- [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, parachute, chain towing,
-      container, fuel, wrench, Stinger and Javelin, smoke grenades
-- [ ] Fuel use and the vehicle inventory
-- [ ] Parachutes for ejection seats and rack drops, containers on racks, repelling and troop drops
+- [x] Night vision and zoom
+- [ ] Thermal view
+- [x] Fuel use, fuel trucks, the fuel can, the wrench and the parachute
+- [ ] The vehicle inventory, with its fuel slots
+- [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, chain towing, container,
+      Stinger and Javelin, smoke grenades
+- [x] Parachutes for ejection seats
+- [ ] Parachutes for rack drops, containers on racks, repelling and troop drops
 - [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
 - [ ] Resupply from the inventory screen and from supply vehicles, marking blocks with targeting
       pods, mortar distance
 - [ ] The drafting table and its recipe browser (pack vehicles included)
 - [ ] Multiplayer team manager and spotting
 
-## Phase 10: workshop, model, parts and tuning (`1.1.0-beta.6`)
+## Phase 9: workshop, model, parts and tuning (`1.1.0-beta.5`)
 
 The first half of the [editor](#the-editor). Its output is a pack from phase 6, so anything
 built here syncs to other players with no extra work.
@@ -269,13 +264,30 @@ built here syncs to other players with no extra work.
 - [ ] Save, export and load packages; undo and redo
 - [ ] Workshop guide in `docs/content/workshop.md`
 
-## Phase 11: workshop, textures, sounds and sharing (`1.1.0-beta.7`)
+## Phase 10: workshop, textures, sounds and sharing (`1.1.0-beta.6`)
 
 - [ ] Texture painting on the model and PNG import per part (cockpit textures included), with
       live preview
 - [ ] OGG sounds for engine, rotor and weapons, with pitch curves
 - [ ] Package browser, author credits shown in game
 - [ ] Operator approval before a player's new vehicle goes live on a server
+
+## Phase 11: every loader, 1.21.1 and 1.20.1 (`1.1.0-beta.7`)
+
+Betas 4 to 6 ship only the Forge 26.3 jar, to keep builds fast. This phase brings the features
+added since beta.3 to NeoForge, Fabric and 1.21.1, and adds 1.20.1, the largest modpack version
+and the furthest from 26.3. All jars ship again from here on.
+
+- [ ] Every module back in `platforms`; phases 8 to 10 ported to NeoForge and Fabric on 26.3 and
+      to all three loaders on 1.21.1
+- [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
+      methods)
+- [ ] 1.20.1 on Forge and Fabric. NeoForge's 1.20.1 is a fork of Forge 47, so the Forge jar is
+      tested there instead of built twice
+- [ ] Vehicle items keep their vehicle in NBT, since data components only arrived in 1.20.5
+- [ ] Rendering, networking and registration for 1.20.1
+- [ ] Legacy importer and content packs checked on 1.20.1
+- [ ] The phase 7 smoke tests for every jar
 
 ## 1.1.0 release
 
