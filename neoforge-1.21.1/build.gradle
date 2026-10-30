@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.neoforged.moddev'
+}
+
+apply from: rootProject.file('gradle/loader.gradle')
+
+// The original MCHeli 1.0.3 download. Players supply their own copy; development runs use this
+// one (git-ignored, see docs/DEVELOPMENT.md).
+def legacyZip = rootProject.file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
+
+neoForge {
+    version = neoforge_version
+
+    runs {
+        configureEach {
+            gameDirectory = rootProject.file("run-${minecraft_version}")
+            systemProperty 'mcheli.legacyZip', legacyZip
+        }
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        mcheli {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
