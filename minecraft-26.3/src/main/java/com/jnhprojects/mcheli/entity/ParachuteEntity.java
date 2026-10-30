@@ -10,6 +10,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.InterpolationHandler;
+import net.minecraft.world.entity.LinearInterpolationHandler;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -147,6 +149,15 @@ public class ParachuteEntity extends Entity {
         if (rider != null) {
             setYRot(rider.getYRot());
         }
+    }
+
+    /**
+     * The server moves the parachute; clients ease towards each position it sends over three
+     * ticks, as for the vehicles. Without this a slow descent steps from one update to the next.
+     */
+    @Override
+    protected InterpolationHandler createInterpolationHandler() {
+        return LinearInterpolationHandler.create(this, 3);
     }
 
     @Override
