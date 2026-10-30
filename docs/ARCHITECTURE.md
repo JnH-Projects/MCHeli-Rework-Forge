@@ -76,6 +76,31 @@ fires its event, so the shared code sees the same thing on every loader:
 
 NeoForge rolls the camera the other way round from Forge, so its mixin negates the roll.
 
+### Minecraft 1.21.1
+
+`minecraft-1.21.1` is a copy of `minecraft-26.3` ported back, so the two read side by side. After
+1.1.0 it is frozen (see [supported versions](ROADMAP.md#supported-versions)), so the copy is not
+kept in step by hand beyond that. What differs:
+
+- **Rendering.** 1.21.1 has no render states or submit step. Each renderer fills the same state
+  object itself at the start of `render` and draws straight into the `MultiBufferSource`, so
+  `PartRenderer`, `MeshRenderer` and `GlassSplit` are unchanged apart from that. The glow uses a
+  render type built from `RenderType`'s public constructor (vanilla keeps `RenderType.create`
+  package private) and a custom `ParticleRenderType` for additive particles.
+- **Vehicle icons.** There is no `item_model` component. The import writes one item model per kind
+  whose `custom_model_data` overrides pick each vehicle's model, and lists the numbers in
+  `mcheli/imported/item_icons.properties`; `AircraftItem.stackOf` puts the number on the stack.
+- **Recipes** take ingredients as `{"item": ...}` and `{"tag": ...}` objects; the import writes
+  them that way for `ImportTarget.V1_21_1`. The marker file records the target, so a folder
+  imported for one version is imported again by the other.
+- **Entities** extend `Entity` instead of `VehicleEntity`, whose abstract `getDropItem` is package
+  private in vanilla, and keep their own hurt wobble data. Save data is `CompoundTag`, damage goes
+  through `hurt` (server only), server position updates are eased in by `lerpTo` like vanilla's
+  boat, and a click on the hull arrives through `interactAt`.
+- **Camera.** Forge 1.21.1 fires its camera event after the camera is placed, so Forge uses the
+  event. NeoForge and Fabric hook `GameRenderer.renderLevel` just before the camera rotation turns
+  into the view matrix, the spot Forge fires from.
+
 `client` is only referenced from the loader modules behind a physical client check, so a
 dedicated server never loads a client class.
 
