@@ -156,6 +156,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     private int timeSinceHit;
     /** The night vision effect a crew member gets, topped up before it runs low: 15 seconds. */
     private static final int NIGHT_VISION_TICKS = 300;
+    /** The fuel load from which an aircraft counts as heavy: the H8K flying boat and up. */
+    private static final int HEAVY_FUEL = 3000;
     /** How long a wreck stays, burning, before it disappears: 30 seconds. */
     private static final int WRECK_TICKS = 600;
     /** The wreck fire dies down over the last five seconds. */
@@ -1657,7 +1659,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         double bestDistance = best.map(from::distanceToSqr).orElse(Double.MAX_VALUE);
         AircraftDefinition def = definition();
         if (def != null) {
-            for (BoundingBoxDefinition box : def.boundingBoxes) {
+            for (BoundingBoxDefinition box : def.hull()) {
                 Optional<Vec3> hit = clip(hullBox(box).inflate(inflate), from, to);
                 if (hit.isPresent() && from.distanceToSqr(hit.get()) < bestDistance) {
                     best = hit;
@@ -1680,15 +1682,15 @@ public abstract class AircraftEntity extends VehicleEntity {
         return new AABB(c.x - hw, c.y - hh, c.z - hw, c.x + hw, c.y + hh, c.z + hw);
     }
 
-    /** The whole hull: the main hit box and every {@code BoundingBox}, in world space. */
+    /** The whole hull: the main hit box, every {@code BoundingBox} and the generated boxes, in world space. */
     public List<AABB> hullBoxes() {
         AircraftDefinition def = definition();
-        if (def == null || def.boundingBoxes.isEmpty()) {
+        if (def == null || def.hull().isEmpty()) {
             return List.of(getBoundingBox());
         }
-        List<AABB> boxes = new ArrayList<>(def.boundingBoxes.size() + 1);
+        List<AABB> boxes = new ArrayList<>(def.hull().size() + 1);
         boxes.add(getBoundingBox());
-        for (BoundingBoxDefinition box : def.boundingBoxes) {
+        for (BoundingBoxDefinition box : def.hull()) {
             boxes.add(hullBox(box));
         }
         return boxes;
@@ -1699,7 +1701,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         AABB bounds = getBoundingBox();
         AircraftDefinition def = definition();
         if (def != null) {
-            for (BoundingBoxDefinition box : def.boundingBoxes) {
+            for (BoundingBoxDefinition box : def.hull()) {
                 bounds = bounds.minmax(hullBox(box));
             }
         }
@@ -1708,9 +1710,17 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     /** Whether any part of this hull touches any part of {@code other}'s, grown by {@code inflate}. */
     private boolean hullsTouch(AircraftEntity other, double inflate) {
-        List<AABB> theirs = other.hullBoxes();
+        // Hulls generated from big models run to a thousand boxes, so skip ours that are nowhere near.
+        AABB around = other.hullBounds().inflate(inflate);
+        List<AABB> theirs = null;
         for (AABB mine : hullBoxes()) {
             AABB grown = mine.inflate(inflate);
+            if (!grown.intersects(around)) {
+                continue;
+            }
+            if (theirs == null) {
+                theirs = other.hullBoxes();
+            }
             for (AABB box : theirs) {
                 if (grown.intersects(box)) {
                     return true;
@@ -1880,7 +1890,7 @@ public abstract class AircraftEntity extends VehicleEntity {
                     entityData.set(DATA_HP, 0);
                     destroyVehicle();
                     timeSinceHit = 20;
-                    if (isAfloat()) {
+                    if (isAfloat() || isHeavy() && isNearGround(3)) {
                         startCookOff(source.getEntity());
                     } else if (source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.FALL)) {
                         crashExplosion();
@@ -1935,6 +1945,10 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (!(level() instanceof ServerLevel level)) {
             return;
         }
+        if (isHeavy()) {
+            startCookOff(null);
+            return;
+        }
         exploded = true;
         AircraftDefinition def = definition();
         float size = Mth.clamp(def != null ? def.maxFuel / 400.0F : 2.0F, 1.0F, 15.0F);
@@ -1945,6 +1959,15 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
     }
 
+    /**
+     * Airliners, bombers and transports ({@code MaxFuel} of {@value HEAVY_FUEL} or more): like a
+     * boat, they go up in three blasts rather than one fireball.
+     */
+    private boolean isHeavy() {
+        AircraftDefinition def = definition();
+        return def != null && def.maxFuel >= HEAVY_FUEL;
+    }
+
     /** A floating vehicle sitting on the water, such as a patrol boat or a float plane at rest. */
     private boolean isAfloat() {
         AircraftDefinition def = definition();
@@ -1952,9 +1975,9 @@ public abstract class AircraftEntity extends VehicleEntity {
     }
 
     /**
-     * A boat destroyed on the water does not go up in one crash fireball; its fuel and magazine
-     * cook off in three blasts over about five seconds, then the hull sinks. Not in the original,
-     * which only had the crash explosion.
+     * A boat destroyed on the water, or a heavy aircraft wrecked on the ground, does not go up in
+     * one crash fireball; its fuel and magazine cook off in three blasts over about five seconds,
+     * then a hull in the water sinks. Not in the original, which only had the crash explosion.
      */
     private void startCookOff(@Nullable Entity cause) {
         exploded = true;
@@ -1986,7 +2009,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             // Three blasts inside five seconds: about 1.5 to 2.5 seconds apart.
             cookOffDelay = 30 + random.nextInt(20);
         } else {
-            entityData.set(DATA_SINKING, true);
+            // A boat or a flying boat goes under; a heavy aircraft on land stays where it burns.
+            if (isInWater() || waterDepth() > 0.0) {
+                entityData.set(DATA_SINKING, true);
+            }
             cookOffCause = null;
         }
     }
