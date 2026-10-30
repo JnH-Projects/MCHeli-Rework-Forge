@@ -4,66 +4,97 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| JDK | 25 | Gradle provisions one through the Foojay resolver if none is installed. |
-| Gradle | 9.7.1 | Use the wrapper (`./gradlew`). |
-| ForgeGradle | 7.x | Sets up Minecraft through the Mavenizer on first build. |
-| Forge | 66.1.0 for Minecraft 26.3 | Mappings are Mojang's official names. |
+| JDK | 25 (and 21 for the 1.21.1 modules) | Gradle provisions them through the Foojay resolver if none is installed. |
+| Gradle | 9.8.2 | Use the wrapper (`./gradlew`). Loom 1.19 needs 9.8. |
+| ForgeGradle | 7.x | Forge modules. Sets up Minecraft through the Mavenizer on first build. |
+| ModDevGradle | 2.0.x | NeoForge modules. |
+| Fabric Loom | 1.19 | Fabric modules: `net.fabricmc.fabric-loom` for 26.x, `-remap` for 1.21.1. |
+| Forge | 66.1.0 for Minecraft 26.3 | |
+| NeoForge | 26.3.0.99 for Minecraft 26.3 | |
+| Fabric | Loader 0.20.1, Fabric API 0.165.0+26.3 | |
+| Forge | 52.1.20 for Minecraft 1.21.1 | Built with ForgeGradle 7 and the official mappings. |
+| NeoForge | 21.1.265 for Minecraft 1.21.1 | |
+| Fabric | Fabric API 0.116.17+1.21.1 | Loom remaps the jar, which is obfuscated on 1.21.1. |
 
-The first build downloads and decompiles Minecraft, which takes a few minutes. Avoid running a
-second Gradle build (for example an IDE import) while that is in progress: both write the same
-cache and can corrupt each other's output. If setup fails with a zip or EOF error, wait for the
-other process to finish and build again.
+All three use Mojang's official names, so the shared code reads the same on every loader.
+
+The first build downloads and decompiles Minecraft once per loader, which takes a few minutes.
+Avoid running a second Gradle build (for example an IDE import) while that is in progress: both
+write the same caches and can corrupt each other's output. If setup fails with a zip or EOF error,
+wait for the other process to finish and build again.
 
 ## Common tasks
 
 ```
-./gradlew build                    # compile and test every module, one jar per Minecraft version in build/release
-./gradlew :common:test             # unit tests (they all live in common)
-./gradlew :forge-26.3:runClient    # start a development client from ./run
-./gradlew :forge-26.3:runServer    # start a development dedicated server from ./run
+./gradlew build                        # compile and test every module, one jar per loader and version in build/release
+./gradlew :common:test                 # unit tests (they all live in common)
+./gradlew :forge-26.3:runClient        # development client from ./run
+./gradlew :neoforge-26.3:runClient
+./gradlew :fabric-26.3:runClient
+./gradlew :neoforge-1.21.1:runClient       # 1.21.1 modules run from ./run-1.21.1
+./gradlew :<module>:runServer          # development dedicated server from ./run
 ```
 
 Shared properties live in the root `gradle.properties`: `mod_version`, the mod metadata, the list
-of platform modules (`platforms`) and the library versions `common` compiles against. Each
-platform module has its own `gradle.properties` with its Minecraft, loader and Java versions.
-`mods.toml` and `pack.mcmeta` are filled in from them at build time.
+of loader modules (`platforms`) and the library versions `common` compiles against. Each loader
+module has its own `gradle.properties` with its loader, Minecraft and Java versions.
+`mods.toml`, `neoforge.mods.toml`, `fabric.mod.json` and `pack.mcmeta` are filled in from them
+at build time. What every loader module shares (source folders, jar contents, manifest, file
+names) is in `gradle/loader.gradle`.
 
 ## Repository layout
 
 ```
 common/                        version-free code, built and tested without Minecraft
-  src/main/java                content, model, hud, physics (see ARCHITECTURE.md)
+  src/main/java                content, model, hud, physics, config (see ARCHITECTURE.md)
   src/main/resources           lang files shared by every platform
   src/test/java                all unit tests, including the boundary test
-forge-26.3/                    the Minecraft 26.3 / Forge 66 platform module
-  src/main/java                rendering, networking, registration, entities, events
-  src/main/resources           mods.toml, pack.mcmeta, item models, damage type data
-  gradle.properties            Minecraft, Forge and Java versions for this module
+minecraft-26.3/                code shared by every loader on Minecraft 26.3 (not a Gradle project)
+  src/main/java                entities, rendering, networking, registries, HUD, sounds, hooks
+  src/main/resources           pack.mcmeta, item models, damage type data, mod icon
+forge-26.3/                    Forge 66 glue: entry point, events, payload channel, ingredient
+neoforge-26.3/                 NeoForge glue, plus a camera mixin
+fabric-26.3/                   Fabric glue, plus mixins for what Fabric API has no event for
+minecraft-1.21.1/              the same shared code, backported to Minecraft 1.21.1
+forge-1.21.1/, neoforge-1.21.1/, fabric-1.21.1/   the loader glue for 1.21.1
+gradle/loader.gradle           what every loader module shares
 docs/                          documentation and content format guides
 .github/workflows              CI and release pipelines
 ```
 
-### Common and platform modules
+### Three layers
 
-1.1.0 brings older Minecraft versions, so the code is split in two:
+1.1.0 runs on several Minecraft versions and three loaders, so the code is split in three:
 
 - **`common`** holds everything that does not depend on the game version: definition parsing,
   the content registry, model loading, the HUD expression language, recipe conversion, rotation
-  and impact maths. Its classpath has only the JDK, SLF4J, JSpecify and JOML (all shipped by every
-  supported Minecraft version), so a stray Minecraft import fails to compile, and
-  `CommonBoundaryTest` names the offending line.
-- **A platform module per Minecraft version** (`forge-26.3` today) holds the glue: entities,
-  rendering, networking, registration, config, commands. It compiles `common`'s sources together
-  with its own, so each version ships as one jar and runs as one module in development.
+  and impact maths, the config file format. Its classpath has only the JDK, SLF4J, JSpecify and
+  JOML (all shipped by every supported Minecraft version), so a stray Minecraft import fails to
+  compile, and `CommonBoundaryTest` names the offending line.
+- **`minecraft-<version>`** holds everything that touches Minecraft but not a loader: entities,
+  rendering, networking, the HUD, sounds, commands, config. It talks to the loader through
+  `platform.Platform` (paths, sending packets, creative tab builders) and `platform.Registration`
+  (registry entries), and exposes `CommonHooks` and `client.ClientHooks` for the loader to call
+  from its events. It is not a Gradle project of its own: every loader module on that version
+  compiles it, and since Fabric has none of Forge's classes and Forge none of Fabric's, a loader
+  API that slips in breaks a build.
+- **A loader module per loader and version** (`forge-26.3`, `neoforge-26.3`, `fabric-26.3`) is
+  the thin glue: the entry point, registering what `Registration` collected, wiring events to the
+  hooks, the packet channel, the vehicle ingredient type, and mixins where the loader has no event
+  (camera roll, hand, use and pick block keys, rider pose, the imported content pack on Fabric).
 
-A feature that is pure logic goes in `common` with a unit test; only the part that touches
-Minecraft goes in the platform module. Adding a version means adding a module directory, listing
-it in `platforms`, and porting the platform code; `common` should not need to change. The run
-folder `./run` is shared for now; later modules will get their own.
+Each loader module compiles `common` and its `minecraft-<version>` sources together with its own,
+so each loader and version ships as one jar and runs as one module in development.
 
-IDEs import the project as three Gradle projects (root, `common`, `forge-26.3`). After pulling the
-split, re-import the Gradle project so the IDE picks up the new source folders and run
-configurations; the old root-level `run*.launch` files point at a project that no longer exists.
+A feature that is pure logic goes in `common` with a unit test; the part that touches Minecraft
+goes in `minecraft-<version>`; only what needs a loader API goes in the loader modules. The run
+folder `./run` is shared by every 26.3 module and `./run-1.21.1` by every 1.21.1 module; worlds made by
+one loader open on the others, but never open a 26.3 world on 1.21.1.
+
+IDEs import the project as one Gradle project per module. A file under `minecraft-26.3` belongs
+to all three loader modules, so the IDE shows it under whichever it picked; it compiles under all
+of them on the command line. After pulling the split, re-import the Gradle project; the old
+`forge-26.3` run configurations still work, the NeoForge and Fabric ones are new.
 
 `Mod/` holds the original `MC1.7.10_mcheli_1.0.3.zip`. It is git-ignored. Download it from the
 [MCHeli CurseForge page](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files)
@@ -105,8 +136,9 @@ Releases are cut from tags. The release workflow refuses to publish when the tag
 
 `.github/workflows/release.yml` then builds and tests the tag, extracts the matching
 `CHANGELOG.md` section as release notes, and publishes a GitHub release with one jar per
-Minecraft version (`mcheli-<minecraft>-<version>.jar`, gathered by the `releaseJars` task into
-`build/release`). One tag always releases every platform module at the same mod version. Versions
+loader and Minecraft version (`mcheli-<loader>-<minecraft>-<version>.jar`, such as
+`mcheli-fabric-26.3-1.1.0-beta.3.jar`, gathered by the `releaseJars` task into `build/release`).
+One tag always releases every loader module at the same mod version. Versions
 containing a hyphen (`-alpha.N`, `-beta.N`, `-rc.N`) are marked as pre-releases.
 
 Every release, pre-releases included, is mirrored to the public repository and tagged there too.

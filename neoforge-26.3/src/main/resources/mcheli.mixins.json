@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.jnhprojects.mcheli.neoforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "CameraInvoker",
+    "GameRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

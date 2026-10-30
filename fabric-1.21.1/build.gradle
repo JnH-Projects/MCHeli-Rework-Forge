@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.fabricmc.fabric-loom-remap'
+}
+
+apply from: rootProject.file('gradle/loader.gradle')
+
+// The original MCHeli 1.0.3 download. Players supply their own copy; development runs use this
+// one (git-ignored, see docs/DEVELOPMENT.md).
+def legacyZip = rootProject.file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
+
+loom {
+    runs {
+        configureEach {
+            runDir = "../run-${minecraft_version}"
+            vmArg "-Dmcheli.legacyZip=${legacyZip}"
+        }
+        server {
+            programArgs '--nogui'
+        }
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    // 1.21.1 is obfuscated; Mojang's names keep the shared code the same as on Forge and NeoForge.
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+}

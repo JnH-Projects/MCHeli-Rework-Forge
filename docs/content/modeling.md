@@ -3,7 +3,7 @@
 This guide covers the model side of a new vehicle: the part you build outside Minecraft. The
 vehicle itself (seats, rotors, wings, engine, weapons, flight values) is described by a definition
 file, see [aircraft.md](aircraft.md). The vehicle workshop planned for 1.1.0 (see
-[ROADMAP.md](../ROADMAP.md), phases 9 and 10) will let you do that second half in game by clicking on the
+[ROADMAP.md](../ROADMAP.md), phases 10 and 11) will let you do that second half in game by clicking on the
 model instead of typing coordinates. The model rules below are the same either way, so a model
 made today keeps working in the workshop.
 

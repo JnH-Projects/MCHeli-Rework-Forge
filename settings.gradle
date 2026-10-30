@@ -1,3 +1,19 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.neoforged.net/releases/' }
+    }
+    resolutionStrategy {
+        eachPlugin {
+            // Loom publishes every plugin id from one artifact, without plugin markers.
+            if (requested.id.id.startsWith('net.fabricmc.fabric-loom')) {
+                useModule("net.fabricmc:fabric-loom:${requested.version}")
+            }
+        }
+    }
+}
+
 plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
@@ -7,8 +23,9 @@ rootProject.name = 'mcheli-rework'
 // Version-free code: content, models, HUD scripts, flight maths. No Minecraft on its classpath.
 include 'common'
 
-// One module per Minecraft version, each compiling common's sources together with its own
-// rendering, networking, registration and event code. See docs/DEVELOPMENT.md.
+// One module per loader and Minecraft version, each compiling common's sources and its Minecraft
+// version's shared sources together with its own registration, events and networking. See
+// docs/DEVELOPMENT.md.
 for (String platform : providers.gradleProperty('platforms').get().split(',')) {
     include platform.trim()
 }

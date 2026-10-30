@@ -2,7 +2,8 @@
 
 <img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
 
-Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** on **Forge 66.1**.
+Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** and **1.21.1**, on **Forge**,
+**NeoForge** and **Fabric**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
 system is rewritten for the modern game, while the original vehicle definitions, models,
@@ -124,24 +125,28 @@ Reserved original, the code is source available rather than open source.
 
 ## Requirements
 
-| | Version |
-|---|---------|
-| Minecraft | 26.3 |
-| Forge | 66.1.0 or newer in the 66.x line |
-| Java | 25 (bundled with the Minecraft launcher) |
+| | Minecraft 26.3 | Minecraft 1.21.1 |
+|---|---|---|
+| Forge | 66.1.0 or newer in the 66.x line | 52.1.0 or newer |
+| NeoForge | 26.3.0.99 or newer | 21.1.200 or newer |
+| Fabric | Loader 0.20 and Fabric API | Loader 0.16 and Fabric API |
+| Java | 25 (bundled with the launcher) | 21 (bundled with the launcher) |
 
 ## Installing
 
-1. Install Forge 66.1.0 for Minecraft 26.3.
-2. Download `mcheli-26.3-<version>.jar` from the [releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases).
-3. Drop it into the `mods` folder of your Forge 26.3 profile.
+1. Install Forge, NeoForge or Fabric for Minecraft 26.3 or 1.21.1. On Fabric, also install
+   [Fabric API](https://modrinth.com/mod/fabric-api).
+2. Download the jar for your loader from the
+   [releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases):
+   `mcheli-<loader>-<minecraft>-<version>.jar`, such as `mcheli-fabric-1.21.1-<version>.jar`.
+3. Drop it into the `mods` folder of that profile.
 4. Download `MC1.7.10_mcheli_1.0.3.zip` from the
    [MCHeli CurseForge page](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files)
    and put it, still zipped, into a folder called `mcheli` next to `mods` (create it if needed):
 
    ```
    <game directory>/
-     mods/mcheli-26.3-<version>.jar
+     mods/mcheli-<loader>-<minecraft>-<version>.jar
      mcheli/MC1.7.10_mcheli_1.0.3.zip
    ```
 
@@ -151,8 +156,10 @@ be switched off. The zip can be deleted afterwards. Dedicated servers need the z
 place. Without it the game still starts, but there are no vehicles, and the chat says where the
 zip goes.
 
-Use a separate game directory for the Forge 26.3 profile. Mods built for other loaders or older
-versions in a shared `mods` folder will stop the game from starting.
+Use a separate game directory for each loader and version. Mods built for other loaders or older
+versions in a shared `mods` folder will stop the game from starting. Worlds and the `mcheli`
+folder can move between loaders on the same Minecraft version: the imported content, content packs
+and configs are the same files on all three. Do not open a 26.3 world in 1.21.1.
 
 ## Controls
 
@@ -279,8 +286,8 @@ adds a small helicopter, the Rework Scout. To make your own, see
 ./gradlew build
 ```
 
-The jars, one per Minecraft version, end up in `build/release`. Java 25 is required; Gradle
-downloads one automatically if it is not installed. `./gradlew :forge-26.3:runClient` and
-`:forge-26.3:runServer` import the content from
+The jars, one per loader and Minecraft version, end up in `build/release`. Java 25 is required;
+Gradle downloads one automatically if it is not installed. `./gradlew :<loader>-26.3:runClient`
+and `:<loader>-26.3:runServer` (`forge`, `neoforge` or `fabric`) import the content from
 `Mod/MC1.7.10_mcheli_1.0.3.zip`, which you have to download yourself. See
 [DEVELOPMENT.md](docs/DEVELOPMENT.md) for details.

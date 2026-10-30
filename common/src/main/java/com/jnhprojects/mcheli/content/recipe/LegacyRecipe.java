@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.content.recipe;
 
 import com.jnhprojects.mcheli.content.ContentRegistry;
+import com.jnhprojects.mcheli.content.ImportTarget;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 
 import java.util.ArrayList;
@@ -37,6 +38,12 @@ public final class LegacyRecipe {
     public static final String VEHICLE_COMPONENT = "mcheli:vehicle";
     /** Ingredient type matching one vehicle, since every vehicle of a kind shares an item. */
     public static final String VEHICLE_INGREDIENT = "mcheli:vehicle";
+    /**
+     * The keys naming a custom ingredient's type on Forge, NeoForge and Fabric. A vehicle
+     * ingredient carries all three, so the imported recipes work whichever loader reads them; each
+     * loader ignores the other two.
+     */
+    public static final List<String> INGREDIENT_TYPE_KEYS = List.of("type", "neoforge:ingredient_type", "fabric:type");
 
     /**
      * @param result      the crafted vehicle
@@ -46,18 +53,28 @@ public final class LegacyRecipe {
      * @throws InvalidRecipeException with the reason when the line cannot become a recipe
      */
     public static String toJson(Vehicle result, String line, boolean shaped, Predicate<String> modItems) {
+        return toJson(result, line, shaped, modItems, ImportTarget.MODERN);
+    }
+
+    /** As above, in the recipe format of {@code target}. */
+    public static String toJson(Vehicle result, String line, boolean shaped, Predicate<String> modItems, ImportTarget target) {
         String[] s = line.trim().split("\\s*,\\s*");
-        return shaped ? shaped(result, s, modItems) : shapeless(result, s, modItems);
+        return shaped ? shaped(result, s, modItems, target) : shapeless(result, s, modItems, target);
     }
 
     /**
      * A crafted vehicle: the generic item of its kind ({@code mcheli:helicopter}) carrying the
      * definition name, and the item model the import wrote for it.
+     *
+     * @param icon the vehicle's {@code custom_model_data} on 1.21.1, 0 for none
      */
-    public record Vehicle(String kind, String name) {
+    public record Vehicle(String kind, String name, int icon) {
+        public Vehicle(String kind, String name) {
+            this(kind, name, 0);
+        }
     }
 
-    private static String shaped(Vehicle result, String[] s, Predicate<String> modItems) {
+    private static String shaped(Vehicle result, String[] s, Predicate<String> modItems, ImportTarget target) {
         int idx = 0;
         int count = 1;
         if (s.length > 0 && isNumber(s[0])) {
@@ -96,7 +113,7 @@ public final class LegacyRecipe {
             if (idx < s.length && isNumber(s[idx])) {
                 damage = Integer.parseInt(s[idx++]);
             }
-            key.put(Character.toUpperCase(symbol.charAt(0)), ingredient(name, damage, modItems));
+            key.put(Character.toUpperCase(symbol.charAt(0)), ingredient(name, damage, modItems, target));
         }
 
         // 1.7.10 left a pattern letter the key does not define as an empty slot; two bundled
@@ -131,11 +148,11 @@ public final class LegacyRecipe {
             json.append("    \"").append(rows.get(i)).append('"').append(i + 1 < rows.size() ? ",\n" : "\n");
         }
         json.append("  ],\n");
-        appendResult(json, result, count);
+        appendResult(json, result, count, target);
         return json.toString();
     }
 
-    private static String shapeless(Vehicle result, String[] s, Predicate<String> modItems) {
+    private static String shapeless(Vehicle result, String[] s, Predicate<String> modItems, ImportTarget target) {
         List<String> ingredients = new ArrayList<>();
         for (int idx = 0; idx < s.length; idx++) {
             if (s[idx].isEmpty()) {
@@ -146,7 +163,7 @@ public final class LegacyRecipe {
             if (idx + 1 < s.length && isNumber(s[idx + 1])) {
                 damage = Integer.parseInt(s[++idx]);
             }
-            ingredients.add(ingredient(name, damage, modItems));
+            ingredients.add(ingredient(name, damage, modItems, target));
         }
         if (ingredients.isEmpty() || ingredients.size() > 9) {
             throw new InvalidRecipeException("a shapeless recipe needs one to nine ingredients");
@@ -157,35 +174,51 @@ public final class LegacyRecipe {
             json.append("    ").append(ingredients.get(i)).append(i + 1 < ingredients.size() ? ",\n" : "\n");
         }
         json.append("  ],\n");
-        appendResult(json, result, 1);
+        appendResult(json, result, 1, target);
         return json.toString();
     }
 
-    private static void appendResult(StringBuilder json, Vehicle result, int count) {
+    private static void appendResult(StringBuilder json, Vehicle result, int count, ImportTarget target) {
         json.append("  \"result\": {\n    \"id\": \"mcheli:").append(result.kind()).append('"');
         if (count > 1) {
             json.append(",\n    \"count\": ").append(count);
         }
         json.append(",\n    \"components\": {\n")
                 .append("      \"").append(VEHICLE_COMPONENT).append("\": \"").append(result.name()).append("\",\n")
-                .append("      \"minecraft:item_model\": \"mcheli:").append(result.name()).append("\"\n")
+                .append("      ").append(model(result, target)).append('\n')
                 .append("    }\n  }\n}\n");
     }
 
+    /** How the crafted stack points at the vehicle's item model. */
+    private static String model(Vehicle result, ImportTarget target) {
+        return switch (target) {
+            case MODERN -> "\"minecraft:item_model\": \"mcheli:" + result.name() + '"';
+            case V1_21_1 -> "\"minecraft:custom_model_data\": " + result.icon();
+        };
+    }
+
     /** @return the ingredient as a JSON value: a quoted item id or tag, or an object for a vehicle */
-    private static String ingredient(String name, int damage, Predicate<String> modItems) {
+    private static String ingredient(String name, int damage, Predicate<String> modItems, ImportTarget target) {
         String lower = name.trim().toLowerCase(Locale.ROOT);
         if (lower.startsWith("mcheli:")) {
             if (!modItems.test(lower)) {
                 throw new InvalidRecipeException(lower + " does not exist (yet)");
             }
-            return "{\"type\": \"" + VEHICLE_INGREDIENT + "\", \"vehicle\": \"" + lower.substring("mcheli:".length()) + "\"}";
+            StringBuilder json = new StringBuilder("{");
+            for (String key : INGREDIENT_TYPE_KEYS) {
+                json.append('"').append(key).append("\": \"").append(VEHICLE_INGREDIENT).append("\", ");
+            }
+            return json.append("\"vehicle\": \"").append(lower.substring("mcheli:".length())).append("\"}").toString();
         }
         String mapped = LegacyItems.ingredient(lower, damage);
         if (mapped == null) {
             throw new InvalidRecipeException("no modern item for " + lower + (damage != 0 ? " with damage " + damage : ""));
         }
-        return '"' + mapped + '"';
+        if (target == ImportTarget.MODERN) {
+            return '"' + mapped + '"';
+        }
+        // 1.21.1 only reads ingredients as objects.
+        return mapped.startsWith("#") ? "{\"tag\": \"" + mapped.substring(1) + "\"}" : "{\"item\": \"" + mapped + "\"}";
     }
 
     private static boolean isNumber(String s) {
@@ -216,6 +249,15 @@ public final class LegacyRecipe {
      *         that could not become a recipe, as {@code "<file>: <reason>"}
      */
     public static Generated generate(ContentRegistry content) {
+        return generate(content, ImportTarget.MODERN, Map.of());
+    }
+
+    /**
+     * As above, in the recipe format of {@code target}.
+     *
+     * @param icons each vehicle's {@code custom_model_data}, for 1.21.1
+     */
+    public static Generated generate(ContentRegistry content, ImportTarget target, Map<String, Integer> icons) {
         Set<String> items = new TreeSet<>();
         for (AircraftDefinition def : content.all()) {
             items.add("mcheli:" + def.name());
@@ -227,7 +269,8 @@ public final class LegacyRecipe {
             for (Map.Entry<String, String> e : fileNames(def.name(), def.recipes).entrySet()) {
                 try {
                     files.put(e.getKey() + ".json",
-                            toJson(new Vehicle(def.kind(), def.name()), e.getValue(), def.shapedRecipe, items::contains));
+                            toJson(new Vehicle(def.kind(), def.name(), icons.getOrDefault(def.name(), 0)), e.getValue(), def.shapedRecipe,
+                            items::contains, target));
                 } catch (InvalidRecipeException ex) {
                     skipped.add(e.getKey() + ": " + ex.getMessage());
                 }

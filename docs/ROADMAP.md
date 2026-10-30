@@ -12,7 +12,7 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-10 | `1.1.0-beta.1` to `beta.6` | Content packs, older versions, equipment, workshop ([plan](#road-to-110)) | Planned |
+| 5-11 | `1.1.0-beta.1` to `beta.7` | Content packs, NeoForge and Fabric, 1.21.1 and 1.20.1, equipment, workshop ([plan](#road-to-110)) | In progress |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
@@ -84,7 +84,7 @@ textures (back faces are culled again). See the [test plan](TESTING.md#phase-4-c
       the recipe book from the first login
 - [x] Code-only jar: the original content is imported from the player's own copy of the 1.0.3 zip
 
-The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 can ship.
+The rest of the original phase 4 list moved to 1.1.0 (phase 9 below), so 1.0.0 can ship.
 
 ## 1.0.0 release criteria
 
@@ -95,9 +95,9 @@ The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 c
 
 ## Road to 1.1.0
 
-1.1.0 adds three big things on top of 1.0.0: content packs, older Minecraft versions, and the
-vehicle workshop. It also picks up the phase 4 items that were left out of 1.0.0. The work is
-split into six phases, each ending in a beta.
+1.1.0 adds three big things on top of 1.0.0: content packs, more Minecraft versions and loaders,
+and the vehicle workshop. It also picks up the phase 4 items that were left out of 1.0.0. The work is
+split into seven phases, each ending in a beta.
 
 ### Release channels
 
@@ -133,17 +133,37 @@ Rules that hold for every beta:
 |-------|---------|-------|-------|
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Released |
-| 7 | `1.1.0-beta.3` | Older Minecraft versions | Planned |
-| 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 | Planned |
-| 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning | Planned |
-| 10 | `1.1.0-beta.6` | Workshop: textures, sounds and sharing | Planned |
+| 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Released |
+| 8 | `1.1.0-beta.4` | 1.20.1 | Planned |
+| 9 | `1.1.0-beta.5` | Equipment and the rest of phase 4 | Planned |
+| 10 | `1.1.0-beta.6` | Workshop: model, parts and tuning | Planned |
+| 11 | `1.1.0-beta.7` | Workshop: textures, sounds and sharing | Planned |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
 sits on them. Content packs come before the workshop, since the workshop's output is a pack.
 The ports come right after packs, while the code is still close to 1.0.0; from then on each
-feature is built once in shared code and only its Minecraft glue is written per version, instead
-of back-porting four phases of work at the end.
+feature is built once in shared code and only its Minecraft glue is written per version and
+loader, instead of back-porting several phases of work at the end.
+
+### Supported versions
+
+MCHeli stopped at Minecraft 1.7.10. 1.1.0 is the bridge back: it runs on the versions most
+players and modpacks are on today, so anyone can pick the mod up again, and then follows the
+latest Minecraft.
+
+| Minecraft | Also runs on | Java | Forge | NeoForge | Fabric |
+|-----------|--------------|------|-------|----------|--------|
+| 26.3 | | 25 | yes | yes | yes |
+| 1.21.1 | 1.21 | 21 | yes | yes | yes |
+| 1.20.1 | 1.20 | 17 | yes | the Forge jar (NeoForge 1.20.1 is a Forge fork) | yes |
+
+Each major version gets its most played minor rather than its last one (1.20.6 and 1.21.11 have
+few players). Nothing below 1.20.
+
+**After 1.1.0, the 1.20.1 and 1.21.1 builds are frozen.** They get no further fixes or features;
+development continues on the latest Minecraft version only, and players are expected to move
+up with it.
 
 ## Phase 5: groundwork (`1.1.0-beta.1`)
 
@@ -184,24 +204,41 @@ The external content packs from phase 4, in the package format the workshop will
 - [x] Night glow: tracers, rocket motors, flares and explosions glow, faint by day and bright at
       night; a crash keeps burning with a glow and the wreck burns for 30 seconds. Client config `effects.nightGlow` turns it off.
 
-## Phase 7: older Minecraft versions (`1.1.0-beta.3`)
+## Phase 7: loaders and 1.21.1 (`1.1.0-beta.3`)
 
-Ports of the platform module. The shared code should need no changes; if it does, the split
-from phase 5 gets fixed rather than worked around.
+1.1.0 runs on three Minecraft versions, each on three loaders (see
+[supported versions](#supported-versions)). This phase splits the code so the loaders share
+almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.21.1.
 
-- [ ] Decide the target list and loader for each version (see [open decisions](#open-decisions))
-- [ ] 26.2 and 26.1 on Forge: closest to 26.3, mostly renamed methods
-- [ ] 1.21.1 on Java 21: older rendering and networking APIs, item stacks with NBT where 26.x
-      uses data components
-- [ ] Legacy importer checked on each version (pack format numbers and the asset layout differ)
-- [ ] CI builds and tests every module on every pull request
-- [ ] [TESTING.md](TESTING.md) gets a short per-version smoke test: import, fly a helicopter,
-      drive a tank, fire a missile, join a dedicated server
+- [x] Three layers: `common` (pure Java, as now), shared code per Minecraft version (rendering,
+      entities, sounds, HUD, which are the same on every loader), and a thin module per loader
+      (registration, events, networking, config)
+- [x] NeoForge and Fabric on 26.3, with the same features and checklists as Forge
+- [x] 1.21.1 (Java 21) on Forge, NeoForge and Fabric: older rendering (no render states), older
+      networking, item models from the item JSON instead of `item_model`
+- [ ] Content packs and their sync work across loaders on the same Minecraft version (a Fabric
+      client on a NeoForge server)
+- [x] Legacy importer checked on 1.21.1 (pack format numbers and the asset layout differ)
+- [x] Jar names carry the loader and the Minecraft version, such as
+      `mcheli-fabric-1.21.1-1.1.0-beta.3.jar`; the release workflow publishes every jar
+- [x] CI builds and tests every module on every pull request
+- [x] [TESTING.md](TESTING.md) gets a short smoke test per jar: import, fly a helicopter, drive a
+      tank, fire a missile, join a dedicated server
 
-1.20.1 (Java 17) is the next candidate after 1.21.1. It joins 1.1.0 only if it is ready in this
-phase; otherwise it moves to 1.2.0 so it does not hold the release back.
+## Phase 8: 1.20.1 (`1.1.0-beta.4`)
 
-## Phase 8: equipment and the rest of phase 4 (`1.1.0-beta.4`)
+The largest modpack version, and the furthest from 26.3.
+
+- [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
+      methods)
+- [ ] 1.20.1 on Forge and Fabric. NeoForge's 1.20.1 is a fork of Forge 47, so the Forge jar is
+      tested there instead of built twice
+- [ ] Vehicle items keep their vehicle in NBT, since data components only arrived in 1.20.5
+- [ ] Rendering, networking and registration for 1.20.1
+- [ ] Legacy importer and content packs checked on 1.20.1
+- [ ] Same smoke tests as phase 7, for every 1.20.1 jar
+
+## Phase 9: equipment and the rest of phase 4 (`1.1.0-beta.5`)
 
 Gameplay carried over from phase 4, built once in `common` with per-version glue.
 
@@ -219,7 +256,7 @@ Gameplay carried over from phase 4, built once in `common` with per-version glue
 - [ ] The drafting table and its recipe browser (pack vehicles included)
 - [ ] Multiplayer team manager and spotting
 
-## Phase 9: workshop, model, parts and tuning (`1.1.0-beta.5`)
+## Phase 10: workshop, model, parts and tuning (`1.1.0-beta.6`)
 
 The first half of the [editor](#the-editor). Its output is a pack from phase 6, so anything
 built here syncs to other players with no extra work.
@@ -232,7 +269,7 @@ built here syncs to other players with no extra work.
 - [ ] Save, export and load packages; undo and redo
 - [ ] Workshop guide in `docs/content/workshop.md`
 
-## Phase 10: workshop, textures, sounds and sharing (`1.1.0-beta.6`)
+## Phase 11: workshop, textures, sounds and sharing (`1.1.0-beta.7`)
 
 - [ ] Texture painting on the model and PNG import per part (cockpit textures included), with
       live preview
@@ -242,7 +279,7 @@ built here syncs to other players with no extra work.
 
 ## 1.1.0 release
 
-No new features after beta.6; a `1.1.0-rc.N` follows only if beta.6 testing finds problems.
+No new features after beta.7; a `1.1.0-rc.N` follows only if beta.7 testing finds problems.
 
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
@@ -252,9 +289,6 @@ No new features after beta.6; a `1.1.0-rc.N` follows only if beta.6 testing find
 
 ## Open decisions
 
-- **Older versions and loaders.** Which versions are in 1.1.0, and Forge or NeoForge for each
-  one below 26.x. NeoForge is where most 1.21.1 mods live; Forge keeps one loader for the whole
-  project. The current plan is 26.2, 26.1 and 1.21.1, with 1.20.1 next.
 - **Workshop entry point.** A new workshop block, or a tab in the drafting table.
 - **Pack hosting.** Whether there is ever a shared place to publish packs, or only hand sharing
   and server sync.

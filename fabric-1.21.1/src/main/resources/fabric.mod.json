@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "Helicopters, planes, tanks and vehicles for modern Minecraft. A ground-up rework of MCHeli 1.0.3 by EMB4, which stopped at Minecraft 1.7.10. The vehicles come from your own copy of the original: put MC1.7.10_mcheli_1.0.3.zip from the MCHeli CurseForge page into the \"mcheli\" folder of the game directory.",
+  "authors": ["JayMar921 (rework)", "EMB4 (original author)", "Fureniku (CurseForge maintainer)"],
+  "contact": {
+    "homepage": "https://github.com/JnH-Projects/MCHeli-Rework-Forge",
+    "issues": "https://github.com/JnH-Projects/MCHeli-Rework-Forge/issues",
+    "sources": "https://github.com/JnH-Projects/MCHeli-Rework-Forge"
+  },
+  "license": "LicenseRef-MCHeli-Rework-1.0",
+  "icon": "mcheli_logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.jnhprojects.mcheli.fabric.McheliFabric"],
+    "client": ["com.jnhprojects.mcheli.fabric.McheliFabricClient"]
+  },
+  "mixins": ["mcheli.mixins.json"],
+  "depends": {
+    "fabricloader": "${loader_version_range}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version_range}",
+    "java": ">=${java_version}"
+  }
+}
