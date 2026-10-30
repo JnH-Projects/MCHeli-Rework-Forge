@@ -13,6 +13,7 @@ import com.jnhprojects.mcheli.content.aircraft.part.TrackRoller;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponBayPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WheelPart;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,6 +87,13 @@ public abstract class AircraftDefinition extends Definition {
     public boolean canRotateOnGround = true;
     public boolean enableBack;
     public final List<BoundingBoxDefinition> boundingBoxes = new ArrayList<>();
+    /**
+     * Not from the file: boxes for the parts of the model the {@code BoundingBox} lines leave out,
+     * made by {@link com.jnhprojects.mcheli.model.HullFill} when the content loads. Empty without a
+     * model.
+     */
+    private List<BoundingBoxDefinition> generatedBoxes = List.of();
+    private @Nullable List<BoundingBoxDefinition> hull;
     public float markerWidth = 2.0F;
     public float markerHeight = 1.0F;
 
@@ -190,6 +198,27 @@ public abstract class AircraftDefinition extends Definition {
 
     /** Asset folder for this kind, for example {@code helicopters}. */
     public abstract String folder();
+
+    public List<BoundingBoxDefinition> generatedBoxes() {
+        return generatedBoxes;
+    }
+
+    public void setGeneratedBoxes(List<BoundingBoxDefinition> boxes) {
+        generatedBoxes = List.copyOf(boxes);
+        hull = null;
+    }
+
+    /** Every hit box besides the main one: the {@code BoundingBox} lines, then the generated boxes. */
+    public List<BoundingBoxDefinition> hull() {
+        List<BoundingBoxDefinition> h = hull;
+        if (h == null) {
+            List<BoundingBoxDefinition> all = new ArrayList<>(boundingBoxes);
+            all.addAll(generatedBoxes);
+            h = List.copyOf(all);
+            hull = h;
+        }
+        return h;
+    }
 
     /** HUD used for a seat that the definition did not configure. */
     protected abstract String defaultHud(int seatIndex);
