@@ -23,6 +23,7 @@ public final class ServerConfig {
     private static final ConfigSpec.BooleanValue EXPLOSIONS_START_FIRES;
     private static final ConfigSpec.DoubleValue VEHICLE_DAMAGE_FACTOR;
     private static final ConfigSpec.BooleanValue INFINITE_AMMO;
+    private static final ConfigSpec.BooleanValue INFINITE_FUEL;
     private static final ConfigSpec.StringListValue DISABLED_VEHICLES;
     private static final ConfigSpec.StringListValue PACK_ALLOW_LIST;
     private static final ConfigSpec.IntValue MAX_PACK_SIZE;
@@ -49,6 +50,9 @@ public final class ServerConfig {
                 .comment("Vehicles that cannot be placed, by definition name (the file name, such as \"ah-64\").",
                         "Vehicles already in the world stay.")
                 .defineList("disabled", List.of());
+        INFINITE_FUEL = builder
+                .comment("Whether vehicles never run out of fuel. Original: InfinityFuel")
+                .define("infiniteFuel", false);
         builder.pop();
 
         builder.push("weapons");
@@ -108,6 +112,10 @@ public final class ServerConfig {
 
     public static boolean infiniteAmmo() {
         return SPEC.isLoaded() ? INFINITE_AMMO.get() : INFINITE_AMMO.getDefault();
+    }
+
+    public static boolean infiniteFuel() {
+        return SPEC.isLoaded() ? INFINITE_FUEL.get() : INFINITE_FUEL.getDefault();
     }
 
     /** Whether the allow list lets the server load this pack. An empty list allows every pack. */
