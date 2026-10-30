@@ -444,6 +444,28 @@ or height between a harmless and a fatal value, before armour. A vehicle wrecked
 or a falling wreck that lands, goes up through `crashExplosion`: the fuel sized explosion of the
 original plus `Explosions.crashFireball`, which only draws a bigger fire.
 
+On the way down, a shot down plane or helicopter goes through `crashSpin`, with the rates from
+`physics.CrashSpin` in `common`: a plane eases its nose down to a 55 degree dive while its roll and
+yaw rates build up, a helicopter spins up to 24 degrees a tick and wobbles in pitch and roll. The
+direction and the wobble phase come from the entity id, so every side computes the same spin
+without syncing anything; the server simulates the wreck and its rotation reaches clients as usual.
+
+### Fuel and equipment
+
+Fuel lives in the synched `DATA_FUEL`, saved as `Fuel`. The server burns it once a second in
+`burnFuel` (the original's `updateFuel`) and fuel trucks share it in `supplyFuel`; whichever side
+simulates the vehicle reads `hasFuel()` and lets the throttle run down when the tank is empty, so
+the pilot's client and the server agree without another packet. Vehicles saved before fuel
+existed load full.
+
+The fuel can, wrench and parachute are plain items (`item.FuelItem`, `WrenchItem`,
+`ParachuteItem`). Fuel and wrench act in `AircraftEntity.interact` before boarding, which also
+covers clicks on the hull outside the main box (they arrive through `BoardVehiclePacket`).
+`ParachuteEntity` is the original's `MCH_EntityParachute`: server simulated, ridden by the
+player, steered by the rider's forward input from `ServerPlayer.getLastClientInput`. Its
+`Kind` picks the model: the round canopy for the item, the seat for ejection (whose canopy opens
+once it falls), the bare canopy for drops.
+
 ## Client
 
 **CrewController** samples keys each client tick and the mouse every frame, for whichever seat the
@@ -489,6 +511,18 @@ particle that `ExplosionEffect` spawns for the flash, the embers and the lingeri
 How bright a glow gets comes from `effect.NightGlow` in `common`: the block light, sky light and
 the sky darkening at that spot, so it is faint at noon and full at night, in caves and under
 water. `ClientConfig` (`config/mcheli-client.toml`) turns it off per player.
+
+Iris replaces every vanilla pipeline with its own shader programs and draws unknown ones with a
+program whose vertex layout does not match. `IrisCompat` looks up `IrisApi` by reflection on the
+first client tick (Iris is optional, so nothing is compiled against it) and assigns the halo
+pipeline to `EMISSIVE_ENTITIES` and the particle pipeline to `PARTICLES_TRANSLUCENT`.
+
+**VehicleCamera** holds the local crew member's zoom and camera mode, the client half of the
+original's `MCH_Camera`. Zoom narrows the field of view through `ViewportEvent.ComputeFov`; it is
+offered on the fold key whenever the seat looks through a sight, as the original did. Night vision
+asks the server through `CrewActionPacket`, and `AircraftEntity` keeps a short ambient night
+vision effect topped up on that seat's occupant, removing it again on leaving (unless a longer
+effect, such as a potion, was there).
 
 **CrewController** also hides the first person hand through `RenderHandEvent` wherever the original
 did: for the pilot, and for anyone looking through a camera or with a weapon selected.
