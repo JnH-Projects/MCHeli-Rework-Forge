@@ -183,6 +183,11 @@ public abstract class AircraftEntity extends VehicleEntity {
     // Crashes, measured from position so they work whichever side simulates the vehicle.
     /** Blocks per tick into terrain, sideways, that count as a crash: about 25 m/s. */
     private static final double TERRAIN_CRASH_SPEED = 1.25;
+    /**
+     * How far a hull reaches past its main box, at most, when looking for neighbours: other
+     * vehicles are found by their main box, and the longest hulls stretch about this far from it.
+     */
+    private static final double HULL_REACH = 24.0;
     /** Closing speed between two vehicles that counts as a crash: about 10 m/s. */
     private static final double VEHICLE_CRASH_SPEED = 0.5;
     /** Highest point since a ground vehicle left the ground, or NaN while it is on it. */
@@ -724,8 +729,14 @@ public abstract class AircraftEntity extends VehicleEntity {
             hurtServer((ServerLevel) level(), damageSources().flyIntoWall(), crashDamage(previous.horizontalDistance()));
         }
         if (speed > VEHICLE_CRASH_SPEED && collisionCooldown == 0) {
-            for (AircraftEntity other : level().getEntitiesOfClass(AircraftEntity.class, getBoundingBox().inflate(0.5),
-                    o -> o != this && !o.isRemoved() && o.getVehicle() != this && getVehicle() != o)) {
+            // A blocked move can leave the hulls up to a tick of travel apart; when the vehicle
+            // stopped short this tick, look that far for what stopped it.
+            boolean stopped = velocity.length() < previous.length() * 0.5;
+            double reach = stopped ? 0.5 + previous.length() : 0.5;
+            for (AircraftEntity other : solidNeighbours(hullBounds().inflate(reach))) {
+                if (!hullsTouch(other, reach)) {
+                    continue;
+                }
                 double closing = velocity.subtract(other.lastVelocity).length();
                 closing = Math.max(closing, previous.subtract(other.lastVelocity).length());
                 if (closing > VEHICLE_CRASH_SPEED && other.collisionCooldown == 0) {
@@ -1647,10 +1658,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         AircraftDefinition def = definition();
         if (def != null) {
             for (BoundingBoxDefinition box : def.boundingBoxes) {
-                Vec3 c = toWorld(box.offset());
-                double hw = box.width() / 2.0 + inflate;
-                double hh = box.height() / 2.0 + inflate;
-                Optional<Vec3> hit = clip(new AABB(c.x - hw, c.y - hh, c.z - hw, c.x + hw, c.y + hh, c.z + hw), from, to);
+                Optional<Vec3> hit = clip(hullBox(box).inflate(inflate), from, to);
                 if (hit.isPresent() && from.distanceToSqr(hit.get()) < bestDistance) {
                     best = hit;
                     bestDistance = from.distanceToSqr(hit.get());
@@ -1659,6 +1667,128 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
         }
         return best;
+    }
+
+    /**
+     * One {@code BoundingBox} in world space. Like the original's, it stays axis aligned: the
+     * centre turns with the hull, the box itself does not.
+     */
+    private AABB hullBox(BoundingBoxDefinition box) {
+        Vec3 c = toWorld(box.offset());
+        double hw = box.width() / 2.0;
+        double hh = box.height() / 2.0;
+        return new AABB(c.x - hw, c.y - hh, c.z - hw, c.x + hw, c.y + hh, c.z + hw);
+    }
+
+    /** The whole hull: the main hit box and every {@code BoundingBox}, in world space. */
+    public List<AABB> hullBoxes() {
+        AircraftDefinition def = definition();
+        if (def == null || def.boundingBoxes.isEmpty()) {
+            return List.of(getBoundingBox());
+        }
+        List<AABB> boxes = new ArrayList<>(def.boundingBoxes.size() + 1);
+        boxes.add(getBoundingBox());
+        for (BoundingBoxDefinition box : def.boundingBoxes) {
+            boxes.add(hullBox(box));
+        }
+        return boxes;
+    }
+
+    /** The smallest box around the whole hull. */
+    private AABB hullBounds() {
+        AABB bounds = getBoundingBox();
+        AircraftDefinition def = definition();
+        if (def != null) {
+            for (BoundingBoxDefinition box : def.boundingBoxes) {
+                bounds = bounds.minmax(hullBox(box));
+            }
+        }
+        return bounds;
+    }
+
+    /** Whether any part of this hull touches any part of {@code other}'s, grown by {@code inflate}. */
+    private boolean hullsTouch(AircraftEntity other, double inflate) {
+        List<AABB> theirs = other.hullBoxes();
+        for (AABB mine : hullBoxes()) {
+            AABB grown = mine.inflate(inflate);
+            for (AABB box : theirs) {
+                if (grown.intersects(box)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Vehicles whose hulls block this one: everything nearby except its own carrier or cargo, and
+     * vehicles either of the two could load onto a rack, which have to drive into each other.
+     */
+    private List<AircraftEntity> solidNeighbours(AABB area) {
+        return level().getEntitiesOfClass(AircraftEntity.class, area.inflate(HULL_REACH), other -> other != this && !other.isRemoved()
+                && other.definition() != null && !other.isPassenger() && !isPassengerOfSameVehicle(other)
+                && other.getVehicle() != this && getVehicle() != other && !canCarry(other) && !other.canCarry(this));
+    }
+
+    /** Whether a free rack of this vehicle would take {@code cargo}. */
+    private boolean canCarry(AircraftEntity cargo) {
+        AircraftDefinition def = definition();
+        if (def == null) {
+            return false;
+        }
+        for (int seat = def.seatCount(); seat < def.seatAndRackCount(); seat++) {
+            if (acceptsCargo(cargo, seat)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Not in the original, where only the main box at a vehicle's feet collided: the whole hull
+     * blocks other vehicles. A move that would push this hull into another vehicle's is undone,
+     * sideways first and then completely, so a helicopter can also set down on a parked truck.
+     * Hulls that already overlapped, say after two vehicles were placed into each other, may move
+     * apart.
+     */
+    @Override
+    public void move(MoverType type, Vec3 delta) {
+        if (type != MoverType.SELF || isPassenger() || definition() == null) {
+            super.move(type, delta);
+            return;
+        }
+        List<AircraftEntity> near = solidNeighbours(hullBounds().expandTowards(delta));
+        if (near.isEmpty()) {
+            super.move(type, delta);
+            return;
+        }
+        List<AircraftEntity> overlapping = new ArrayList<>();
+        for (AircraftEntity other : near) {
+            if (hullsTouch(other, 0.0)) {
+                overlapping.add(other);
+            }
+        }
+        Vec3 before = position();
+        super.move(type, delta);
+        if (!entersHull(near, overlapping)) {
+            return;
+        }
+        Vec3 m = getDeltaMovement();
+        setPos(before.x, getY(), before.z);
+        setDeltaMovement(0.0, m.y, 0.0);
+        if (entersHull(near, overlapping)) {
+            setPos(before);
+            setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    private boolean entersHull(List<AircraftEntity> near, List<AircraftEntity> overlapping) {
+        for (AircraftEntity other : near) {
+            if (!overlapping.contains(other) && hullsTouch(other, 0.0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A ray that starts inside a box hits it where it starts, as it does for vanilla entity picking. */
