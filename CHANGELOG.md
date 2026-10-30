@@ -7,25 +7,30 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
-Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge.
+Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge, and on Minecraft
+1.21.1 as well as 26.3.
 
 ### Added
 
 - NeoForge and Fabric jars for Minecraft 26.3, with the same features as the Forge one. Fabric
   needs Fabric API. Worlds, the `mcheli` folder, content packs and configs carry over between
   loaders.
+- Minecraft 1.21.1 on Forge, NeoForge and Fabric, with the same vehicles, weapons, HUD and
+  content packs as on 26.3. Vehicle icons come from the kind's item model, which picks each
+  vehicle by `custom_model_data`.
 - The log names the loader the mod runs on, next to the version.
 
 ### Changed
 
-- Jar names carry the loader: `mcheli-forge-26.3-<version>.jar`, `mcheli-neoforge-26.3-<version>.jar`
-  and `mcheli-fabric-26.3-<version>.jar`.
+- Jar names carry the loader and the Minecraft version, such as `mcheli-forge-26.3-<version>.jar`
+  and `mcheli-fabric-1.21.1-<version>.jar`.
 - The configs are read by the mod itself instead of Forge's config system, which Fabric does not
   have. The files, their place and their keys stay the same, so existing settings are kept. Edits
   to `serverconfig/mcheli-server.toml` now apply on the next world start or `/mcheli reload`
   instead of while the server runs; `/mcheli reload` now reads the server config again too.
 - The original content is imported again on the first start, since the recipes now name the
-  vehicle ingredient for every loader.
+  vehicle ingredient for every loader. The import writes the layout of the Minecraft version it runs
+  on, and imports again when the folder was made for another version.
 - Every packet travels under its own id (`mcheli:pilot_state` and so on) with the same encoding on
   every loader. Clients and servers need the same version, since the network protocol changed.
 - Glass panes that bullets shoot through come from the `c:glass_panes` tag, which every loader
@@ -38,6 +43,8 @@ Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge.
   code reaches the loader through `Platform` and `Registration`, and the loaders call
   `CommonHooks` and `ClientHooks` from their events. Where NeoForge or Fabric has no event, a
   mixin hooks in where Forge fires its own. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- `minecraft-1.21.1` holds the shared code backported to 1.21.1; `forge-1.21.1`, `neoforge-1.21.1`
+  and `fabric-1.21.1` are its loader modules. 1.21.1 development runs use `./run-1.21.1`.
 - Gradle 9.8.2, for Fabric Loom 1.19. NeoForge modules build with ModDevGradle.
 
 ## [1.1.0-beta.2] - 2026-10-29
