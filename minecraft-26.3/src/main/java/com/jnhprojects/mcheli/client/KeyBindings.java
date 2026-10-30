@@ -21,7 +21,7 @@ public final class KeyBindings {
     /** Cycles the pilot's camera positions, or toggles the gunner sight in seats that allow it. */
     public static final KeyMapping SWITCH_CAMERA = new KeyMapping("key.mcheli.switch_camera", InputConstants.KEY_H, CATEGORY);
     public static final KeyMapping LANDING_GEAR = new KeyMapping("key.mcheli.landing_gear", InputConstants.KEY_B, CATEGORY);
-    /** Folds hatches and wings, sweeps variable geometry wings. */
+    /** Zooms through a sight, as the original Z key did; otherwise folds hatches and wings, sweeps variable geometry wings. */
     public static final KeyMapping FOLD = new KeyMapping("key.mcheli.fold", InputConstants.KEY_Z, CATEGORY);
     /** The original used F, which vanilla now uses to swap hands. */
     public static final KeyMapping VTOL = new KeyMapping("key.mcheli.vtol", InputConstants.KEY_V, CATEGORY);
@@ -35,9 +35,11 @@ public final class KeyBindings {
     public static final KeyMapping FLARE = new KeyMapping("key.mcheli.flare", InputConstants.KEY_C, CATEGORY);
     /** The original resupplied from the vehicle's inventory screen, which does not exist yet. */
     public static final KeyMapping RESUPPLY = new KeyMapping("key.mcheli.resupply", InputConstants.KEY_N, CATEGORY);
+    /** Night vision on and off in vehicles with {@code EnableNightVision}. The original used C, now the flare key. */
+    public static final KeyMapping CAMERA_MODE = new KeyMapping("key.mcheli.camera_mode", InputConstants.KEY_K, CATEGORY);
 
     public static final List<KeyMapping> ALL = List.of(FREE_LOOK, SWITCH_CAMERA, LANDING_GEAR, FOLD, VTOL, SWITCH_SEAT, RACK_LOAD, RACK_UNLOAD,
-            SWITCH_WEAPON, WEAPON_MODE, FLARE, RESUPPLY);
+            SWITCH_WEAPON, WEAPON_MODE, FLARE, RESUPPLY, CAMERA_MODE);
 
     private KeyBindings() {
     }
