@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.content;
 
+import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.recipe.LegacyRecipe;
 
 import java.io.IOException;
@@ -44,10 +45,16 @@ import java.util.zip.ZipFile;
 public final class LegacyImporter {
     /**
      * Bump whenever the output changes, so existing installs import again. 2: recipes craft the
-     * generic vehicle items of 1.1.0. 3: vehicle ingredients name
-     * their type for every loader.
+     * generic vehicle items of 1.1.0. 3: vehicle ingredients name their type for every loader, and
+     * the output depends on the {@link ImportTarget}.
      */
     public static final int FORMAT = 3;
+
+    /**
+     * Written at the pack root for {@link ImportTarget#V1_21_1}: each original vehicle's
+     * {@code custom_model_data}, as {@code name=index}, which the mod puts on the vehicle's stack.
+     */
+    public static final String ICONS_FILE = "item_icons.properties";
 
     private static final String ASSET_ROOT = "mcheli/assets/mcheli/";
     private static final Set<String> SKIPPED_EXTENSIONS = Set.of("xcf");
@@ -56,6 +63,8 @@ public final class LegacyImporter {
     private static final Pattern LANG_TILE = Pattern.compile("^tile\\.(.+)\\.name$");
     private static final Pattern LANG_ACHIEVEMENT = Pattern.compile("^achievement\\.McHeli(\\w+?)(\\.desc)?$");
 
+    private final ImportTarget target;
+    private final Path packRoot;
     private final Path assetsOut;
     private final Path recipesOut;
     private final Map<String, Map<String, String>> translations = new TreeMap<>();
@@ -63,7 +72,9 @@ public final class LegacyImporter {
     private final Set<String> itemTextures = new TreeSet<>();
     private int copied;
 
-    private LegacyImporter(Path packRoot) {
+    private LegacyImporter(Path packRoot, ImportTarget target) {
+        this.target = target;
+        this.packRoot = packRoot;
         this.assetsOut = packRoot.resolve("assets/mcheli");
         this.recipesOut = packRoot.resolve("data/mcheli/recipe");
     }
@@ -74,7 +85,12 @@ public final class LegacyImporter {
      * @throws IOException when the zip cannot be read or holds no {@code mcheli/assets/mcheli} folder
      */
     public static Summary run(Path zip, Path packRoot) throws IOException {
-        return new LegacyImporter(packRoot).importFrom(zip);
+        return run(zip, packRoot, ImportTarget.MODERN);
+    }
+
+    /** As above, in the layout of {@code target}. */
+    public static Summary run(Path zip, Path packRoot, ImportTarget target) throws IOException {
+        return new LegacyImporter(packRoot, target).importFrom(zip);
     }
 
     private Summary importFrom(Path zipPath) throws IOException {
@@ -98,7 +114,9 @@ public final class LegacyImporter {
         writeItemModels();
         writeTranslations();
 
-        LegacyRecipe.Generated recipes = LegacyRecipe.generate(ContentRegistry.load(assetsOut));
+        ContentRegistry content = ContentRegistry.load(assetsOut);
+        Map<String, Integer> icons = target == ImportTarget.V1_21_1 ? writeKindModels(content) : Map.of();
+        LegacyRecipe.Generated recipes = LegacyRecipe.generate(content, target, icons);
         for (Map.Entry<String, String> e : recipes.files().entrySet()) {
             write(recipesOut.resolve(e.getKey()), e.getValue());
         }
@@ -256,6 +274,40 @@ public final class LegacyImporter {
                     }
                     """.formatted(name));
         }
+    }
+
+    /**
+     * 1.21.1: one item model per kind, which shows a barrier unless the stack's
+     * {@code custom_model_data} picks a vehicle. Vehicles are numbered from 1 in name order within
+     * their kind; one without an item texture keeps the barrier.
+     *
+     * @return each vehicle's number, also written to {@link #ICONS_FILE}
+     */
+    private Map<String, Integer> writeKindModels(ContentRegistry content) throws IOException {
+        Map<String, List<String>> byKind = new TreeMap<>();
+        for (AircraftDefinition def : content.all()) {
+            byKind.computeIfAbsent(def.kind(), k -> new ArrayList<>()).add(def.name());
+        }
+        Map<String, Integer> icons = new TreeMap<>();
+        for (Map.Entry<String, List<String>> e : byKind.entrySet()) {
+            List<String> names = e.getValue();
+            names.sort(null);
+            StringBuilder json = new StringBuilder("{\n  \"parent\": \"minecraft:item/barrier\",\n  \"overrides\": [\n");
+            for (int i = 0; i < names.size(); i++) {
+                String name = names.get(i);
+                icons.put(name, i + 1);
+                String model = itemTextures.contains(name) ? "mcheli:item/" + name : "minecraft:item/barrier";
+                json.append("    {\"predicate\": {\"custom_model_data\": ").append(i + 1).append("}, \"model\": \"")
+                        .append(model).append("\"}").append(i + 1 < names.size() ? "," : "").append('\n');
+            }
+            write(assetsOut.resolve("models/item/" + e.getKey() + ".json"), json.append("  ]\n}\n").toString());
+        }
+        StringBuilder list = new StringBuilder("# Written by MCHeli Rework: the custom_model_data of each vehicle's icon\n");
+        for (Map.Entry<String, Integer> e : icons.entrySet()) {
+            list.append(e.getKey()).append('=').append(e.getValue()).append('\n');
+        }
+        write(packRoot.resolve(ICONS_FILE), list.toString());
+        return icons;
     }
 
     private void writeTranslations() throws IOException {
