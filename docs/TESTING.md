@@ -6,9 +6,10 @@ hand with this plan before a pre-release is tagged.
 ## Setup
 
 1. `./gradlew build`, then copy the jar for the loader under test from `build/release`
-   (`mcheli-<loader>-26.3-<version>.jar`) into the `mods` folder of a 26.3 profile for that loader,
+   (`mcheli-<loader>-<minecraft>-<version>.jar`) into the `mods` folder of a profile for that loader
+   and Minecraft version,
    and `MC1.7.10_mcheli_1.0.3.zip` into its `mcheli` folder. Fabric also needs Fabric API.
-   Alternatively run `./gradlew :<loader>-26.3:runClient`, which imports the zip from `Mod/`.
+   Alternatively run `./gradlew :<loader>-<minecraft>:runClient`, which imports the zip from `Mod/`.
 2. Use a launcher profile with its own game directory. Mods for other loaders or Minecraft
    versions in the same `mods` folder will prevent the game from starting.
 3. Create a creative world with cheats enabled.
@@ -45,6 +46,15 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       vehicles and items intact, and back.
 - [ ] A Fabric client joins a NeoForge server (both with the mod) and downloads its packs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
+
+### 1.21.1 only
+
+- [ ] Vehicle icons show in the creative tabs and the hand (the kind model picks them by
+      `custom_model_data`); a pack vehicle shows the barrier.
+- [ ] `mcheli/imported/item_icons.properties` exists, and the AH-6X recipe crafts an AH-6X with
+      its icon.
+- [ ] Glow halos, tracers and the glow particle are additive and do not hide smoke behind them.
+- [ ] A vehicle hit by a weapon wobbles (hurt time) and takes damage only once per hit.
 
 ## Phase 1 checklist
 
