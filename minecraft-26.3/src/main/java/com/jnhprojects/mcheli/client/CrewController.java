@@ -99,6 +99,7 @@ final class CrewController {
             tracking = false;
             viewVehicle = null;
             viewSeat = -1;
+            VehicleCamera.reset();
             return;
         }
         int seat = vehicle.seatOf(player);
@@ -109,6 +110,7 @@ final class CrewController {
             cameraIndex = 0;
             gunnerSight = false;
             tracking = false;
+            VehicleCamera.reset();
         }
 
         Input keys = player.input.keyPresses;
@@ -164,9 +166,14 @@ final class CrewController {
             }
         }
         while (KeyBindings.FOLD.consumeClick()) {
-            if (pilot) {
+            if (looksThroughSight(vehicle, seat)) {
+                VehicleCamera.onZoomKey(player, vehicle);
+            } else if (pilot) {
                 send(vehicle, CrewActionPacket.Action.FOLD);
             }
+        }
+        while (KeyBindings.CAMERA_MODE.consumeClick()) {
+            VehicleCamera.onCameraModeKey(player, vehicle);
         }
         while (KeyBindings.VTOL.consumeClick()) {
             if (pilot) {
@@ -183,6 +190,18 @@ final class CrewController {
                 send(vehicle, CrewActionPacket.Action.RACK_UNLOAD);
             }
         }
+    }
+
+    /**
+     * Whether this seat sees through a sight that can zoom: a camera position or gunner sight, the
+     * pilot in gunner mode, or the pilot of a UAV. The zoom key folds the wings everywhere else.
+     */
+    private static boolean looksThroughSight(AircraftEntity vehicle, int seat) {
+        AircraftDefinition def = vehicle.definition();
+        if (def == null || seat < 0 || seat >= def.seatCount() || def.cameraZoom <= 1) {
+            return false;
+        }
+        return eyePosition(vehicle, def, seat) != null || vehicle.isGunnerMode() || def.uav;
     }
 
     private static void send(AircraftEntity vehicle, CrewActionPacket.Action action) {
