@@ -67,6 +67,16 @@ public final class Glow {
     }
 
     /**
+     * Hands both glow pipelines to Iris, so a shader pack draws them with a matching program: the
+     * halos and tracers as emissive entities, the particle as a translucent particle. Called once
+     * the mods are loaded; without Iris it does nothing.
+     */
+    public static void assignShaderPrograms() {
+        IrisCompat.assign(ENTITY_PIPELINE, "EMISSIVE_ENTITIES");
+        IrisCompat.assign(PARTICLE_PIPELINE, "PARTICLES_TRANSLUCENT");
+    }
+
+    /**
      * How strongly something at {@code pos} glows: faint by day, full at night, in caves and
      * under water. 0 when the player turned the glow off.
      */

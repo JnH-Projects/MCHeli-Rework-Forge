@@ -7,6 +7,7 @@ import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
+import com.jnhprojects.mcheli.entity.ParachuteEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
 import com.jnhprojects.mcheli.entity.projectile.A10Entity;
@@ -63,6 +64,13 @@ public final class ModEntities {
             .updateInterval(1)
             .fireImmune()
             .noSave()
+            .build(key));
+
+    public static final Registered<EntityType<ParachuteEntity>> PARACHUTE = Registration.register(Registries.ENTITY_TYPE, "parachute", key -> EntityType.Builder
+            .<ParachuteEntity>of(ParachuteEntity::new, MobCategory.MISC)
+            .sized(1.5F, 0.6F)
+            .clientTrackingRange(10)
+            .updateInterval(1)
             .build(key));
 
     private ModEntities() {

@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.client.hud;
 
+import com.jnhprojects.mcheli.client.VehicleCamera;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
@@ -30,8 +31,7 @@ import java.util.List;
  * the radar sweep, altitude and stick behave as in the original; {@link #update} then fills in the
  * per frame values before a script runs.
  *
- * <p>Systems that arrive later in phase 4 read as their idle state for now: fuel is full, the
- * camera is in normal view at zoom 1, the pilot gunner mode is off, the vehicle inventory is empty
+ * <p>Systems that arrive later read as their idle state for now: the vehicle inventory is empty
  * and the mortar distance is unknown.
  */
 final class HudState {
@@ -56,6 +56,7 @@ final class HudState {
     private final double[] stickXSamples = new double[STICK_SAMPLES];
     private final double[] stickYSamples = new double[STICK_SAMPLES];
     private int stickSample;
+    private int fuelWarnCount;
 
     /** Colour set by the last {@code Color} line. Like the original it carries over between frames. */
     int color = 0xFF000000;
@@ -196,15 +197,15 @@ final class HudState {
         v.set(HudVariable.MOTION_Y, my);
         v.set(HudVariable.MOTION_Z, mz);
         v.set(HudVariable.SPEED, Math.sqrt(mx * mx + my * my + mz * mz));
-        v.set(HudVariable.FUEL, 1.0);
-        v.set(HudVariable.LOW_FUEL, 0.0);
+        v.set(HudVariable.FUEL, vehicle.fuelRatio());
+        v.set(HudVariable.LOW_FUEL, lowFuel(vehicle));
         updateStick(seat == 0 && vehicle.steersWithMouse());
         updateWeapon(vehicle, seat);
         v.set(HudVariable.VTOL_STAT, vehicle.vtolMode());
         v.set(HudVariable.FREE_LOOK, seat == 0 && vehicle.input().freeLook);
         v.set(HudVariable.GUNNER_MODE, vehicle.isGunnerMode(player));
-        v.set(HudVariable.CAM_MODE, 0.0);
-        v.set(HudVariable.CAM_ZOOM, 1.0);
+        v.set(HudVariable.CAM_MODE, VehicleCamera.mode().ordinal());
+        v.set(HudVariable.CAM_ZOOM, VehicleCamera.zoom());
         v.set(HudVariable.AUTO_PILOT, vehicle instanceof PlaneEntity && vehicle.isGunnerMode(player));
         VehicleWeapons weapons = vehicle.weapons();
         boolean flares = weapons != null && weapons.flares.isFitted();
@@ -214,6 +215,18 @@ final class HudState {
         v.set(HudVariable.HOVERING, vehicle instanceof HelicopterEntity && vehicle.isHoveringMode());
         v.set(HudVariable.IS_UAV, def.uav);
         v.set(HudVariable.UAV_FS, 0.0);
+    }
+
+    /**
+     * {@code isLowFuel}: below 10% the warning blinks, on for eight seconds out of every fourteen.
+     * Ticks with each update, as the original counted per frame.
+     */
+    private boolean lowFuel(AircraftEntity vehicle) {
+        if (fuelWarnCount <= 0) {
+            fuelWarnCount = 280;
+        }
+        fuelWarnCount--;
+        return fuelWarnCount < 160 && vehicle.maxFuel() > 0 && vehicle.fuelRatio() < 0.1F;
     }
 
     /** The original averaged the last four stick positions, scaled to -1..1, with up positive. */
@@ -327,7 +340,7 @@ final class HudState {
             case PLYR_YAW -> rotate360(player.getYRot() + 180.0);
             case PLYR_PITCH -> -player.getXRot();
             case TVM_POS_X, TVM_POS_Y, TVM_POS_Z, TVM_DIFF -> tvMissile(arg, vehicle);
-            case CAM_ZOOM -> 1.0F;
+            case CAM_ZOOM -> VehicleCamera.zoom();
             case UAV_DIST -> 0.0;
             case THROTTLE -> vehicle.visibleThrottle() * 100.0;
         };

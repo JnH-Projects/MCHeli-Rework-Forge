@@ -34,6 +34,7 @@ final class ForgeClient {
 
         TickEvent.ClientTickEvent.Post.BUS.addListener(event -> ClientHooks.clientTickEnd());
         ViewportEvent.ComputeCameraAngles.BUS.addListener(event -> ClientHooks.computeCameraAngles(new Angles(event)));
+        ViewportEvent.ComputeFov.BUS.addListener(event -> event.setFOV(ClientHooks.fov(event.getFOV())));
         RenderHandEvent.BUS.addListener(ForgeClient::hideHand);
         RenderLivingEvent.Pre.BUS.addListener(event -> {
             ClientHooks.beforeRenderLiving(event.getState(), event.getPoseStack(), event.getCameraState().cameraEntityPartialTicks);

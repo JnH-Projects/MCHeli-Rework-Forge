@@ -30,6 +30,18 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
+Phase 8 in a development build (`1.1.0-beta.4`): hit boxes that cover the whole vehicle, and shot
+down planes that spiral in.
+
+| | |
+|---|---|
+| ![The MD-90 with F3+B on: cyan boxes from its definition along the fuselage and wings, amber boxes from its model filling the nose, fin and tail](docs/images/phase-8/md-90-hull-boxes.png) | ![An EC665 Tiger seen from above with F3+B on, its hull covered in amber and cyan boxes and none in the rotor disc](docs/images/phase-8/ec665-hull-boxes.png) |
+| The MD-90's hull: the definition's boxes (cyan) and the ones made from its model (amber) | The EC665's hull; the rotor disc stays clear |
+| ![The S-75 sight with an SA-2 selected, locked onto a plane overhead](docs/images/phase-8/sa-2-lock-on-plane.png) | ![The SA-2 bursting on the plane in a cloud of smoke and debris](docs/images/phase-8/sa-2-hits-plane.png) |
+| An S-75 locks onto a plane | The SA-2 bursts on it |
+| ![Burning debris trailing down from the sky behind the plane as it spirals towards the ground](docs/images/phase-8/plane-crash-spin.png) | ![The wreck exploding on the ground in a desert village, debris arcing out](docs/images/phase-8/plane-crash-site.png) |
+| The plane rolls into a nose-down spiral | It goes up where it comes down |
+
 Phase 6 in a development build (`1.1.0-beta.2`): night glow. Tracers, rocket motors, flares and
 explosions light up the dark, and a wreck keeps burning until it disappears.
 
@@ -163,7 +175,7 @@ and configs are the same files on all three. Do not open a 26.3 world in 1.21.1.
 
 ## Controls
 
-Take a vehicle from one of the four MCHeli creative tabs (helicopters, planes, tanks and cars,
+Take a vehicle from one of the MCHeli creative tabs (helicopters, planes, tanks and cars,
 ground vehicles), right-click a block to place it, and right-click anywhere on the vehicle to
 board. The first player aboard is the pilot; a closed canopy opens on the first click and closes once the pilot
 is in. Every key below can be rebound under Controls, category MCHeli.
@@ -193,7 +205,7 @@ to climb.
 | W / S | Throttle up / down; full throttle is needed to climb |
 | A / D | Roll in the air, steer on the ground |
 | B | Landing gear up / down (it also comes down by itself near the ground) |
-| Z | Fold or sweep the wings, or open the hatch |
+| Z | Fold or sweep the wings, or open the hatch. Through a sight, zoom instead. |
 | V | VTOL mode, for planes that have it |
 | Space, twice | Eject, for planes with ejection seats |
 
@@ -215,6 +227,8 @@ to climb.
 | R | Move to the next free seat |
 | J | Load nearby vehicles onto your racks, or drive onto a carrier's rack |
 | U | Unload the last vehicle from your racks, or leave the carrier |
+| Z | Through a camera, gunner sight or gunner mode: zoom (2x, 4x and so on up to the vehicle's limit, then back) |
+| K | Night vision on and off, in vehicles that have it |
 | Shift | Leave the vehicle |
 
 **Weapons**
@@ -230,6 +244,17 @@ to climb.
 Each seat fires the weapons its vehicle assigns to it; the pilot also fires a gunner's weapons
 while that seat has no player. Creative players have unlimited ammunition. A small readout at the
 bottom right shows hit points, the weapon, ammunition, reload, heat, lock and flares.
+
+**Fuel and equipment**
+
+Vehicles burn fuel while the throttle is open; the HUD shows the tank and warns below 10%. With
+an empty tank the engine winds down. Refuel with the **fuel can** from the Equipment tab:
+right-click a vehicle to pour in up to 100 units, and right-click in the air with coal or
+charcoal in your inventory to fill the can again. A fuel truck tops up every vehicle around it.
+The **wrench** repairs 10 hit points per click, once a second; with Shift it switches the
+vehicle's paint. The **parachute** opens when used in mid-air; hold W to glide forward.
+Ejection seats come down on a parachute of their own. All three are crafted with the original's
+recipes.
 
 ## Commands and server settings
 
@@ -250,6 +275,7 @@ server runs):
 | `explosions.startFires` | `true` | Incendiary weapons and crashes start fires |
 | `vehicles.damageFactor` | `1.0` | Multiplies the damage vehicles take; `0.5` makes them twice as tough |
 | `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
+| `vehicles.infiniteFuel` | `false` | Vehicles never run out of fuel |
 | `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
 | `packs.allowList` | `[]` | Content packs the server loads, by id; empty loads all of them |
 | `packs.maxPackSize` | `8` | Largest content pack the server loads and sends to players, in MB |

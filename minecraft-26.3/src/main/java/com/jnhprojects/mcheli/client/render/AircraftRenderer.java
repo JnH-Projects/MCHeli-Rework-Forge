@@ -15,6 +15,7 @@ import com.jnhprojects.mcheli.model.Mesh;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -22,21 +23,48 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.gizmos.GizmoStyle;
+import net.minecraft.gizmos.Gizmos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Draws any MCHeli vehicle from its MQO/OBJ model, following {@code MCH_RenderAircraft}: the hull,
  * the kind's own moving parts (rotors, wings, gun mounts) and then the parts every kind can have.
  */
 public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T, AircraftRenderState> {
+    private static final int HULL_COLOR = 0xFF00E0FF;
+    private static final int GENERATED_COLOR = 0xFFFFC000;
 
     public AircraftRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.shadowRadius = 2.0F;
+    }
+
+    /**
+     * With F3+B on, outlines the hull boxes next to vanilla's main box: what projectiles hit and
+     * what other vehicles collide with. The definition's own boxes are cyan, the ones generated
+     * from the model amber.
+     */
+    private static void showHull(AircraftEntity entity, AircraftDefinition def, float partialTicks) {
+        List<AABB> hull = entity.hullBoxes();
+        if (hull.size() < 2) {
+            return;
+        }
+        Vec3 offset = entity.getPosition(partialTicks).subtract(entity.position());
+        int listed = def.boundingBoxes.size();
+        try (Gizmos.TemporaryCollection ignored = Minecraft.getInstance().levelRenderer.collectPerFrameRenderThreadGizmos()) {
+            // The first is the main box, which vanilla draws itself; then the listed boxes, then the generated ones.
+            for (int i = 1; i < hull.size(); i++) {
+                Gizmos.cuboid(hull.get(i).move(offset), GizmoStyle.stroke(i <= listed ? HULL_COLOR : GENERATED_COLOR));
+            }
+        }
     }
 
     @Override
@@ -55,6 +83,9 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
         state.roll = entity.roll(partialTicks);
         if (def == null) {
             return;
+        }
+        if (Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) {
+            showHull(entity, def, partialTicks);
         }
 
         state.rotorAngle = switch (entity) {

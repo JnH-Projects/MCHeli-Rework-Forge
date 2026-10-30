@@ -12,8 +12,11 @@ import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.item.FuelItem;
+import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
+import com.jnhprojects.mcheli.physics.CrashSpin;
 import com.jnhprojects.mcheli.physics.GroundImpact;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.weapon.Explosions;
@@ -99,6 +102,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final EntityDataAccessor<Integer> DATA_TV_MISSILE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FLARE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SINKING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_FUEL = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
 
     // Bits of DATA_PARTS, the same assignment the original used for its part status word.
     protected static final int PART_CANOPY = 0;
@@ -150,6 +154,10 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Damage factor of the extra hit box the last projectile ray struck, {@code lastBBDamageFactor}. */
     private float hitBoxFactor = 1.0F;
     private int timeSinceHit;
+    /** The night vision effect a crew member gets, topped up before it runs low: 15 seconds. */
+    private static final int NIGHT_VISION_TICKS = 300;
+    /** The fuel load from which an aircraft counts as heavy: the H8K flying boat and up. */
+    private static final int HEAVY_FUEL = 3000;
     /** How long a wreck stays, burning, before it disappears: 30 seconds. */
     private static final int WRECK_TICKS = 600;
     /** The wreck fire dies down over the last five seconds. */
@@ -158,9 +166,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     private int despawnCount;
     /** Ticks the client has seen this vehicle as a wreck, for the fire to die down on time. */
     private int wreckTicks;
-    private float destroyedYaw;
-    private float destroyedPitch;
-    private float destroyedRoll;
+    /** Ticks since this aircraft was shot down, for the crash spin. Counted on both sides. */
+    private int spinTicks;
     private boolean exploded;
     /** Blasts still to come while a wrecked boat cooks off, and ticks until the next one. */
     private int cookOffBlasts;
@@ -168,9 +175,21 @@ public abstract class AircraftEntity extends VehicleEntity {
     private @Nullable Entity cookOffCause;
     private int alertCount;
 
+    /** Fuel burnt but not yet taken from the tank, which only holds whole units. Server only. */
+    private double fuelBurnt;
+    /** Ticks a fuel truck nearby keeps this vehicle from burning fuel. Server only. */
+    private int fuelSuppliedCount;
+    /** One bit per seat whose occupant has night vision on. Server only, not saved. */
+    private int nightVisionSeats;
+
     // Crashes, measured from position so they work whichever side simulates the vehicle.
     /** Blocks per tick into terrain, sideways, that count as a crash: about 25 m/s. */
     private static final double TERRAIN_CRASH_SPEED = 1.25;
+    /**
+     * How far a hull reaches past its main box, at most, when looking for neighbours: other
+     * vehicles are found by their main box, and the longest hulls stretch about this far from it.
+     */
+    private static final double HULL_REACH = 24.0;
     /** Closing speed between two vehicles that counts as a crash: about 10 m/s. */
     private static final double VEHICLE_CRASH_SPEED = 0.5;
     /** Highest point since a ground vehicle left the ground, or NaN while it is on it. */
@@ -202,6 +221,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_TV_MISSILE, 0);
         builder.define(DATA_FLARE, false);
         builder.define(DATA_SINKING, false);
+        builder.define(DATA_FUEL, 0);
     }
 
     // Definition
@@ -266,6 +286,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         entityData.set(DATA_TYPE, definition.name());
         entityData.set(DATA_TEXTURE, definition.textures().getFirst());
         entityData.set(DATA_HP, definition.maxHp);
+        entityData.set(DATA_FUEL, definition.maxFuel);
         refreshDimensions();
         definition();
     }
@@ -281,6 +302,175 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     public int hp() {
         return entityData.get(DATA_HP);
+    }
+
+    /**
+     * {@code repair}: adds hit points up to the maximum. A wreck stays a wreck. Server only.
+     *
+     * @return whether anything was repaired
+     */
+    public boolean repair(int amount) {
+        AircraftDefinition def = definition();
+        if (def == null || isDestroyed() || hp() >= def.maxHp) {
+            return false;
+        }
+        entityData.set(DATA_HP, Math.min(hp() + amount, def.maxHp));
+        return true;
+    }
+
+    /**
+     * {@code switchNextTextureName}: the next paint scheme the definition lists. Server only.
+     *
+     * @return false when the vehicle has only one
+     */
+    public boolean nextTexture() {
+        AircraftDefinition def = definition();
+        if (def == null || def.textures().size() < 2) {
+            return false;
+        }
+        List<String> textures = def.textures();
+        int next = (textures.indexOf(texture()) + 1) % textures.size();
+        entityData.set(DATA_TEXTURE, textures.get(next));
+        return true;
+    }
+
+    // Fuel
+
+    public int fuel() {
+        return entityData.get(DATA_FUEL);
+    }
+
+    public int maxFuel() {
+        AircraftDefinition def = definition();
+        return def != null ? def.maxFuel : 0;
+    }
+
+    /** {@code getFuelP}: how full the tank is, 0 to 1. Vehicles without a tank read as full. */
+    public float fuelRatio() {
+        int max = maxFuel();
+        return max <= 0 ? 1.0F : (float) fuel() / max;
+    }
+
+    /** {@code canUseFuel}: a vehicle without a tank never runs dry. */
+    public boolean hasFuel() {
+        return maxFuel() <= 0 || fuel() > 1;
+    }
+
+    /**
+     * Pours up to {@code amount} into the tank. Server only.
+     *
+     * @return how much went in
+     */
+    public int refuel(int amount) {
+        int added = Math.clamp(maxFuel() - fuel(), 0, Math.max(amount, 0));
+        if (added > 0) {
+            entityData.set(DATA_FUEL, fuel() + added);
+        }
+        return added;
+    }
+
+    // Night vision
+
+    /** A crew member switched night vision on or off. Server only. */
+    public void setNightVision(Player player, boolean on) {
+        AircraftDefinition def = definition();
+        int seat = seatOf(player);
+        if (seat < 0 || seat >= 31) {
+            return;
+        }
+        if (on && def != null && def.nightVision && !isDestroyed()) {
+            nightVisionSeats |= 1 << seat;
+        } else if (hasNightVision(seat)) {
+            nightVisionSeats &= ~(1 << seat);
+            endNightVision(player);
+        }
+    }
+
+    /**
+     * {@code MCH_Camera.updateViewer}: keeps a short night vision effect topped up on everyone who
+     * switched it on. It never runs below ten seconds, where vanilla starts to flicker the view.
+     */
+    private void tickNightVision() {
+        if (nightVisionSeats == 0) {
+            return;
+        }
+        if (isDestroyed()) {
+            for (int seat = 0; seat < seatIds.length; seat++) {
+                if (occupant(seat) instanceof LivingEntity crew) {
+                    endNightVision(crew);
+                }
+            }
+            nightVisionSeats = 0;
+            return;
+        }
+        for (int seat = 0; seat < seatIds.length; seat++) {
+            if (hasNightVision(seat) && occupant(seat) instanceof LivingEntity crew) {
+                MobEffectInstance current = crew.getEffect(MobEffects.NIGHT_VISION);
+                if (current == null || current.getDuration() < NIGHT_VISION_TICKS - 40) {
+                    crew.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, NIGHT_VISION_TICKS, 0, true, false, false));
+                }
+            }
+        }
+    }
+
+    /** Only the first 31 seats can switch it on; racks and the like come after them anyway. */
+    private boolean hasNightVision(int seat) {
+        return seat >= 0 && seat < 31 && (nightVisionSeats & 1 << seat) != 0;
+    }
+
+    /** Takes our night vision away again, but leaves a potion's longer one alone. */
+    private static void endNightVision(Entity entity) {
+        if (entity instanceof LivingEntity living) {
+            MobEffectInstance current = living.getEffect(MobEffects.NIGHT_VISION);
+            if (current != null && current.getDuration() <= NIGHT_VISION_TICKS) {
+                living.removeEffect(MobEffects.NIGHT_VISION);
+            }
+        }
+    }
+
+    /**
+     * {@code updateFuel}: once a second the engine burns its {@code FuelConsumption}, scaled by the
+     * throttle and topping out at 70% throttle. Nothing burns next to a fuel truck or with the
+     * server's infinite fuel on.
+     */
+    private void burnFuel(AircraftDefinition def) {
+        if (def.maxFuel <= 0 || isDestroyed()) {
+            return;
+        }
+        if (fuelSuppliedCount > 0) {
+            fuelSuppliedCount--;
+            return;
+        }
+        if (ticksAlive % 20 != 0 || fuel() <= 1 || throttle <= 0.0 || ServerConfig.infiniteFuel()) {
+            return;
+        }
+        fuelBurnt += Math.min(throttle * 1.4, 1.0) * def.fuelConsumption;
+        if (fuelBurnt > 1.0) {
+            int whole = (int) fuelBurnt;
+            fuelBurnt -= whole;
+            entityData.set(DATA_FUEL, Math.max(fuel() - whole, 0));
+        }
+    }
+
+    /**
+     * {@code supplyFuel}: a fuel truck ({@code FuelSupplyRange}) tops up every vehicle within range,
+     * 30 units every half second. While it is on the ground it only reaches vehicles that are on
+     * the ground too.
+     */
+    private void supplyFuel(AircraftDefinition def) {
+        float range = def.fuelSupplyRange;
+        if (range <= 0.0F || ticksAlive % 10 != 0 || isDestroyed()) {
+            return;
+        }
+        for (AircraftEntity other : level().getEntitiesOfClass(AircraftEntity.class, getBoundingBox().inflate(range))) {
+            if (other == this) {
+                continue;
+            }
+            if (!onGround() || other.onGround()) {
+                other.refuel(30);
+            }
+            other.fuelSuppliedCount = 40;
+        }
     }
 
     /** Whether the flight model holds a hover: in hover mode, or while the pilot mans the guns. */
@@ -431,9 +621,19 @@ public abstract class AircraftEntity extends VehicleEntity {
         double fallBefore = getDeltaMovement().y;
         tickDestroyed();
 
+        if (!level().isClientSide()) {
+            supplyFuel(def);
+            burnFuel(def);
+            tickNightVision();
+        }
+
         if (isSimulatingHere()) {
             if (!(getControllingPassenger() instanceof Player) || isDestroyed()) {
                 input.clear();
+            }
+            if (!hasFuel()) {
+                // An empty tank: the throttle runs down by itself, as with the pilot's hand off it.
+                input.throttleUp = false;
             }
             if (entityData.get(DATA_SINKING)) {
                 sink();
@@ -531,8 +731,14 @@ public abstract class AircraftEntity extends VehicleEntity {
             hurtServer((ServerLevel) level(), damageSources().flyIntoWall(), crashDamage(previous.horizontalDistance()));
         }
         if (speed > VEHICLE_CRASH_SPEED && collisionCooldown == 0) {
-            for (AircraftEntity other : level().getEntitiesOfClass(AircraftEntity.class, getBoundingBox().inflate(0.5),
-                    o -> o != this && !o.isRemoved() && o.getVehicle() != this && getVehicle() != o)) {
+            // A blocked move can leave the hulls up to a tick of travel apart; when the vehicle
+            // stopped short this tick, look that far for what stopped it.
+            boolean stopped = velocity.length() < previous.length() * 0.5;
+            double reach = stopped ? 0.5 + previous.length() : 0.5;
+            for (AircraftEntity other : solidNeighbours(hullBounds().inflate(reach))) {
+                if (!hullsTouch(other, reach)) {
+                    continue;
+                }
                 double closing = velocity.subtract(other.lastVelocity).length();
                 closing = Math.max(closing, previous.subtract(other.lastVelocity).length());
                 if (closing > VEHICLE_CRASH_SPEED && other.collisionCooldown == 0) {
@@ -918,6 +1124,10 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         int seat = seatOf(passenger);
         if (seat >= 0) {
+            if (hasNightVision(seat)) {
+                nightVisionSeats &= ~(1 << seat);
+                endNightVision(passenger);
+            }
             lastSeats.put(passenger.getId(), seat);
             seatIds[seat] = EMPTY;
             entityData.set(DATA_SEATS, encodeSeats());
@@ -1014,6 +1224,13 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
+        ItemStack held = player.getItemInHand(hand);
+        if (definition() != null && (held.getItem() instanceof FuelItem || held.getItem() instanceof WrenchItem)) {
+            if (level().isClientSide()) {
+                return InteractionResult.SUCCESS;
+            }
+            return held.getItem() instanceof FuelItem ? FuelItem.pour(held, this, player) : WrenchItem.useOn(held, this, player, hand);
+        }
         InteractionResult result = super.interact(player, hand, location);
         if (result != InteractionResult.PASS || player.isSecondaryUseActive()) {
             return result;
@@ -1195,8 +1412,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     }
 
     /**
-     * Throws the occupant clear of the aircraft. Without the parachute item (a later phase) the
-     * crew member gets a few seconds of slow falling instead. Server only.
+     * {@code ejectSeat}: throws the occupant clear of the aircraft in an ejection seat, whose
+     * parachute opens once it starts to fall. Server only.
      */
     public void eject(Entity entity) {
         AircraftDefinition def = definition();
@@ -1212,9 +1429,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         entity.setDeltaMovement(getDeltaMovement().add(push.x + (random.nextFloat() - 0.5) * 0.1, push.y,
                 push.z + (random.nextFloat() - 0.5) * 0.1));
         entity.needsSync = true;
-        if (entity instanceof LivingEntity living) {
-            living.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 400));
-        }
+        ParachuteEntity.open(level(), entity, ParachuteEntity.Kind.EJECTION_SEAT);
         if (canopy != null && !canopy.status()) {
             canopy.set(true, false);
             modeSwitchCooldown = 40;
@@ -1444,11 +1659,8 @@ public abstract class AircraftEntity extends VehicleEntity {
         double bestDistance = best.map(from::distanceToSqr).orElse(Double.MAX_VALUE);
         AircraftDefinition def = definition();
         if (def != null) {
-            for (BoundingBoxDefinition box : def.boundingBoxes) {
-                Vec3 c = toWorld(box.offset());
-                double hw = box.width() / 2.0 + inflate;
-                double hh = box.height() / 2.0 + inflate;
-                Optional<Vec3> hit = clip(new AABB(c.x - hw, c.y - hh, c.z - hw, c.x + hw, c.y + hh, c.z + hw), from, to);
+            for (BoundingBoxDefinition box : def.hull()) {
+                Optional<Vec3> hit = clip(hullBox(box).inflate(inflate), from, to);
                 if (hit.isPresent() && from.distanceToSqr(hit.get()) < bestDistance) {
                     best = hit;
                     bestDistance = from.distanceToSqr(hit.get());
@@ -1457,6 +1669,136 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
         }
         return best;
+    }
+
+    /**
+     * One {@code BoundingBox} in world space. Like the original's, it stays axis aligned: the
+     * centre turns with the hull, the box itself does not.
+     */
+    private AABB hullBox(BoundingBoxDefinition box) {
+        Vec3 c = toWorld(box.offset());
+        double hw = box.width() / 2.0;
+        double hh = box.height() / 2.0;
+        return new AABB(c.x - hw, c.y - hh, c.z - hw, c.x + hw, c.y + hh, c.z + hw);
+    }
+
+    /** The whole hull: the main hit box, every {@code BoundingBox} and the generated boxes, in world space. */
+    public List<AABB> hullBoxes() {
+        AircraftDefinition def = definition();
+        if (def == null || def.hull().isEmpty()) {
+            return List.of(getBoundingBox());
+        }
+        List<AABB> boxes = new ArrayList<>(def.hull().size() + 1);
+        boxes.add(getBoundingBox());
+        for (BoundingBoxDefinition box : def.hull()) {
+            boxes.add(hullBox(box));
+        }
+        return boxes;
+    }
+
+    /** The smallest box around the whole hull. */
+    private AABB hullBounds() {
+        AABB bounds = getBoundingBox();
+        AircraftDefinition def = definition();
+        if (def != null) {
+            for (BoundingBoxDefinition box : def.hull()) {
+                bounds = bounds.minmax(hullBox(box));
+            }
+        }
+        return bounds;
+    }
+
+    /** Whether any part of this hull touches any part of {@code other}'s, grown by {@code inflate}. */
+    private boolean hullsTouch(AircraftEntity other, double inflate) {
+        // Hulls generated from big models run to a thousand boxes, so skip ours that are nowhere near.
+        AABB around = other.hullBounds().inflate(inflate);
+        List<AABB> theirs = null;
+        for (AABB mine : hullBoxes()) {
+            AABB grown = mine.inflate(inflate);
+            if (!grown.intersects(around)) {
+                continue;
+            }
+            if (theirs == null) {
+                theirs = other.hullBoxes();
+            }
+            for (AABB box : theirs) {
+                if (grown.intersects(box)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Vehicles whose hulls block this one: everything nearby except its own carrier or cargo, and
+     * vehicles either of the two could load onto a rack, which have to drive into each other.
+     */
+    private List<AircraftEntity> solidNeighbours(AABB area) {
+        return level().getEntitiesOfClass(AircraftEntity.class, area.inflate(HULL_REACH), other -> other != this && !other.isRemoved()
+                && other.definition() != null && !other.isPassenger() && !isPassengerOfSameVehicle(other)
+                && other.getVehicle() != this && getVehicle() != other && !canCarry(other) && !other.canCarry(this));
+    }
+
+    /** Whether a free rack of this vehicle would take {@code cargo}. */
+    private boolean canCarry(AircraftEntity cargo) {
+        AircraftDefinition def = definition();
+        if (def == null) {
+            return false;
+        }
+        for (int seat = def.seatCount(); seat < def.seatAndRackCount(); seat++) {
+            if (acceptsCargo(cargo, seat)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Not in the original, where only the main box at a vehicle's feet collided: the whole hull
+     * blocks other vehicles. A move that would push this hull into another vehicle's is undone,
+     * sideways first and then completely, so a helicopter can also set down on a parked truck.
+     * Hulls that already overlapped, say after two vehicles were placed into each other, may move
+     * apart.
+     */
+    @Override
+    public void move(MoverType type, Vec3 delta) {
+        if (type != MoverType.SELF || isPassenger() || definition() == null) {
+            super.move(type, delta);
+            return;
+        }
+        List<AircraftEntity> near = solidNeighbours(hullBounds().expandTowards(delta));
+        if (near.isEmpty()) {
+            super.move(type, delta);
+            return;
+        }
+        List<AircraftEntity> overlapping = new ArrayList<>();
+        for (AircraftEntity other : near) {
+            if (hullsTouch(other, 0.0)) {
+                overlapping.add(other);
+            }
+        }
+        Vec3 before = position();
+        super.move(type, delta);
+        if (!entersHull(near, overlapping)) {
+            return;
+        }
+        Vec3 m = getDeltaMovement();
+        setPos(before.x, getY(), before.z);
+        setDeltaMovement(0.0, m.y, 0.0);
+        if (entersHull(near, overlapping)) {
+            setPos(before);
+            setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    private boolean entersHull(List<AircraftEntity> near, List<AircraftEntity> overlapping) {
+        for (AircraftEntity other : near) {
+            if (!overlapping.contains(other) && hullsTouch(other, 0.0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A ray that starts inside a box hits it where it starts, as it does for vanilla entity picking. */
@@ -1548,7 +1890,7 @@ public abstract class AircraftEntity extends VehicleEntity {
                     entityData.set(DATA_HP, 0);
                     destroyVehicle();
                     timeSinceHit = 20;
-                    if (isAfloat()) {
+                    if (isAfloat() || isHeavy() && isNearGround(3)) {
                         startCookOff(source.getEntity());
                     } else if (source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FLY_INTO_WALL) || source.is(DamageTypes.FALL)) {
                         crashExplosion();
@@ -1583,9 +1925,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     private void destroyVehicle() {
         AircraftDefinition def = definition();
         despawnCount = def != null && def.targetDrone ? 50 : WRECK_TICKS;
-        destroyedPitch = random.nextFloat() - 0.5F;
-        destroyedRoll = (random.nextFloat() - 0.5F) * 0.5F;
-        destroyedYaw = 0.0F;
         setHovering(false);
         if (def != null && def.uav) {
             Entity remote = occupant(0);
@@ -1606,6 +1945,10 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (!(level() instanceof ServerLevel level)) {
             return;
         }
+        if (isHeavy()) {
+            startCookOff(null);
+            return;
+        }
         exploded = true;
         AircraftDefinition def = definition();
         float size = Mth.clamp(def != null ? def.maxFuel / 400.0F : 2.0F, 1.0F, 15.0F);
@@ -1616,6 +1959,15 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
     }
 
+    /**
+     * Airliners, bombers and transports ({@code MaxFuel} of {@value HEAVY_FUEL} or more): like a
+     * boat, they go up in three blasts rather than one fireball.
+     */
+    private boolean isHeavy() {
+        AircraftDefinition def = definition();
+        return def != null && def.maxFuel >= HEAVY_FUEL;
+    }
+
     /** A floating vehicle sitting on the water, such as a patrol boat or a float plane at rest. */
     private boolean isAfloat() {
         AircraftDefinition def = definition();
@@ -1623,9 +1975,9 @@ public abstract class AircraftEntity extends VehicleEntity {
     }
 
     /**
-     * A boat destroyed on the water does not go up in one crash fireball; its fuel and magazine
-     * cook off in three blasts over about five seconds, then the hull sinks. Not in the original,
-     * which only had the crash explosion.
+     * A boat destroyed on the water, or a heavy aircraft wrecked on the ground, does not go up in
+     * one crash fireball; its fuel and magazine cook off in three blasts over about five seconds,
+     * then a hull in the water sinks. Not in the original, which only had the crash explosion.
      */
     private void startCookOff(@Nullable Entity cause) {
         exploded = true;
@@ -1657,7 +2009,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             // Three blasts inside five seconds: about 1.5 to 2.5 seconds apart.
             cookOffDelay = 30 + random.nextInt(20);
         } else {
-            entityData.set(DATA_SINKING, true);
+            // A boat or a flying boat goes under; a heavy aircraft on land stays where it burns.
+            if (isInWater() || waterDepth() > 0.0) {
+                entityData.set(DATA_SINKING, true);
+            }
             cookOffCause = null;
         }
     }
@@ -1714,16 +2069,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         input.clear();
         throttle *= 0.98;
-        if (this instanceof HelicopterEntity) {
-            destroyedYaw = Math.min(destroyedYaw + 0.3F, 15.0F);
-            setYRot(getYRot() + destroyedYaw * (float) throttle);
-            if (!isNearGround(3)) {
-                if (Math.abs(getXRot()) < 10.0F) {
-                    setXRot(getXRot() + destroyedPitch);
-                }
-                roll += destroyedRoll;
-            }
-        }
+        crashSpin();
         if (!(level() instanceof ServerLevel level)) {
             return;
         }
@@ -1740,6 +2086,27 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (despawnCount > 0 && --despawnCount <= 1) {
             ejectPassengers();
             discard();
+        }
+    }
+
+    /**
+     * Not in the original: a shot down plane rolls into a nose-down spiral and a helicopter spins
+     * with some wobble, until it is close to the ground. Tanks and cars just stop.
+     */
+    private void crashSpin() {
+        if (!(this instanceof HelicopterEntity) && !(this instanceof PlaneEntity) || isNearGround(3) || isInWater()) {
+            return;
+        }
+        int direction = CrashSpin.direction(getId());
+        int ticks = spinTicks++;
+        if (this instanceof HelicopterEntity) {
+            setYRot(getYRot() + CrashSpin.helicopterYawRate(ticks, direction));
+            setXRot(Mth.approach(getXRot(), CrashSpin.helicopterWobblePitch(ticks, getId()), 2.0F));
+            roll = Mth.approach(roll, CrashSpin.helicopterWobbleRoll(ticks, getId()), 3.0F);
+        } else {
+            setYRot(getYRot() + CrashSpin.planeYawRate(ticks, direction));
+            setXRot(CrashSpin.planePitch(getXRot()));
+            roll = AircraftRotation.wrap(roll + CrashSpin.planeRollRate(ticks, direction));
         }
     }
 
@@ -1838,6 +2205,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         output.putString("Type", typeName());
         output.putString("Texture", texture());
         output.putInt("Hp", hp());
+        output.putInt("Fuel", fuel());
         output.putFloat("Roll", roll);
         output.putBoolean("Hovering", isHoveringMode());
         output.putBoolean("GunnerMode", isGunnerMode());
@@ -1862,6 +2230,8 @@ public abstract class AircraftEntity extends VehicleEntity {
         entityData.set(DATA_PARTS, input.getIntOr("Parts", 0));
         AircraftDefinition def = definition();
         entityData.set(DATA_HP, input.getIntOr("Hp", def != null ? def.maxHp : 1));
+        // 1.0.0 and the earlier betas had no fuel; their vehicles come back with a full tank.
+        entityData.set(DATA_FUEL, input.getIntOr("Fuel", def != null ? def.maxFuel : 0));
         roll = input.getFloatOr("Roll", 0.0F);
         setHovering(input.getBooleanOr("Hovering", false));
         entityData.set(DATA_GUNNER_MODE, input.getBooleanOr("GunnerMode", false));
