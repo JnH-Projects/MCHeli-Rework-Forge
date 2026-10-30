@@ -163,7 +163,7 @@ and configs are the same files on all three. Do not open a 26.3 world in 1.21.1.
 
 ## Controls
 
-Take a vehicle from one of the four MCHeli creative tabs (helicopters, planes, tanks and cars,
+Take a vehicle from one of the MCHeli creative tabs (helicopters, planes, tanks and cars,
 ground vehicles), right-click a block to place it, and right-click anywhere on the vehicle to
 board. The first player aboard is the pilot; a closed canopy opens on the first click and closes once the pilot
 is in. Every key below can be rebound under Controls, category MCHeli.
@@ -193,7 +193,7 @@ to climb.
 | W / S | Throttle up / down; full throttle is needed to climb |
 | A / D | Roll in the air, steer on the ground |
 | B | Landing gear up / down (it also comes down by itself near the ground) |
-| Z | Fold or sweep the wings, or open the hatch |
+| Z | Fold or sweep the wings, or open the hatch. Through a sight, zoom instead. |
 | V | VTOL mode, for planes that have it |
 | Space, twice | Eject, for planes with ejection seats |
 
@@ -215,6 +215,8 @@ to climb.
 | R | Move to the next free seat |
 | J | Load nearby vehicles onto your racks, or drive onto a carrier's rack |
 | U | Unload the last vehicle from your racks, or leave the carrier |
+| Z | Through a camera, gunner sight or gunner mode: zoom (2x, 4x and so on up to the vehicle's limit, then back) |
+| K | Night vision on and off, in vehicles that have it |
 | Shift | Leave the vehicle |
 
 **Weapons**
@@ -230,6 +232,17 @@ to climb.
 Each seat fires the weapons its vehicle assigns to it; the pilot also fires a gunner's weapons
 while that seat has no player. Creative players have unlimited ammunition. A small readout at the
 bottom right shows hit points, the weapon, ammunition, reload, heat, lock and flares.
+
+**Fuel and equipment**
+
+Vehicles burn fuel while the throttle is open; the HUD shows the tank and warns below 10%. With
+an empty tank the engine winds down. Refuel with the **fuel can** from the Equipment tab:
+right-click a vehicle to pour in up to 100 units, and right-click in the air with coal or
+charcoal in your inventory to fill the can again. A fuel truck tops up every vehicle around it.
+The **wrench** repairs 10 hit points per click, once a second; with Shift it switches the
+vehicle's paint. The **parachute** opens when used in mid-air; hold W to glide forward.
+Ejection seats come down on a parachute of their own. All three are crafted with the original's
+recipes.
 
 ## Commands and server settings
 
@@ -250,6 +263,7 @@ server runs):
 | `explosions.startFires` | `true` | Incendiary weapons and crashes start fires |
 | `vehicles.damageFactor` | `1.0` | Multiplies the damage vehicles take; `0.5` makes them twice as tough |
 | `vehicles.disabled` | `[]` | Vehicles that cannot be placed, by name, such as `["ah-64", "f-35b"]` |
+| `vehicles.infiniteFuel` | `false` | Vehicles never run out of fuel |
 | `weapons.infiniteAmmo` | `false` | Vehicle weapons never run out of ammunition |
 | `packs.allowList` | `[]` | Content packs the server loads, by id; empty loads all of them |
 | `packs.maxPackSize` | `8` | Largest content pack the server loads and sends to players, in MB |
