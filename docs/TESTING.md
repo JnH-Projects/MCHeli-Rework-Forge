@@ -23,7 +23,7 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 
 - [ ] The game reaches the title screen. The log has `MCHeli Rework <version> on <loader>` and no
       `mcheli` errors; on the first start it also has `Imported ... files` from the zip.
-- [ ] The four MCHeli creative tabs list the vehicles with icons and names, after the vanilla tabs.
+- [ ] The four MCHeli vehicle tabs list the vehicles with icons and names, after the vanilla tabs.
 - [ ] Fly a helicopter (`ah-64`): it takes off, banks and lands. In first person the view rolls
       with the hull and the eye sits in the cockpit; the hand is hidden in the pilot seat.
 - [ ] Other players and the rider model tilt with the hull (second player or F5).
@@ -404,6 +404,60 @@ Copy `examples/rework-example-pack` into `<game dir>/mcheli/packs` first.
       nothing is downloaded and the game keeps running.
 - [ ] Remove the pack from the server and restart it: a world with a Scout still loads; the Scout
       stays in place, inert and invisible, and comes back when the pack does.
+
+## Phase 8 checklist (`1.1.0-beta.4`)
+
+Forge 26.3 only. Start from a world made by beta.3 with a few vehicles in it.
+
+### Shaders
+
+Install Sodium and Iris for 26.3 with a shader pack (Complementary or BSL).
+
+- [ ] Fire tracers and rockets, release flares, blow something up, call in the A-10: the glows sit
+      where they belong, with no purple, pink or teal lines running to the horizon.
+- [ ] The log has `Iris draws mcheli:pipeline/glow with its EMISSIVE_ENTITIES program` at debug
+      level (or no warning about Iris). Without Iris the game starts as before.
+- [ ] Note whether the A-10 still draws as a flat white shape with the shader pack on.
+
+### Crash spin
+
+- [ ] Shoot down a plane (`f-35b`, `/mcheli give`, then a missile or `/kill`): it rolls into a
+      nose-down spiral and stops spinning near the ground. A second plane may spin the other way.
+- [ ] Shoot down a helicopter: it spins up faster than in beta.3 and nods and rocks while it falls.
+- [ ] A second player watching sees the same spin direction.
+- [ ] A tank or car that is destroyed does not spin.
+
+### Fuel
+
+- [ ] A beta.3 vehicle loads with a full tank (helicopter HUD fuel gauge full).
+- [ ] Fly with the throttle open: the gauge goes down; with `/data merge` or a long flight down to
+      10% the low fuel warning blinks; at empty the throttle runs down and the engine stops.
+- [ ] Right-click the vehicle with the fuel can: the tank fills by 100 and the can's bar drops.
+      Right-click in the air with coal in the inventory: the coal is used up and the can refills.
+- [ ] Park next to a fuel truck: the tank fills and does not drop while the throttle is open.
+- [ ] `vehicles.infiniteFuel = true` and `/mcheli reload`: the tank stops going down.
+- [ ] A vehicle without `MaxFuel` (check the HUD) still flies forever.
+
+### Wrench and parachute
+
+- [ ] Damage a vehicle, right-click it with the wrench: 10 hit points back per click, once a
+      second, with the wrench sound; the wrench loses durability. A wreck cannot be repaired.
+- [ ] Shift right-click a vehicle with several paints (`ah-64`) with the wrench: the paint changes
+      for everyone.
+- [ ] Jump off a cliff and use the parachute: it opens above you, you float down, W glides you
+      forward, and you land without damage. The parachute is used up.
+- [ ] Eject from a plane with an ejection seat (Space twice): the seat flies up, the canopy opens
+      once it falls, and you land safely.
+- [ ] The fuel can, wrench and parachute are in the MCHeli Equipment tab with icons and names, and
+      craft with the original recipes.
+
+### Zoom and night vision
+
+- [ ] Gunner seat or gunner mode in an AH-64 (`H`): Z zooms 2x, 4x, then back to 1x; the HUD's zoom
+      readout follows. In the pilot seat without a sight, Z still folds the wings or hatch.
+- [ ] K in a vehicle with night vision: the view brightens at night, K again turns it off.
+      Leaving the vehicle turns it off. A night vision potion is not cut short.
+- [ ] K in a vehicle without night vision plays the "no" sound and does nothing.
 
 ## Reporting problems
 
