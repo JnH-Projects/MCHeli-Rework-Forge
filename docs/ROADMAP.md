@@ -133,7 +133,7 @@ Rules that hold for every beta:
 |-------|---------|-------|-------|
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Released |
-| 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Planned |
+| 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Released |
 | 8 | `1.1.0-beta.4` | 1.20.1 | Planned |
 | 9 | `1.1.0-beta.5` | Equipment and the rest of phase 4 | Planned |
 | 10 | `1.1.0-beta.6` | Workshop: model, parts and tuning | Planned |
