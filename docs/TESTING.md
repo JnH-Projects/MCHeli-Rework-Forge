@@ -453,8 +453,9 @@ Install Sodium and Iris for 26.3 with a shader pack (Complementary or BSL).
 
 ### Hull boxes and collisions
 
-- [ ] F3+B: cyan boxes outline the hull of an `ec665`, an `f-35b` and an `s-75`, next to the white
-      main box. The `mh-6` and the other vehicles without `BoundingBox` lines only show the main box.
+- [ ] F3+B: cyan boxes (from the definition) and amber boxes (from the model) outline the hull of an
+      `ec665`, an `f-35b`, an `s-75` and an `md90`. The amber ones fill the MD-90's tail fin and nose.
+      The `mh-6` has amber boxes only. No boxes stand in a rotor disc.
 - [ ] Fire the gun at the tail, the nose and the rotor mast of a parked helicopter: every round stops
       on the hull (no tracer behind it), and the helicopter takes damage.
 - [ ] Fire from a helicopter's own guns: no round stops inside the firing helicopter.
@@ -464,6 +465,10 @@ Install Sodium and Iris for 26.3 with a shader pack (Complementary or BSL).
 - [ ] A vehicle that fits a carrier's rack (a car and a truck with a rack) can still drive onto the
       rack, and `J` loads it.
 - [ ] Two vehicles placed into each other can drive apart.
+- [ ] Shoot the MD-90's tail fin: the rounds stop on it and it takes damage.
+- [ ] Destroy a parked MD-90 or C-5: three blasts a second or two apart, and the wreck stays on land.
+      A US-2 destroyed on the water sinks after its three blasts. Shoot down an MD-90 in the air: the
+      three blasts come when the wreck hits the ground.
 
 ### Zoom and night vision
 
