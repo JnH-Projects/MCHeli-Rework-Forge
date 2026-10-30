@@ -82,13 +82,13 @@ public class ProjectileRenderer extends EntityRenderer<ProjectileEntity, Project
         state.model = entity.model();
         state.yaw = entity.getYRot(partialTicks);
         state.pitch = entity.getXRot(partialTicks);
-        state.visible = !(entity instanceof BombEntity bomb) || bomb.isVisible();
+        state.visible = !entity.isSpent() && (!(entity instanceof BombEntity bomb) || bomb.isVisible());
         WeaponDefinition w = entity.weapon();
         boolean inWater = inWater(entity.level(), entity);
         WeaponColor c = w != null ? (inWater ? w.colorInWater : w.color) : WeaponColor.WHITE;
         state.color = c.argb();
 
-        state.glowKind = inWater ? GlowKind.NONE : glowKind(entity);
+        state.glowKind = inWater || entity.isSpent() ? GlowKind.NONE : glowKind(entity);
         if (state.glowKind != GlowKind.NONE) {
             state.glow = Glow.strength(entity.level(), entity.blockPosition());
             state.travel = new Vec3(entity.getX() - entity.xo, entity.getY() - entity.yo, entity.getZ() - entity.zo);
