@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli;
 
+import com.jnhprojects.mcheli.content.ImportTarget;
 import com.jnhprojects.mcheli.content.LegacyImporter;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -43,6 +44,8 @@ public final class LegacyContent {
 
     private static final String PACK_ID = "mcheli_content";
     private static final String MARKER = "import.properties";
+    /** The pack layout this Minecraft version reads. */
+    private static final ImportTarget TARGET = ImportTarget.MODERN;
 
     private final Path folder;
     private final Path packRoot;
@@ -114,7 +117,7 @@ public final class LegacyContent {
         MCHeli.LOGGER.info("Importing MCHeli content from {}", zip);
         Path staging = folder.resolve("imported.tmp");
         deleteTree(staging);
-        LegacyImporter.Summary summary = LegacyImporter.run(zip, staging);
+        LegacyImporter.Summary summary = LegacyImporter.run(zip, staging, TARGET);
         try (OutputStream out = Files.newOutputStream(staging.resolve(MARKER))) {
             source.store(out, "Written by MCHeli Rework. Delete this folder to import again.");
         }
@@ -205,6 +208,7 @@ public final class LegacyContent {
     private static Properties describe(Path zip) throws IOException {
         Properties p = new Properties();
         p.setProperty("format", Integer.toString(LegacyImporter.FORMAT));
+        p.setProperty("target", TARGET.name());
         p.setProperty("source", zip.toAbsolutePath().normalize().toString());
         p.setProperty("size", Long.toString(Files.size(zip)));
         p.setProperty("modified", Long.toString(Files.getLastModifiedTime(zip).toMillis()));
