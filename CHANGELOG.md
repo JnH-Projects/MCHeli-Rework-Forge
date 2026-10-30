@@ -5,10 +5,12 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.3] - 2026-10-30
 
 Phase 7 of the road to 1.1.0: the mod on NeoForge and Fabric as well as Forge, and on Minecraft
-1.21.1 as well as 26.3.
+1.21.1 as well as 26.3. Betas are not uploaded to CurseForge; download them from the GitHub
+releases, one jar per loader and Minecraft version. Worlds from 1.1.0-beta.2 and 1.0.0 load as
+before on 26.3. Players and servers need the same version, since the network protocol changed.
 
 ### Added
 
