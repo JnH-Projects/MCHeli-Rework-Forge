@@ -4,7 +4,7 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| JDK | 25 | Gradle provisions one through the Foojay resolver if none is installed. |
+| JDK | 25 (and 21 for the 1.21.1 modules) | Gradle provisions them through the Foojay resolver if none is installed. |
 | Gradle | 9.8.2 | Use the wrapper (`./gradlew`). Loom 1.19 needs 9.8. |
 | ForgeGradle | 7.x | Forge modules. Sets up Minecraft through the Mavenizer on first build. |
 | ModDevGradle | 2.0.x | NeoForge modules. |
@@ -12,6 +12,9 @@
 | Forge | 66.1.0 for Minecraft 26.3 | |
 | NeoForge | 26.3.0.99 for Minecraft 26.3 | |
 | Fabric | Loader 0.20.1, Fabric API 0.165.0+26.3 | |
+| Forge | 52.1.20 for Minecraft 1.21.1 | Built with ForgeGradle 7 and the official mappings. |
+| NeoForge | 21.1.265 for Minecraft 1.21.1 | |
+| Fabric | Fabric API 0.116.17+1.21.1 | Loom remaps the jar, which is obfuscated on 1.21.1. |
 
 All three use Mojang's official names, so the shared code reads the same on every loader.
 
@@ -28,6 +31,7 @@ wait for the other process to finish and build again.
 ./gradlew :forge-26.3:runClient        # development client from ./run
 ./gradlew :neoforge-26.3:runClient
 ./gradlew :fabric-26.3:runClient
+./gradlew :neoforge-1.21.1:runClient       # 1.21.1 modules run from ./run-1.21.1
 ./gradlew :<module>:runServer          # development dedicated server from ./run
 ```
 
@@ -51,6 +55,8 @@ minecraft-26.3/                code shared by every loader on Minecraft 26.3 (no
 forge-26.3/                    Forge 66 glue: entry point, events, payload channel, ingredient
 neoforge-26.3/                 NeoForge glue, plus a camera mixin
 fabric-26.3/                   Fabric glue, plus mixins for what Fabric API has no event for
+minecraft-1.21.1/              the same shared code, backported to Minecraft 1.21.1
+forge-1.21.1/, neoforge-1.21.1/, fabric-1.21.1/   the loader glue for 1.21.1
 gradle/loader.gradle           what every loader module shares
 docs/                          documentation and content format guides
 .github/workflows              CI and release pipelines
@@ -82,7 +88,8 @@ so each loader and version ships as one jar and runs as one module in developmen
 
 A feature that is pure logic goes in `common` with a unit test; the part that touches Minecraft
 goes in `minecraft-<version>`; only what needs a loader API goes in the loader modules. The run
-folder `./run` is shared by every module; worlds made by one loader open on the others.
+folder `./run` is shared by every 26.3 module and `./run-1.21.1` by every 1.21.1 module; worlds made by
+one loader open on the others, but never open a 26.3 world on 1.21.1.
 
 IDEs import the project as one Gradle project per module. A file under `minecraft-26.3` belongs
 to all three loader modules, so the IDE shows it under whichever it picked; it compiles under all
