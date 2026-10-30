@@ -12,7 +12,7 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-11 | `1.1.0-beta.1` to `beta.7` | Content packs, NeoForge and Fabric, 1.21.1, equipment, workshop, 1.20.1 ([plan](#road-to-110)) | In progress |
+| 5-12 | `1.1.0-beta.1` to `beta.8` | Content packs, NeoForge and Fabric, 1.21.1, equipment, workshop, 1.20.1 ([plan](#road-to-110)) | In progress |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
@@ -84,7 +84,7 @@ textures (back faces are culled again). See the [test plan](TESTING.md#phase-4-c
       the recipe book from the first login
 - [x] Code-only jar: the original content is imported from the player's own copy of the 1.0.3 zip
 
-The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 can ship.
+The rest of the original phase 4 list moved to 1.1.0 (phases 8 and 9 below), so 1.0.0 can ship.
 
 ## 1.0.0 release criteria
 
@@ -97,7 +97,7 @@ The rest of the original phase 4 list moved to 1.1.0 (phase 8 below), so 1.0.0 c
 
 1.1.0 adds three big things on top of 1.0.0: content packs, more Minecraft versions and loaders,
 and the vehicle workshop. It also picks up the phase 4 items that were left out of 1.0.0. The work is
-split into seven phases, each ending in a beta.
+split into eight phases, each ending in a beta.
 
 ### Release channels
 
@@ -134,18 +134,19 @@ Rules that hold for every beta:
 | 5 | `1.1.0-beta.1` | Groundwork: runtime registry, config, multi-version build | Released |
 | 6 | `1.1.0-beta.2` | Content packs and multiplayer sync | Released |
 | 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Released |
-| 8 | `1.1.0-beta.4` | Equipment and the rest of phase 4 (Forge 26.3 only) | In progress |
-| 9 | `1.1.0-beta.5` | Workshop: model, parts and tuning (Forge 26.3 only) | Planned |
-| 10 | `1.1.0-beta.6` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
-| 11 | `1.1.0-beta.7` | Every loader, 1.21.1 and 1.20.1 | Planned |
+| 8 | `1.1.0-beta.4` | Fuel, first equipment, hull hit boxes (Forge 26.3 only) | Released |
+| 9 | `1.1.0-beta.5` | The rest of the equipment (Forge 26.3 only) | Planned |
+| 10 | `1.1.0-beta.6` | Workshop: model, parts and tuning (Forge 26.3 only) | Planned |
+| 11 | `1.1.0-beta.7` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
+| 12 | `1.1.0-beta.8` | Every loader, 1.21.1 and 1.20.1 | Planned |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
 sits on them. Content packs come before the workshop, since the workshop's output is a pack.
 The loader split and 1.21.1 come right after packs, while the code is still close to 1.0.0;
 from then on each feature is built once in shared code and only its Minecraft glue is written per
-version and loader. Betas 4 to 6 build only the Forge 26.3 jar, since six modules on three
-toolchains made every build slow; phase 11 writes the glue for the rest, adds 1.20.1 and ships
+version and loader. Betas 4 to 7 build only the Forge 26.3 jar, since six modules on three
+toolchains made every build slow; phase 12 writes the glue for the rest, adds 1.20.1 and ships
 every jar again.
 
 ### Supported versions
@@ -227,10 +228,11 @@ almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.
 - [x] [TESTING.md](TESTING.md) gets a short smoke test per jar: import, fly a helicopter, drive a
       tank, fire a missile, join a dedicated server
 
-## Phase 8: equipment and the rest of phase 4 (`1.1.0-beta.4`)
+## Phase 8: fuel, first equipment and hull hit boxes (`1.1.0-beta.4`)
 
 Gameplay carried over from phase 4, built once in shared code with per-loader glue. Built and
-tested on Forge 26.3 only; the other loaders and versions get it in phase 11.
+tested on Forge 26.3 only; the other loaders and versions get it in phase 12. What was not done
+in this phase moved to phase 9.
 
 - [x] Glows under Iris shaders: the custom glow pipelines are handed to Iris, so tracers, motors,
       flares and explosions no longer streak to the horizon with a shader pack on
@@ -238,12 +240,18 @@ tested on Forge 26.3 only; the other loaders and versions get it in phase 11.
       nose-down spiral instead of just falling, and helicopters spin faster with some wobble. The
       spin direction comes from the entity id so every client sees the same thing.
 - [x] Night vision and zoom
-- [ ] Thermal view
 - [x] Fuel use, fuel trucks, the fuel can, the wrench and the parachute
+- [x] Parachutes for ejection seats
+- [x] Hit boxes over the whole vehicle: the definition's boxes filled in from the model, used by
+      projectiles and by collisions between vehicles
+- [x] Heavy aircraft cook off in three blasts
+
+## Phase 9: the rest of the equipment (`1.1.0-beta.5`)
+
+- [ ] Thermal view
 - [ ] The vehicle inventory, with its fuel slots
 - [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, chain towing, container,
       Stinger and Javelin, smoke grenades
-- [x] Parachutes for ejection seats
 - [ ] Parachutes for rack drops, containers on racks, repelling and troop drops
 - [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
 - [ ] Resupply from the inventory screen and from supply vehicles, marking blocks with targeting
@@ -251,7 +259,7 @@ tested on Forge 26.3 only; the other loaders and versions get it in phase 11.
 - [ ] The drafting table and its recipe browser (pack vehicles included)
 - [ ] Multiplayer team manager and spotting
 
-## Phase 9: workshop, model, parts and tuning (`1.1.0-beta.5`)
+## Phase 10: workshop, model, parts and tuning (`1.1.0-beta.6`)
 
 The first half of the [editor](#the-editor). Its output is a pack from phase 6, so anything
 built here syncs to other players with no extra work.
@@ -264,7 +272,7 @@ built here syncs to other players with no extra work.
 - [ ] Save, export and load packages; undo and redo
 - [ ] Workshop guide in `docs/content/workshop.md`
 
-## Phase 10: workshop, textures, sounds and sharing (`1.1.0-beta.6`)
+## Phase 11: workshop, textures, sounds and sharing (`1.1.0-beta.7`)
 
 - [ ] Texture painting on the model and PNG import per part (cockpit textures included), with
       live preview
@@ -272,13 +280,13 @@ built here syncs to other players with no extra work.
 - [ ] Package browser, author credits shown in game
 - [ ] Operator approval before a player's new vehicle goes live on a server
 
-## Phase 11: every loader, 1.21.1 and 1.20.1 (`1.1.0-beta.7`)
+## Phase 12: every loader, 1.21.1 and 1.20.1 (`1.1.0-beta.8`)
 
-Betas 4 to 6 ship only the Forge 26.3 jar, to keep builds fast. This phase brings the features
+Betas 4 to 7 ship only the Forge 26.3 jar, to keep builds fast. This phase brings the features
 added since beta.3 to NeoForge, Fabric and 1.21.1, and adds 1.20.1, the largest modpack version
 and the furthest from 26.3. All jars ship again from here on.
 
-- [ ] Every module back in `platforms`; phases 8 to 10 ported to NeoForge and Fabric on 26.3 and
+- [ ] Every module back in `platforms`; phases 8 to 11 ported to NeoForge and Fabric on 26.3 and
       to all three loaders on 1.21.1
 - [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
       methods)
@@ -291,7 +299,7 @@ and the furthest from 26.3. All jars ship again from here on.
 
 ## 1.1.0 release
 
-No new features after beta.7; a `1.1.0-rc.N` follows only if beta.7 testing finds problems.
+No new features after beta.8; a `1.1.0-rc.N` follows only if beta.8 testing finds problems.
 
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
