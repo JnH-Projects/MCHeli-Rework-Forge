@@ -30,6 +30,11 @@ changed.
   vehicle's `CameraZoom` and then goes back to 1x. Elsewhere Z still folds wings and hatches, as in
   the original. The HUD's `cam_zoom` follows it.
 - Night vision on K for vehicles with `EnableNightVision`. The HUD's `cam_mode` follows it.
+- Vehicles collide with each other by their whole hull (the `BoundingBox` lines), not just the
+  small box at their feet: a vehicle cannot drive or fly into another one, a helicopter can set
+  down on top of a parked truck, and ramming uses the same boxes for crash damage. Vehicles that
+  can be loaded onto each other's racks still pass through, so they can drive onto the rack.
+- With F3+B on, the hull boxes are outlined in cyan next to the main box.
 - Crash spin: a shot down plane or jet rolls into a nose-down spiral, and a helicopter spins up
   faster than before with some wobble, until it is close to the ground. The direction comes from
   the entity, so everyone sees the same spin.
@@ -43,6 +48,10 @@ changed.
 
 ### Fixed
 
+- Rounds no longer seem to fly through a vehicle they hit. The server always counted the hit on
+  the hull, but the client kept drawing the round until the server removed it; it now stops and
+  disappears where it struck. Clients also learn who fired, so a round never stops on its own
+  vehicle.
 - With an Iris shader pack, tracers, rocket motors, flares and explosion glows no longer turn into
   long purple and teal lines running to the horizon. The glow pipelines are now handed to Iris,
   which draws them with its emissive entity and translucent particle programs.
