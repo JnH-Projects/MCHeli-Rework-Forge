@@ -452,8 +452,13 @@ without syncing anything; the server simulates the wreck and its rotation reache
 
 ### Hull collisions
 
-The `BoundingBox` lines are the hull: `hullBoxes()` returns them in world space, axis aligned as in
-the original, next to the main box. Projectiles and boarding clicks clip against them
+The `BoundingBox` lines are the hull, filled in where they leave gaps by `model.HullFill`: when the
+content loads, `ContentRegistry` reads each vehicle's model from the same pack, cuts its surface
+into one-block cells, drops the cells a listed box already holds and the spinning parts (`$blade`,
+`$rotor`, `$rotpart`), and stacks the rest into one-cell columns (`AircraftDefinition.hull()` holds
+both). Columns stay one cell wide because hull boxes only move their centres with the vehicle,
+not their shape. Server and client read the same file, so they agree on hits. `hullBoxes()`
+returns the hull in world space, axis aligned as in the original, next to the main box. Projectiles and boarding clicks clip against them
 (`clipHitBoxes`), and so do other vehicles: `move` is overridden to undo a step that would push the
 hull into another vehicle's, first sideways and then completely, which also lets a vehicle rest on
 top of another. Vanilla entity collision only knows one box per entity, so this check runs on top
