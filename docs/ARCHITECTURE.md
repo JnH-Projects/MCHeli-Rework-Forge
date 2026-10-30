@@ -450,6 +450,23 @@ yaw rates build up, a helicopter spins up to 24 degrees a tick and wobbles in pi
 direction and the wobble phase come from the entity id, so every side computes the same spin
 without syncing anything; the server simulates the wreck and its rotation reaches clients as usual.
 
+### Hull collisions
+
+The `BoundingBox` lines are the hull: `hullBoxes()` returns them in world space, axis aligned as in
+the original, next to the main box. Projectiles and boarding clicks clip against them
+(`clipHitBoxes`), and so do other vehicles: `move` is overridden to undo a step that would push the
+hull into another vehicle's, first sideways and then completely, which also lets a vehicle rest on
+top of another. Vanilla entity collision only knows one box per entity, so this check runs on top
+of it, on whichever side simulates the vehicle. Pairs that may load each other onto a rack, and a
+carrier and its cargo, are left out. The server's ramming check uses the same boxes and, after a
+sudden stop, looks one tick of travel ahead, because a blocked step on the pilot's client leaves
+the hulls just short of touching. With F3+B on, `AircraftRenderer` outlines the hull through the
+per-frame gizmo collector.
+
+A projectile hit only does something on the server. Clients still run the same hit test (they know
+the shooter from synched data, so a round never stops on its own vehicle) and park the round,
+hidden, where it struck until the server removes it.
+
 ### Fuel and equipment
 
 Fuel lives in the synched `DATA_FUEL`, saved as `Fuel`. The server burns it once a second in
