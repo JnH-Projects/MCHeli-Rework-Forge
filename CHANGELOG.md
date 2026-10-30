@@ -34,7 +34,15 @@ changed.
   small box at their feet: a vehicle cannot drive or fly into another one, a helicopter can set
   down on top of a parked truck, and ramming uses the same boxes for crash damage. Vehicles that
   can be loaded onto each other's racks still pass through, so they can drive onto the rack.
-- With F3+B on, the hull boxes are outlined in cyan next to the main box.
+- Hit boxes for the parts a vehicle's `BoundingBox` lines leave out, such as the MD-90's tail fin,
+  made from its model when the content loads: every one-block cell of the model's surface that no
+  listed box covers becomes part of the hull. Rotor blades and propellers are left out. Vehicles
+  without any `BoundingBox` line (the MH-6, the R44 and others) get a hull this way too.
+- With F3+B on, the hull boxes are outlined next to the main box: the definition's in cyan, the
+  generated ones in amber.
+- Heavy aircraft (`MaxFuel` of 3000 or more: the MD-90, C-5, E-767, B-29, B-2A, AC-130, US-2 and
+  H8K) go up in three blasts like a destroyed boat, when wrecked on the ground or when their wreck
+  crashes. Only a hull in the water sinks afterwards.
 - Crash spin: a shot down plane or jet rolls into a nose-down spiral, and a helicopter spins up
   faster than before with some wobble, until it is close to the ground. The direction comes from
   the entity, so everyone sees the same spin.
