@@ -5,7 +5,7 @@
   "entity.mcheli.tank": "戦車",
   "entity.mcheli.vehicle": "地上兵器",
   "gui.mcheli.vehicle.cargo": "積荷",
-  "gui.mcheli.vehicle.fuel": "燃料 %s / %s",
+  "gui.mcheli.vehicle.fuel": "燃料 %s%%",
   "gui.mcheli.vehicle.no_weapons": "武装なし",
   "gui.mcheli.vehicle.parachute": "パラシュート",
   "gui.mcheli.vehicle.reload": "補給",
