@@ -38,6 +38,7 @@ public class VehicleScreen extends AbstractContainerScreen<VehicleMenu> {
     private static final int GREEN = 0xFF55FF55;
 
     private int weapon;
+    private boolean cargoButton;
     private @Nullable Button reload;
     private @Nullable Button previous;
     private @Nullable Button next;
@@ -58,7 +59,8 @@ public class VehicleScreen extends AbstractContainerScreen<VehicleMenu> {
                 .bounds(leftPos + PANEL_X + PANEL_WIDTH - 16, topPos + 68, 16, 16).build());
         AircraftEntity vehicle = menu.vehicle();
         AircraftDefinition def = vehicle != null ? vehicle.definition() : null;
-        if (def != null && def.cargoRows() > 0) {
+        cargoButton = def != null && def.cargoRows() > 0;
+        if (cargoButton) {
             addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.vehicle.cargo"), b -> press(VehicleMenu.BUTTON_CARGO))
                     .bounds(leftPos + imageWidth - 52, topPos + 3, 46, 13).build());
         }
@@ -125,15 +127,22 @@ public class VehicleScreen extends AbstractContainerScreen<VehicleMenu> {
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, font.plainSubstrByWidth(title.getString(), 110), titleLabelX, titleLabelY, LABEL, false);
-        graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, LABEL, false);
         AircraftEntity vehicle = menu.vehicle();
+        // Long names only give way to the Cargo button, where there is one.
+        int titleWidth = cargoButton ? imageWidth - 64 : imageWidth - 16;
+        graphics.text(font, font.plainSubstrByWidth(title.getString(), titleWidth), titleLabelX, titleLabelY, LABEL, false);
+        graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, LABEL, false);
         if (vehicle == null) {
             return;
         }
         if (vehicle.maxFuel() > 0) {
-            graphics.text(font, Component.translatable("gui.mcheli.vehicle.fuel", vehicle.fuel(), vehicle.maxFuel()),
-                    VehicleMenu.FUEL_X, VehicleMenu.FUEL_Y - 11, LABEL, false);
+            // A percentage and a gauge: the exact units would run into the weapon panel.
+            int percent = Math.round(vehicle.fuelRatio() * 100.0F);
+            graphics.text(font, Component.translatable("gui.mcheli.vehicle.fuel", percent), VehicleMenu.FUEL_X, VehicleMenu.FUEL_Y - 11, LABEL, false);
+            int gaugeY = VehicleMenu.FUEL_Y + 18;
+            int width = VehicleInventory.FUEL_SLOTS * 18 - 2;
+            graphics.fill(VehicleMenu.FUEL_X, gaugeY, VehicleMenu.FUEL_X + width, gaugeY + 3, 0xFF373737);
+            graphics.fill(VehicleMenu.FUEL_X, gaugeY, VehicleMenu.FUEL_X + width * percent / 100, gaugeY + 3, percent <= 10 ? RED : GREEN);
         }
         if (menu.parachuteSlots() > 0) {
             graphics.text(font, Component.translatable("gui.mcheli.vehicle.parachute"), VehicleMenu.PARACHUTE_X, VehicleMenu.PARACHUTE_Y - 11, LABEL, false);
