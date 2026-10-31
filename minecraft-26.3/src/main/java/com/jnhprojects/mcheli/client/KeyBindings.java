@@ -33,13 +33,13 @@ public final class KeyBindings {
     public static final KeyMapping WEAPON_MODE = new KeyMapping("key.mcheli.weapon_mode", InputConstants.KEY_X, CATEGORY);
     /** The original used V, which VTOL took over. */
     public static final KeyMapping FLARE = new KeyMapping("key.mcheli.flare", InputConstants.KEY_C, CATEGORY);
-    /** The original resupplied from the vehicle's inventory screen, which does not exist yet. */
-    public static final KeyMapping RESUPPLY = new KeyMapping("key.mcheli.resupply", InputConstants.KEY_N, CATEGORY);
-    /** Night vision on and off in vehicles with {@code EnableNightVision}. The original used C, now the flare key. */
+    /** Fuel and parachute slots, reloading and the cargo chest. The original used R, which switches seats here. */
+    public static final KeyMapping VEHICLE_SCREEN = new KeyMapping("key.mcheli.vehicle_screen", InputConstants.KEY_I, CATEGORY);
+    /** Night vision, thermal view and back in vehicles with {@code EnableNightVision}. The original used C, now the flare key. */
     public static final KeyMapping CAMERA_MODE = new KeyMapping("key.mcheli.camera_mode", InputConstants.KEY_K, CATEGORY);
 
     public static final List<KeyMapping> ALL = List.of(FREE_LOOK, SWITCH_CAMERA, LANDING_GEAR, FOLD, VTOL, SWITCH_SEAT, RACK_LOAD, RACK_UNLOAD,
-            SWITCH_WEAPON, WEAPON_MODE, FLARE, RESUPPLY, CAMERA_MODE);
+            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE);
 
     private KeyBindings() {
     }
