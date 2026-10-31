@@ -50,7 +50,7 @@ CameraPosition = 0.0, 1.1, 3.7, true, 30, 45
 | `CameraZoom = 3` | Maximum camera zoom. |
 | `HUD = heli, heli_gnr, none, gunner` | HUD file per seat (`hud/<name>.txt`). `none` hides the HUD. Missing seats use the defaults below. |
 | `EnableGunnerMode = true` | Allow switching to gunner mode. |
-| `EnableNightVision = true` | Allow switching night vision. |
+| `EnableNightVision = true` | Allow switching night vision and thermal view. |
 | `EnableEntityRadar = false` | Fit a radar. |
 | `DefaultFreelook = true` | Start in free look right after boarding. Mostly used for tanks. |
 | `CameraRotationSpeed = 25` | Camera rotation speed. Tanks use it to limit turret traverse speed. |
@@ -244,7 +244,7 @@ the old damage values to the flattened item names.
 | `ArmorMinDamage = 5` | Hits below this are ignored. |
 | `ArmorMaxDamage = 500` | Hits above this are capped. With 100, a 300 point hit only deals 100. |
 | `DamageFactor = 0.2` | Damage multiplier for players inside. 0.2 means 20%. The vehicle still takes the full hit. |
-| `InventorySize = 18` | Inventory size, a multiple of 9. |
+| `InventorySize = 18` | Slots in the cargo chest, up to 54. Sizes between rows round up to a whole row of 9. |
 | `Regeneration = true` | Mobs from seat 2 onwards heal over time. |
 | `Stealth = 0.5` | 0.0 to 1.0, default 0.0. Higher values make missile locks take longer and shorten lock range. |
 
@@ -265,7 +265,8 @@ seconds is `MaxFuel / FuelConsumption`, here 1200 seconds.
 | Key | Meaning |
 |-----|---------|
 | `FuelSupplyRange = 25` | Refuels every vehicle within 25 m. The supplier's own fuel does not drop, but it cannot refuel itself. |
-| `AmmoSupplyRange = 35` | Rearms every vehicle within 35 m, with the same rules. |
+| `AmmoSupplyRange = 35` | Rearms every vehicle within 35 m that stands on something, a tenth of each weapon's maximum every two seconds. |
+| `RepairOtherVehicles = 20, 10` | Repairs every vehicle within 20 m by 10 hit points a second. The value is optional (default 10). |
 
 ### Rendering and sound
 
@@ -411,7 +412,7 @@ Files: `planes/<name>.txt`, `models/planes/<name>.mqo`, `textures/planes/<name>.
 | `EnableVtol = true` | VTOL capable. |
 | `DefaultVtol = true` | Switch to VTOL automatically on the ground. |
 | `VtolYaw = 0.3`, `VtolPitch = 0.3` | Turn and pitch rate in VTOL. |
-| `EnableEjectionSeat = true` | Adds ejection seats to the GUI, one per seat for up to two seats. |
+| `EnableEjectionSeat = true` | Seats zero and one can eject; each ejection takes a parachute from the vehicle screen, which gets a parachute slot per ejection seat. |
 | `AddParticleSplash = X, Y, Z, count, size, speed, lifetime, rise, gravity` | Spray while moving on water. Independent of `EnableSeaSurfaceParticle`. |
 | `EnableSeaSurfaceParticle = true` | Spray when flying low over the sea. Scales with `ParticlesScale`, around 0.7 is recommended. |
 
