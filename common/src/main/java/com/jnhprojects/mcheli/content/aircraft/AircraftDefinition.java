@@ -68,6 +68,9 @@ public abstract class AircraftDefinition extends Definition {
     public float fuelConsumption = 1.0F;
     public float fuelSupplyRange;
     public float ammoSupplyRange;
+    /** {@code RepairOtherVehicles}: how far this vehicle repairs others, and by how much a second. */
+    public float repairOtherVehiclesRange;
+    public int repairOtherVehiclesValue = 10;
     public int inventorySize;
 
     // Body and physics
@@ -268,6 +271,26 @@ public abstract class AircraftDefinition extends Definition {
         return seats.size();
     }
 
+    /**
+     * Rows of the cargo chest: {@code InventorySize} rounded up to whole rows of nine, the only
+     * sizes a chest screen comes in. Zero means the vehicle has no chest.
+     */
+    public int cargoRows() {
+        return (inventorySize + 8) / 9;
+    }
+
+    /**
+     * Seats that can bail out, one parachute slot each in the vehicle screen: seats zero and one
+     * with {@code EnableEjectionSeat}, except the pilot seat of a drone, whose pilot is not aboard.
+     */
+    public int ejectionSeats() {
+        if (!ejectionSeat) {
+            return 0;
+        }
+        int seats = Math.min(seatCount(), 2);
+        return uav && seats > 0 ? seats - 1 : seats;
+    }
+
     /** Crew seats followed by racks, the index space used by {@code ExclusionSeat} and the seat map. */
     public int seatAndRackCount() {
         return seats.size() + racks.size();
@@ -312,6 +335,13 @@ public abstract class AircraftDefinition extends Definition {
         keys.put("FuelConsumption", v -> fuelConsumption = toFloat(v, 0.0F, 10000.0F));
         keys.put("FuelSupplyRange", v -> fuelSupplyRange = toFloat(v, 0.0F, 1000.0F));
         keys.put("AmmoSupplyRange", v -> ammoSupplyRange = toFloat(v, 0.0F, 1000.0F));
+        keys.put("RepairOtherVehicles", v -> {
+            String[] s = split(v);
+            repairOtherVehiclesRange = toFloat(s[0], 0.0F, 1000.0F);
+            if (s.length >= 2) {
+                repairOtherVehiclesValue = toInt(s[1], 0, 10000000);
+            }
+        });
         keys.put("InventorySize", v -> inventorySize = toInt(v, 0, 54));
 
         keys.put("Width", v -> bodyWidth = toFloat(v, 0.1F, 1000.0F));
