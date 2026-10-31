@@ -92,9 +92,6 @@ final class WeaponController {
                 click();
             }
         }
-        while (KeyBindings.RESUPPLY.consumeClick()) {
-            send(s.vehicle, CrewActionPacket.Action.RESUPPLY);
-        }
 
         if (mc.gui.screen() == null && mc.options.keyUse.isDown() && !s.vehicle.isDestroyed()) {
             fire(s, player);
