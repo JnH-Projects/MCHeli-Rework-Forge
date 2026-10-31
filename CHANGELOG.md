@@ -5,11 +5,12 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.5] - 2026-10-31
 
-Phase 9 of the road to 1.1.0, in progress: the vehicle screen and what goes with it, supply
-vehicles and thermal view. Worlds from 1.1.0-beta.4 load as before; their vehicles come back with
-empty slots. Players and servers need the same version, since the network protocol changed.
+Phase 9 of the road to 1.1.0: the vehicle screen and what goes with it, supply vehicles and
+thermal view. Betas are not uploaded to CurseForge, and this one ships the Forge 26.3 jar only.
+Worlds from 1.1.0-beta.4 load as before; their vehicles come back with empty slots. Players and
+servers need the same version, since the network protocol changed.
 
 ### Added
 
@@ -35,6 +36,11 @@ empty slots. Players and servers need the same version, since the network protoc
 - Reloading a weapon from your inventory moved from the N key to the vehicle screen and only works
   on the ground, as in the original. The empty magazine hint on the HUD names the new key.
 - The network protocol is now version 8.
+
+### Fixed
+
+- A helicopter on the ground no longer tilts with the pilot's mouse; it stays level until it
+  lifts off.
 
 ## [1.1.0-beta.4] - 2026-10-30
 
@@ -546,6 +552,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.5]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.5
 [1.1.0-beta.4]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.4
 [1.1.0-beta.3]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.3
 [1.1.0-beta.2]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.2
