@@ -175,6 +175,11 @@ final class CrewController {
         while (KeyBindings.CAMERA_MODE.consumeClick()) {
             VehicleCamera.onCameraModeKey(player, vehicle);
         }
+        while (KeyBindings.VEHICLE_SCREEN.consumeClick()) {
+            if (!vehicle.isDestroyed()) {
+                send(vehicle, CrewActionPacket.Action.VEHICLE_SCREEN);
+            }
+        }
         while (KeyBindings.VTOL.consumeClick()) {
             if (pilot) {
                 send(vehicle, CrewActionPacket.Action.VTOL);
