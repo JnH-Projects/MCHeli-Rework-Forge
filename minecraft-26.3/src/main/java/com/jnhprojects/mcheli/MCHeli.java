@@ -6,6 +6,7 @@ import com.jnhprojects.mcheli.registry.ModCreativeTabs;
 import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
+import com.jnhprojects.mcheli.registry.ModMenus;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ public final class MCHeli {
         ModDataComponents.init();
         ModEntities.init();
         ModParticles.init();
+        ModMenus.init();
         ModItems.init(content);
         ModCreativeTabs.init();
     }
