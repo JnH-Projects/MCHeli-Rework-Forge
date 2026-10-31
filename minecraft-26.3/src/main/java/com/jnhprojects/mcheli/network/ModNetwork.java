@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  */
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    public static final int PROTOCOL_VERSION = 7;
+    public static final int PROTOCOL_VERSION = 8;
 
     /** Client to server. The handler gets the sending player. */
     public static final List<Serverbound<?>> SERVERBOUND = List.of(
