@@ -10,30 +10,35 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Resupplying a weapon from the crew member's inventory, the {@code supplyAmmo} path of the
- * original. There the vehicle's inventory screen did it; until that screen exists a key does.
- * One supply costs the weapon's {@code Item} lines and adds {@code SuppliedNum} rounds.
+ * Resupplying a weapon from a crew member's own items, the {@code supplyAmmo} path of the
+ * original's vehicle screen. One supply costs the weapon's {@code Item} lines and adds
+ * {@code SuppliedNum} rounds; it only works while the vehicle stands on something.
  */
 public final class Resupply {
     private Resupply() {
     }
 
-    public static boolean fromInventory(ServerPlayer player, AircraftEntity vehicle) {
+    /** {@code canPlayerSupplyAmmo}: whether {@link #supply} would do anything right now. */
+    public static boolean canSupply(ServerPlayer player, AircraftEntity vehicle, int weapon) {
         VehicleWeapons weapons = vehicle.weapons();
-        int seat = vehicle.seatOf(player);
-        WeaponSet set = weapons != null ? weapons.current(seat) : null;
-        if (set == null || vehicle.isDestroyed()) {
+        WeaponSet set = weapons != null ? weapons.set(weapon) : null;
+        if (set == null || vehicle.isDestroyed() || player.getVehicle() != vehicle || !vehicle.canSupply()) {
             return false;
         }
-        WeaponDefinition w = set.definition();
         if (set.ammo() + set.restAmmo() >= set.maxAmmo()) {
             return false;
         }
+        return player.getAbilities().instabuild || canPay(player.getInventory(), set.definition());
+    }
+
+    /** Pays for and adds one supply of {@code weapon}. Server only. */
+    public static boolean supply(ServerPlayer player, AircraftEntity vehicle, int weapon) {
+        if (!canSupply(player, vehicle, weapon)) {
+            return false;
+        }
+        WeaponSet set = vehicle.weapons().set(weapon);
         if (!player.getAbilities().instabuild) {
-            if (!canPay(player.getInventory(), w)) {
-                return false;
-            }
-            pay(player.getInventory(), w);
+            pay(player.getInventory(), set.definition());
         }
         set.supply();
         if (set.ammo() <= 0) {
