@@ -16,9 +16,9 @@ import net.minecraft.world.level.Level;
  * The fuel can, {@code MCH_ItemFuel}. It holds 600 units; the durability bar shows how much is
  * left. Using it refills it from the coal and charcoal in the inventory, as in the original.
  *
- * <p>The original poured the can into a vehicle through the fuel slots of the vehicle's inventory
- * screen. That screen does not exist yet, so right-clicking a vehicle with the can pours up to 100
- * units at a time instead.
+ * <p>A can in a fuel slot of the vehicle screen empties into the tank while the vehicle stands on
+ * something, as in the original. Not in the original: right-clicking a vehicle with the can pours
+ * up to 100 units at once, which saves opening the screen.
  */
 public class FuelItem extends Item {
     /** Units a full can holds, the original's maximum damage. */
