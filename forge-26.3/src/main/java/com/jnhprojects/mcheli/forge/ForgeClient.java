@@ -17,14 +17,17 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.client.gui.overlay.ForgeLayeredDraw;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 /** Client events on Forge. Only loaded on a physical client. */
 final class ForgeClient {
     private ForgeClient() {
     }
 
-    static void init() {
+    static void init(BusGroup modBus) {
         ClientHooks.init();
+        FMLClientSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(ClientHooks::registerMenuScreens));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
         RegisterParticleProvidersEvent.BUS.addListener(event -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
         RegisterKeyMappingsEvent.BUS.addListener(event -> ClientHooks.keyMappings().forEach(event::register));

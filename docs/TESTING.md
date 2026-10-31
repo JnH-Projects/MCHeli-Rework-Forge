@@ -161,8 +161,9 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 - [ ] `ah-6`: right mouse fires the M134 in a stream with muzzle flashes, ejected cases and its
       sound; middle mouse (or G) switches to the Hydra rockets, which leave a smoke trail and
       explode on impact. Shift with G goes back.
-- [ ] Survival: the readout counts ammunition down and reloads; when the reserve is empty, N with
-      iron, gunpowder (and redstone where listed) in the inventory buys one resupply.
+- [ ] Survival: the readout counts ammunition down and reloads; when the reserve is empty, landed,
+      Reload in the vehicle screen (I) with iron, gunpowder (and redstone where listed) in the
+      inventory buys one resupply.
 - [ ] Creative: ammunition shows as infinite.
 - [ ] `f-35b`: selecting the AIM-9X opens its weapon bay. Holding right mouse at a flying mob or a
       second aircraft shows "Locking" and fires once locked; the missile chases the target.
@@ -477,6 +478,51 @@ Install Sodium and Iris for 26.3 with a shader pack (Complementary or BSL).
 - [ ] K in a vehicle with night vision: the view brightens at night, K again turns it off.
       Leaving the vehicle turns it off. A night vision potion is not cut short.
 - [ ] K in a vehicle without night vision plays the "no" sound and does nothing.
+
+## Phase 9 checklist (`1.1.0-beta.5`)
+
+Forge 26.3 only. Start from a world made by beta.4 with a few vehicles in it, in survival.
+
+### Thermal view
+
+- [ ] K in an `ah-64` cycles normal, night vision, thermal view (white hot, with outlines) and back
+      to normal. The HUD's `cam_mode` shows 1 and 2. Night vision stays on through the thermal view.
+- [ ] Leaving the vehicle or switching seat in thermal view goes back to the normal view.
+- [ ] With an Iris shader pack on, thermal view still shows (or note what it looks like).
+
+### Vehicle screen
+
+- [ ] I in any seat opens the vehicle screen, named after the vehicle, with three fuel slots and,
+      a parachute slot per ejection seat (one in the single seat `f-35b`). A helicopter without
+      ejection seats has none.
+- [ ] Only fuel cans go in the fuel slots and only parachutes in the parachute slots. Shift-click
+      from the inventory sends them there.
+- [ ] Landed with a fuel can in a slot, the fuel percentage and gauge climb by up to 100 units
+      every half second and the can's bar drops; in the air nothing pours.
+- [ ] Empty a weapon's reserve, land: Reload is active with the items in the inventory, takes them
+      and adds the rounds. In the air it is greyed out with "Land to reload" as its tooltip.
+      Closing the screen loads the magazine. In creative it costs nothing.
+- [ ] `<` and `>` step through every weapon of the vehicle, including other seats' weapons, with
+      their rounds as the server has them.
+- [ ] Space twice in an `f-35b` without a parachute in the slots: no ejection, the "no" sound and a
+      message. With a parachute in a slot, the seat ejects and the parachute is used up.
+- [ ] Items in the vehicle screen stay after leaving, saving and reloading the world.
+
+### Helicopter on the ground
+
+- [ ] Sit in a parked helicopter and move the mouse around: it stays level. Throttle up until it
+      lifts off: from then on the mouse tilts it as before.
+
+### Cargo and supply vehicles
+
+- [ ] A vehicle with an `InventorySize` (`ch47`, `c5`, `centauro`) shows a Cargo button in the
+      vehicle screen that opens a chest of the right size. Shift + right-click on the vehicle from
+      outside opens the same chest; walking away closes it.
+- [ ] The `m1129` (`InventorySize = 10`) gets two rows.
+- [ ] Walk far enough for the vehicle's chunk to unload and come back: the cargo is still there.
+- [ ] Destroy a loaded vehicle (or pack it up by punching it): the fuel cans, parachutes and cargo
+      drop.
+- [ ] Park next to an `ammo_box`: weapons with a low reserve fill up a tenth at a time.
 
 ## Reporting problems
 

@@ -14,17 +14,20 @@ import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.jnhprojects.mcheli.item.FuelItem;
 import com.jnhprojects.mcheli.item.WrenchItem;
+import com.jnhprojects.mcheli.menu.VehicleMenu;
 import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.physics.CrashSpin;
 import com.jnhprojects.mcheli.physics.GroundImpact;
 import com.jnhprojects.mcheli.registry.ModItems;
+import com.jnhprojects.mcheli.supply.SupplyRules;
 import com.jnhprojects.mcheli.weapon.Explosions;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -37,6 +40,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -51,6 +55,8 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -181,6 +187,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     private int fuelSuppliedCount;
     /** One bit per seat whose occupant has night vision on. Server only, not saved. */
     private int nightVisionSeats;
+    /** Fuel and parachute slots and the cargo chest. Only the server's copy holds anything. */
+    private final VehicleInventory inventory = new VehicleInventory(this);
 
     // Crashes, measured from position so they work whichever side simulates the vehicle.
     /** Blocks per tick into terrain, sideways, that count as a crash: about 25 m/s. */
@@ -473,6 +481,101 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
     }
 
+    // Inventory and supply
+
+    public VehicleInventory inventory() {
+        return inventory;
+    }
+
+    /**
+     * {@code canSupply}: fuel cans and resupply only work while the vehicle stands on something,
+     * within three blocks; a vehicle that cannot float must not be in the water either.
+     */
+    public boolean canSupply() {
+        AircraftDefinition def = definition();
+        return def != null && hasBlockBelow(1, 3, false) && (def.floats || !isInWater());
+    }
+
+    /** {@code openGui}: shows a crew member the vehicle screen. Server only. */
+    public void openScreen(ServerPlayer player) {
+        AircraftDefinition def = definition();
+        if (def == null || isDestroyed() || player.getVehicle() != this) {
+            return;
+        }
+        player.openMenu(new SimpleMenuProvider((id, playerInventory, p) -> new VehicleMenu(id, playerInventory, this), displayName(def)));
+    }
+
+    /**
+     * {@code openInventory}: shows the cargo chest of a vehicle with an {@code InventorySize}.
+     * Server only.
+     *
+     * @return false when the vehicle has none
+     */
+    public boolean openCargo(ServerPlayer player) {
+        AircraftDefinition def = definition();
+        if (def == null || def.cargoRows() <= 0 || isDestroyed() || !inventory.stillValid(player)) {
+            return false;
+        }
+        int rows = Math.min(def.cargoRows(), 6);
+        MenuType<ChestMenu> type = switch (rows) {
+            case 1 -> MenuType.GENERIC_9x1;
+            case 2 -> MenuType.GENERIC_9x2;
+            case 3 -> MenuType.GENERIC_9x3;
+            case 4 -> MenuType.GENERIC_9x4;
+            case 5 -> MenuType.GENERIC_9x5;
+            default -> MenuType.GENERIC_9x6;
+        };
+        player.openMenu(new SimpleMenuProvider((id, playerInventory, p) -> new ChestMenu(type, id, playerInventory, inventory.cargo(), rows),
+                displayName(def)));
+        return true;
+    }
+
+    /** The vehicle's name as its item shows it. */
+    private static Component displayName(AircraftDefinition def) {
+        return Component.translatableWithFallback("item.mcheli." + def.name(), def.displayName);
+    }
+
+    /**
+     * {@code supplyAmmoToOtherAircraft}: an ammunition truck ({@code AmmoSupplyRange}) tops up the
+     * weapons of every vehicle within range that stands on something, a tenth of each weapon's
+     * maximum every two seconds.
+     */
+    private void supplyAmmo(AircraftDefinition def) {
+        float range = def.ammoSupplyRange;
+        if (range <= 0.0F || ticksAlive % SupplyRules.AMMO_TRUCK_INTERVAL != 0 || isDestroyed()) {
+            return;
+        }
+        for (AircraftEntity other : level().getEntitiesOfClass(AircraftEntity.class, getBoundingBox().inflate(range))) {
+            VehicleWeapons theirs = other.weapons();
+            if (other == this || theirs == null || other.isDestroyed() || !other.canSupply()) {
+                continue;
+            }
+            for (WeaponSet set : theirs.sets()) {
+                int rounds = SupplyRules.roundsFromTruck(set.ammo() + set.restAmmo(), set.maxAmmo());
+                if (rounds > 0) {
+                    set.setRestAmmo(set.restAmmo() + rounds);
+                    if (set.ammo() <= 0) {
+                        set.reloadMagazine();
+                    }
+                }
+            }
+        }
+    }
+
+    /** {@code repairOtherAircraft}: a repair vehicle ({@code RepairOtherVehicles}) mends those in range. */
+    private void repairOthers(AircraftDefinition def) {
+        float range = def.repairOtherVehiclesRange;
+        if (range <= 0.0F || ticksAlive % SupplyRules.REPAIR_INTERVAL != 0 || isDestroyed()) {
+            return;
+        }
+        for (AircraftEntity other : level().getEntitiesOfClass(AircraftEntity.class, getBoundingBox().inflate(range))) {
+            AircraftDefinition theirs = other.definition();
+            if (other != this && theirs != null) {
+                other.repair(SupplyRules.repair(other.hp(), theirs.maxHp, def.repairOtherVehiclesValue));
+            }
+        }
+    }
+
     /** Whether the flight model holds a hover: in hover mode, or while the pilot mans the guns. */
     public boolean isHovering() {
         return isHoveringMode() || isGunnerMode();
@@ -623,7 +726,12 @@ public abstract class AircraftEntity extends VehicleEntity {
 
         if (!level().isClientSide()) {
             supplyFuel(def);
+            supplyAmmo(def);
+            repairOthers(def);
             burnFuel(def);
+            if (def.maxFuel > 0 && fuel() < def.maxFuel && !isDestroyed()) {
+                inventory.pourFuelCans(ticksAlive);
+            }
             tickNightVision();
         }
 
@@ -1232,10 +1340,18 @@ public abstract class AircraftEntity extends VehicleEntity {
             return held.getItem() instanceof FuelItem ? FuelItem.pour(held, this, player) : WrenchItem.useOn(held, this, player, hand);
         }
         InteractionResult result = super.interact(player, hand, location);
+        AircraftDefinition def = definition();
+        if (result == InteractionResult.PASS && player.isSecondaryUseActive() && def != null && def.cargoRows() > 0
+                && !isDestroyed() && player.getVehicle() != this) {
+            // Sneaking opens the cargo chest from outside, as in the original.
+            if (player instanceof ServerPlayer server) {
+                openCargo(server);
+            }
+            return InteractionResult.SUCCESS;
+        }
         if (result != InteractionResult.PASS || player.isSecondaryUseActive()) {
             return result;
         }
-        AircraftDefinition def = definition();
         if (def == null || !def.canRide || player.getVehicle() == this) {
             return InteractionResult.PASS;
         }
@@ -1413,12 +1529,22 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     /**
      * {@code ejectSeat}: throws the occupant clear of the aircraft in an ejection seat, whose
-     * parachute opens once it starts to fall. Server only.
+     * parachute opens once it starts to fall. Each ejection takes a parachute from the parachute
+     * slots of the vehicle screen; without one the seat stays put. Creative players need none.
+     * Server only.
      */
     public void eject(Entity entity) {
         AircraftDefinition def = definition();
         int seat = seatOf(entity);
         if (def == null || !canEject(entity)) {
+            return;
+        }
+        boolean creative = entity instanceof Player player && player.getAbilities().instabuild;
+        if (!creative && !inventory.takeParachute()) {
+            if (entity instanceof ServerPlayer player) {
+                ModSounds.playTo(player, "ng", 1.0F, 1.0F);
+                player.sendOverlayMessage(Component.translatable("message.mcheli.no_parachute"));
+            }
             return;
         }
         Vector3 seatPos = def.seats.get(seat).position();
@@ -2162,6 +2288,15 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
     }
 
+    /** A vehicle that is destroyed, packed up or killed spills what it carried; one that unloads keeps it. */
+    @Override
+    public void remove(RemovalReason reason) {
+        if (reason.shouldDestroy() && !level().isClientSide() && !isRemoved()) {
+            inventory.dropAll();
+        }
+        super.remove(reason);
+    }
+
     @Override
     protected Item getDropItem() {
         AircraftDefinition def = definition();
@@ -2216,6 +2351,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (weapons != null) {
             output.putIntArray("WeaponsAmmo", weapons.saveAmmo());
         }
+        inventory.save(output);
         ValueOutput.TypedOutputList<String> seats = output.list("Seats", Codec.STRING);
         for (int i = 0; i < seatIds.length; i++) {
             Entity e = occupant(i);
@@ -2250,6 +2386,7 @@ public abstract class AircraftEntity extends VehicleEntity {
                 savedAmmo = ammo;
             }
         });
+        inventory.load(input);
         savedSeats.clear();
         List<String> seats = input.listOrEmpty("Seats", Codec.STRING).stream().toList();
         for (int i = 0; i < seats.size(); i++) {

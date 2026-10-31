@@ -12,16 +12,19 @@ import com.jnhprojects.mcheli.client.render.MeshCache;
 import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
+import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.registry.ModEntities;
+import com.jnhprojects.mcheli.registry.ModMenus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -79,6 +82,11 @@ public final class ClientHooks {
         renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
     }
 
+    /** On the main thread during client setup, once our menu types are registered. */
+    public static void registerMenuScreens() {
+        MenuScreens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
+    }
+
     public static List<KeyMapping> keyMappings() {
         return KeyBindings.ALL;
     }
@@ -96,6 +104,7 @@ public final class ClientHooks {
             Glow.assignShaderPrograms();
         }
         CrewController.onClientTick();
+        VehicleCamera.tick();
         WeaponController.onClientTick();
         HudRenderer.tick();
         EngineSoundPlayer.tick();

@@ -5,6 +5,43 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.1.0-beta.5] - 2026-10-31
+
+Phase 9 of the road to 1.1.0: the vehicle screen and what goes with it, supply vehicles and
+thermal view. Betas are not uploaded to CurseForge, and this one ships the Forge 26.3 jar only.
+Worlds from 1.1.0-beta.4 load as before; their vehicles come back with empty slots. Players and
+servers need the same version, since the network protocol changed.
+
+### Added
+
+- The vehicle screen, on I in any seat (the original's GUI key, R, switches seats here). It has
+  three fuel slots that empty fuel cans into the tank while the vehicle stands on something, a
+  parachute slot for each ejection seat, and a weapon panel that shows every weapon's rounds and
+  reload cost and reloads it from your own items. Closing it after a reload loads every magazine.
+- The cargo chest of vehicles with an `InventorySize`, from the vehicle screen's Cargo button or
+  with Shift + right-click on the vehicle from outside. Sizes between rows round up to a whole row.
+  What a vehicle carries drops when it is destroyed or packed up.
+- Ammunition trucks (`AmmoSupplyRange`) rearm every vehicle around them that stands on something,
+  a tenth of each weapon's maximum every two seconds.
+- Repair vehicles: `RepairOtherVehicles = range[, value]` mends every vehicle in range by `value`
+  hit points a second (10 by default). None of the original vehicles uses it; packs can.
+- Thermal view: K now steps from night vision to a white hot thermal view with outlines and back
+  to normal. The HUD's `cam_mode` reads 2 in it, as in the original. The original's vanilla
+  "pencil" shader no longer exists, so the filter is our own.
+
+### Changed
+
+- Ejection seats need a parachute in the vehicle screen's parachute slots, one per ejection, as in
+  the original. Without one the seat stays put and says so. Creative players need none.
+- Reloading a weapon from your inventory moved from the N key to the vehicle screen and only works
+  on the ground, as in the original. The empty magazine hint on the HUD names the new key.
+- The network protocol is now version 8.
+
+### Fixed
+
+- A helicopter on the ground no longer tilts with the pilot's mouse; it stays level until it
+  lifts off.
+
 ## [1.1.0-beta.4] - 2026-10-30
 
 Phase 8 of the road to 1.1.0: fuel, the first equipment carried over from phase 4, hit boxes that
@@ -515,6 +552,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.5]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.5
 [1.1.0-beta.4]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.4
 [1.1.0-beta.3]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.3
 [1.1.0-beta.2]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.2

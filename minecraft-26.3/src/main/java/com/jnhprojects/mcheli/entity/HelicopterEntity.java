@@ -126,7 +126,8 @@ public class HelicopterEntity extends AircraftEntity implements EngineSoundSourc
         if (!isNearGround(2)) {
             yaw = clamp(x, 40.0F * def.mobilityYaw) * LOOK_SCALE;
         }
-        if (!isHovering()) {
+        // Standing on its skids or wheels a helicopter stays level; the mouse only tilts it in the air.
+        if (!isHovering() && !onGround()) {
             pitch = clamp(y, 40.0F * def.mobilityPitch) * LOOK_SCALE;
             rollDelta = clamp(x, 40.0F * def.mobilityRoll) * LOOK_SCALE;
         }

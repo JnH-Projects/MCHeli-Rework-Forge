@@ -488,6 +488,30 @@ player, steered by the rider's forward input from `ServerPlayer.getLastClientInp
 `Kind` picks the model: the round canopy for the item, the seat for ejection (whose canopy opens
 once it falls), the bare canopy for drops.
 
+### Vehicle inventory and supply
+
+`entity.VehicleInventory` is the original's `MCH_AircraftInventory` plus the container half of
+`W_EntityContainer`: five equipment slots (three fuel cans, two parachutes) and a 54 slot cargo
+chest, saved as `Equipment` and `Cargo`. The chest always has room for the largest size and the
+screen shows `AircraftDefinition.cargoRows()` rows of it, so a content reload that shrinks
+`InventorySize` hides items instead of deleting them. Everything drops when the vehicle is removed
+for good (`RemovalReason.shouldDestroy`), not when its chunk unloads.
+
+`menu.VehicleMenu` is the vehicle screen, registered as `mcheli:vehicle` in `registry.ModMenus`;
+the cargo chest reuses vanilla's `ChestMenu` and `GENERIC_9xN` types. A crew member opens the
+screen with `CrewActionPacket.Action.VEHICLE_SCREEN`; the client side of the menu finds the
+vehicle as the one its player rides, so the open packet needs no extra data and the menu works on
+every loader. Both sides always build the same 41 slots, parachute slots the vehicle lacks are
+simply inactive. The server sends each weapon's rounds and a bitmask of the weapons that can be
+reloaded now through data slots, because a client only hears about its own seat's ammunition.
+The screen's buttons go back through vanilla's container button packet (`clickMenuButton`): ids
+from zero reload that weapon through `weapon.Resupply`, `BUTTON_CARGO` opens the chest.
+
+The supply amounts are in `supply.SupplyRules` in `common`: a fuel slot pours up to 100 units
+every half second while `canSupply()` (the vehicle stands on something, and floats or is out of
+the water), an ammunition truck (`AmmoSupplyRange`) adds a tenth of each weapon's maximum every
+two seconds, and a repair vehicle (`RepairOtherVehicles`) mends its neighbours once a second.
+
 ## Client
 
 **CrewController** samples keys each client tick and the mouse every frame, for whichever seat the
@@ -544,7 +568,11 @@ original's `MCH_Camera`. Zoom narrows the field of view through `ViewportEvent.C
 offered on the fold key whenever the seat looks through a sight, as the original did. Night vision
 asks the server through `CrewActionPacket`, and `AircraftEntity` keeps a short ambient night
 vision effect topped up on that seat's occupant, removing it again on leaving (unless a longer
-effect, such as a potion, was there).
+effect, such as a potion, was there). Thermal view is night vision plus the `mcheli:thermal` post
+effect (`assets/mcheli/post_effect/thermal.json`, shader `post/thermal.fsh`), a white hot
+monochrome with outlines in place of the original's vanilla "pencil" shader, which no longer
+exists. `VehicleCamera.tick` keeps it in `LocalPlayer.getActivePostEffects()`, the list the game
+reads every frame, so no loader hook is needed.
 
 **CrewController** also hides the first person hand through `RenderHandEvent` wherever the original
 did: for the pilot, and for anyone looking through a camera or with a weapon selected.

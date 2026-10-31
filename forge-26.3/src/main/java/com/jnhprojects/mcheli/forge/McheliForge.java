@@ -55,7 +55,7 @@ public final class McheliForge {
         });
 
         if (Platform.get().isClient()) {
-            ForgeClient.init();
+            ForgeClient.init(modBus);
         }
     }
 
