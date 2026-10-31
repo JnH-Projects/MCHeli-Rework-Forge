@@ -248,14 +248,14 @@ in this phase moved to phase 9.
 
 ## Phase 9: the rest of the equipment (`1.1.0-beta.5`)
 
-- [ ] Thermal view
-- [ ] The vehicle inventory, with its fuel slots
+- [x] Thermal view
+- [x] The vehicle inventory, with its fuel and parachute slots, and the cargo chest
+- [x] Resupply from the vehicle screen and from ammunition trucks; repair vehicles
 - [ ] Equipment: GLTD, rangefinder, UAV station and portable controller, chain towing, container,
       Stinger and Javelin, smoke grenades
 - [ ] Parachutes for rack drops, containers on racks, repelling and troop drops
 - [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
-- [ ] Resupply from the inventory screen and from supply vehicles, marking blocks with targeting
-      pods, mortar distance
+- [ ] Marking blocks with targeting pods, mortar distance
 - [ ] The drafting table and its recipe browser (pack vehicles included)
 - [ ] Multiplayer team manager and spotting
 
