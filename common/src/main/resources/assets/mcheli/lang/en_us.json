@@ -29,7 +29,7 @@
   "entity.mcheli.tv_missile": "TV-Guided Missile",
   "entity.mcheli.vehicle": "Ground Vehicle",
   "gui.mcheli.vehicle.cargo": "Cargo",
-  "gui.mcheli.vehicle.fuel": "Fuel %s / %s",
+  "gui.mcheli.vehicle.fuel": "Fuel %s%%",
   "gui.mcheli.vehicle.no_weapons": "No weapons",
   "gui.mcheli.vehicle.parachute": "Parachutes",
   "gui.mcheli.vehicle.reload": "Reload",
