@@ -2,7 +2,6 @@ package com.jnhprojects.mcheli.network;
 
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
-import com.jnhprojects.mcheli.weapon.Resupply;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -44,8 +43,8 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
         WEAPON_MODE,
         /** Release flares. Pilot and first crew seat. */
         FLARE,
-        /** Pay the selected weapon's {@code Item} cost from the inventory for one resupply. */
-        RESUPPLY,
+        /** Open the vehicle screen: fuel and parachute slots, reloading, the way to the cargo chest. */
+        VEHICLE_SCREEN,
         /** Hand the controls to the autopilot and man the weapons, or take them back. Pilot only. */
         GUNNER_MODE,
         /** Turn night vision on for the sender, in vehicles with {@code EnableNightVision}. */
@@ -135,7 +134,7 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
                     weapons.flares.use();
                 }
             }
-            case RESUPPLY -> Resupply.fromInventory(sender, vehicle);
+            case VEHICLE_SCREEN -> vehicle.openScreen(sender);
             case NIGHT_VISION_ON, NIGHT_VISION_OFF -> vehicle.setNightVision(sender, msg.action == Action.NIGHT_VISION_ON);
         }
     }
