@@ -228,7 +228,8 @@ to climb.
 | J | Load nearby vehicles onto your racks, or drive onto a carrier's rack |
 | U | Unload the last vehicle from your racks, or leave the carrier |
 | Z | Through a camera, gunner sight or gunner mode: zoom (2x, 4x and so on up to the vehicle's limit, then back) |
-| K | Night vision on and off, in vehicles that have it |
+| K | Night vision, then thermal view, then back to normal, in vehicles that have night vision |
+| I | The vehicle screen: fuel and parachute slots, reloading, and the cargo chest |
 | Shift | Leave the vehicle |
 
 **Weapons**
@@ -239,7 +240,6 @@ to climb.
 | Middle mouse or G | Next weapon for your seat; with Shift, the previous one |
 | X | Fire mode, for weapons that have one (HE rounds, top attack, TV guidance) |
 | C | Release flares (pilot and first crew seat) |
-| N | Resupply the selected weapon, paying its item cost from your inventory |
 
 Each seat fires the weapons its vehicle assigns to it; the pilot also fires a gunner's weapons
 while that seat has no player. Creative players have unlimited ammunition. A small readout at the
@@ -249,12 +249,18 @@ bottom right shows hit points, the weapon, ammunition, reload, heat, lock and fl
 
 Vehicles burn fuel while the throttle is open; the HUD shows the tank and warns below 10%. With
 an empty tank the engine winds down. Refuel with the **fuel can** from the Equipment tab:
-right-click a vehicle to pour in up to 100 units, and right-click in the air with coal or
-charcoal in your inventory to fill the can again. A fuel truck tops up every vehicle around it.
-The **wrench** repairs 10 hit points per click, once a second; with Shift it switches the
-vehicle's paint. The **parachute** opens when used in mid-air; hold W to glide forward.
-Ejection seats come down on a parachute of their own. All three are crafted with the original's
-recipes.
+right-click a vehicle to pour in up to 100 units, or put cans in the fuel slots of the vehicle
+screen (I), which empty into the tank while the vehicle is on the ground. Right-click in the air
+with coal or charcoal in your inventory to fill a can again. A fuel truck tops up every vehicle
+around it, and an ammunition truck rearms them. The **wrench** repairs 10 hit points per click,
+once a second; with Shift it switches the vehicle's paint. The **parachute** opens when used in
+mid-air; hold W to glide forward. Ejection seats need a parachute in the vehicle screen's
+parachute slots, one per ejection. All three are crafted with the original's recipes.
+
+The vehicle screen also reloads weapons from your own items, one supply per click, while the
+vehicle is on the ground; closing it loads every magazine. Vehicles with cargo space have a
+**Cargo** button there, and Shift + right-click opens their cargo chest from outside. What a
+vehicle carries drops when it is destroyed.
 
 ## Commands and server settings
 
