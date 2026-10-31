@@ -66,6 +66,29 @@ class HelicopterDefinitionTest {
     }
 
     @Test
+    void readsInventoryAndSupplyKeys() throws IOException {
+        HelicopterDefinition def = parse("cargo", """
+                AddSeat = 0, 1, 0
+                AddSeat = 0, 1, 1
+                AddSeat = 0, 1, 2
+                InventorySize = 10
+                EnableEjectionSeat = true
+                RepairOtherVehicles = 20, 5
+                """);
+
+        // Ten slots need two rows of nine; only seats zero and one have ejection seats.
+        assertEquals(2, def.cargoRows());
+        assertEquals(2, def.ejectionSeats());
+        assertEquals(20.0F, def.repairOtherVehiclesRange);
+        assertEquals(5, def.repairOtherVehiclesValue);
+
+        HelicopterDefinition bare = parse("bare", "AddSeat = 0, 1, 0");
+        assertEquals(0, bare.cargoRows());
+        assertEquals(0, bare.ejectionSeats());
+        assertEquals(10, bare.repairOtherVehiclesValue);
+    }
+
+    @Test
     void rejectsDefinitionWithoutSeats() throws IOException {
         DefinitionReader.Result<HelicopterDefinition> result = parseResult("empty", "DisplayName = Nothing");
         assertFalse(result.isValid());
