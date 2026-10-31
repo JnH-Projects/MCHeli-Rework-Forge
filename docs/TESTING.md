@@ -497,8 +497,8 @@ Forge 26.3 only. Start from a world made by beta.4 with a few vehicles in it, in
       ejection seats has none.
 - [ ] Only fuel cans go in the fuel slots and only parachutes in the parachute slots. Shift-click
       from the inventory sends them there.
-- [ ] Landed with a fuel can in a slot, the tank fills by up to 100 every half second and the can's
-      bar drops; in the air nothing pours.
+- [ ] Landed with a fuel can in a slot, the fuel percentage and gauge climb by up to 100 units
+      every half second and the can's bar drops; in the air nothing pours.
 - [ ] Empty a weapon's reserve, land: Reload is active with the items in the inventory, takes them
       and adds the rounds. In the air it is greyed out with "Land to reload" as its tooltip.
       Closing the screen loads the magazine. In creative it costs nothing.
@@ -507,6 +507,11 @@ Forge 26.3 only. Start from a world made by beta.4 with a few vehicles in it, in
 - [ ] Space twice in an `f-35b` without a parachute in the slots: no ejection, the "no" sound and a
       message. With a parachute in a slot, the seat ejects and the parachute is used up.
 - [ ] Items in the vehicle screen stay after leaving, saving and reloading the world.
+
+### Helicopter on the ground
+
+- [ ] Sit in a parked helicopter and move the mouse around: it stays level. Throttle up until it
+      lifts off: from then on the mouse tilts it as before.
 
 ### Cargo and supply vehicles
 
