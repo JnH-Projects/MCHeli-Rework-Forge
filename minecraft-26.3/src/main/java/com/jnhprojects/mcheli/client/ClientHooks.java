@@ -7,12 +7,13 @@ import com.jnhprojects.mcheli.client.hud.HudScripts;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
 import com.jnhprojects.mcheli.client.render.FlareRenderer;
+import com.jnhprojects.mcheli.client.render.GltdRenderer;
 import com.jnhprojects.mcheli.client.render.Glow;
 import com.jnhprojects.mcheli.client.render.MeshCache;
 import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
-import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
+import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
@@ -82,6 +83,7 @@ public final class ClientHooks {
         renderers.register(ModEntities.A10.get(), A10Renderer::new);
         renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
         renderers.register(ModEntities.THROWABLE.get(), ThrowableRenderer::new);
+        renderers.register(ModEntities.GLTD.get(), GltdRenderer::new);
     }
 
     /** On the main thread during client setup, once our menu types are registered. */
@@ -106,6 +108,7 @@ public final class ClientHooks {
             Glow.assignShaderPrograms();
         }
         CrewController.onClientTick();
+        GltdController.onClientTick();
         VehicleCamera.tick();
         WeaponController.onClientTick();
         HudRenderer.tick();
@@ -115,6 +118,7 @@ public final class ClientHooks {
     /** Tilts the view with the hull and moves the eye into the cockpit or onto a TV missile. */
     public static void computeCameraAngles(CameraAngles angles) {
         CrewController.onCameraAngles(angles);
+        GltdController.onCameraAngles(angles);
     }
 
     /** Sets the camera's rotation, roll included, the way Forge's {@code Camera#setRotation} does. */
@@ -197,7 +201,7 @@ public final class ClientHooks {
 
     /** Whether to skip drawing the first person hand this frame. */
     public static boolean hidesHand() {
-        return CrewController.hidesHand();
+        return CrewController.hidesHand() || GltdController.hidesHand();
     }
 
     /** What happens to a press of the use key. */
@@ -211,7 +215,7 @@ public final class ClientHooks {
     }
 
     public static UseKey onUseKey(InteractionHand hand) {
-        if (WeaponController.onUseItem()) {
+        if (WeaponController.onUseItem() || GltdController.onUseItem()) {
             return UseKey.CONSUME;
         }
         return VehiclePicker.onUseItem(hand) ? UseKey.CONSUME_AND_SWING : UseKey.PASS;
@@ -228,6 +232,7 @@ public final class ClientHooks {
 
     public static void drawHud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         WeaponHud.draw(graphics, delta);
+        GltdController.drawHud(graphics, delta);
     }
 
     /** Without the original zip there are no vehicles, so say so where the player will see it. */
