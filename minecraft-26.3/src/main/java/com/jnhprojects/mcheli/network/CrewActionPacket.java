@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.network;
 
+import com.jnhprojects.mcheli.ModSounds;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
@@ -50,7 +51,11 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
         /** Turn night vision on for the sender, in vehicles with {@code EnableNightVision}. */
         NIGHT_VISION_ON,
         /** Turn the sender's night vision off again. */
-        NIGHT_VISION_OFF
+        NIGHT_VISION_OFF,
+        /** Let the troops down: ropes from a hover, a parachute drop, or out on the ground. Pilot only. */
+        DROP_CREW,
+        /** Slide down a rope or jump with a parachute. Crew other than the pilot. */
+        JUMP_OUT
     }
 
     public static void encode(CrewActionPacket msg, FriendlyByteBuf buf) {
@@ -136,6 +141,16 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
             }
             case VEHICLE_SCREEN -> vehicle.openScreen(sender);
             case NIGHT_VISION_ON, NIGHT_VISION_OFF -> vehicle.setNightVision(sender, msg.action == Action.NIGHT_VISION_ON);
+            case DROP_CREW -> {
+                if (pilot && !vehicle.dropCrew()) {
+                    ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
+                }
+            }
+            case JUMP_OUT -> {
+                if (!pilot && !vehicle.jumpOut(sender)) {
+                    ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
+                }
+            }
         }
     }
 
