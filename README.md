@@ -11,9 +11,10 @@ textures and sounds load unchanged.
 
 > **Status:** on the way to 1.1.0, now at phase 10 (`1.1.0-beta.6`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
-> 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and most of the equipment are
-> in. Betas 4 to 8 ship the Forge 26.3 jar only; every loader and Minecraft version comes back for
-> 1.1.0. See the [roadmap](docs/ROADMAP.md).
+> 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
+> equipment are in, down to UAV stations, the drafting table and the team manager. Betas 4 to 8
+> ship the Forge 26.3 jar only; every loader and Minecraft version comes back for 1.1.0. See the
+> [roadmap](docs/ROADMAP.md).
 
 ## Showcase video
 
@@ -124,8 +125,8 @@ the throttle, the mouse flies or aims, right mouse fires and Shift gets out. Eve
 rebound under Controls, category MCHeli.
 
 The full controls for each kind of vehicle, fuel and repairs, the equipment (parachute, smoke
-grenades, GLTD, rangefinder, Stinger and Javelin, container, tow chain) and the commands and
-server settings are in
+grenades, GLTD, rangefinder, Stinger and Javelin, container, UAV station, drafting table, tow
+chain), troops, the team manager and the commands and server settings are in
 [docs/PLAYING.md](docs/PLAYING.md).
 
 ## Content packs
