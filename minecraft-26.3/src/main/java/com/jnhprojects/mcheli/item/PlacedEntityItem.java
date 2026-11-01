@@ -13,6 +13,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.function.Supplier;
 
 /**
@@ -38,6 +40,7 @@ public class PlacedEntityItem extends Item {
             return InteractionResult.FAIL;
         }
         entity.snapTo(above.getX() + 0.5, above.getY(), above.getZ() + 0.5, player != null ? player.getYRot() : 0.0F, 0.0F);
+        prepare(entity, player);
         if (!level.noCollision(entity, entity.getBoundingBox().deflate(0.1)) || !level.getEntities(entity, entity.getBoundingBox()).isEmpty()) {
             return InteractionResult.FAIL;
         }
@@ -51,5 +54,9 @@ public class PlacedEntityItem extends Item {
         }
         stack.consume(1, player);
         return InteractionResult.SUCCESS;
+    }
+
+    /** Sets up the new entity before it is checked for room and spawned. */
+    protected void prepare(Entity entity, @Nullable Player player) {
     }
 }
