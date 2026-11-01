@@ -61,9 +61,9 @@ public final class CommonHooks {
     }
 
     /**
-     * The vehicle recipes live in {@code data/mcheli/recipe} of the imported content pack. The
-     * original listed them on its drafting table; until that is ported, every MCHeli recipe goes
-     * into a player's recipe book when they join, so they can be found.
+     * The vehicle recipes live in {@code data/mcheli/recipe} of the imported content pack. Every
+     * MCHeli recipe goes into a player's recipe book when they join: the drafting table lists them
+     * from there, and they can be found in the crafting table's book too.
      */
     public static void playerLoggedIn(ServerPlayer player) {
         PackSync.onLogin(player);
