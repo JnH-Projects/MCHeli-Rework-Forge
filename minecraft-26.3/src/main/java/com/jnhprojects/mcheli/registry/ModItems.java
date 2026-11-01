@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.registry;
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
+import com.jnhprojects.mcheli.entity.UavStationEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.jnhprojects.mcheli.item.ChainItem;
 import com.jnhprojects.mcheli.item.FuelItem;
@@ -12,6 +13,7 @@ import com.jnhprojects.mcheli.item.ParachuteItem;
 import com.jnhprojects.mcheli.item.PlacedEntityItem;
 import com.jnhprojects.mcheli.item.RangefinderItem;
 import com.jnhprojects.mcheli.item.ThrowableItem;
+import com.jnhprojects.mcheli.item.UavStationItem;
 import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
@@ -47,12 +49,16 @@ public final class ModItems {
     public static final Registered<Item> JAVELIN_MISSILE = Registration.register(Registries.ITEM, "fgm148_bullet", key -> new Item(new Item.Properties().setId(key).stacksTo(16)));
     public static final Registered<Item> JAVELIN = Registration.register(Registries.ITEM, "fgm148",
             key -> new LauncherItem("fgm148", () -> ModItems.JAVELIN_MISSILE.get(), new Item.Properties().setId(key)));
+    public static final Registered<Item> UAV_STATION = Registration.register(Registries.ITEM, "uav_station",
+            key -> new UavStationItem(UavStationEntity.STATION, new Item.Properties().setId(key).stacksTo(1)));
+    public static final Registered<Item> UAV_CONTROLLER = Registration.register(Registries.ITEM, "uav_station2",
+            key -> new UavStationItem(UavStationEntity.PORTABLE, new Item.Properties().setId(key).stacksTo(1)));
     /** Every throwable; the stack says which (see {@link ThrowableItem}). */
     public static final Registered<Item> THROWABLE = Registration.register(Registries.ITEM, "throwable", key -> new ThrowableItem(new Item.Properties().setId(key)));
 
     /** The equipment tab, in the order it lists them. */
     public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER, CONTAINER, CHAIN,
-            STINGER, STINGER_MISSILE, JAVELIN, JAVELIN_MISSILE);
+            STINGER, STINGER_MISSILE, JAVELIN, JAVELIN_MISSILE, UAV_STATION, UAV_CONTROLLER);
 
     private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
