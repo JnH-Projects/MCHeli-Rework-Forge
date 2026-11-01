@@ -130,6 +130,10 @@ public abstract class AircraftDefinition extends Definition {
     public boolean entityRadar;
     public boolean ejectionSeat;
     public boolean parachuting;
+    /** {@code MobDropOption}: where passengers leave under a parachute, and the ticks between two. */
+    public Vector3 dropPosition = Vector3.ZERO;
+    public int dropInterval = 1;
+    public final List<RepellingHook> repellingHooks = new ArrayList<>();
     public float entityWidth = 1.0F;
     public float entityHeight = 1.0F;
     public float entityPitch;
@@ -436,6 +440,19 @@ public abstract class AircraftDefinition extends Definition {
         keys.put("EnableEntityRadar", v -> entityRadar = toBool(v));
         keys.put("EnableEjectionSeat", v -> ejectionSeat = toBool(v));
         keys.put("EnableParachuting", v -> parachuting = toBool(v));
+        keys.put("MobDropOption", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                dropPosition = toVec(s[0], s[1], s[2]);
+                dropInterval = s.length >= 4 ? Math.max(toInt(s[3]), 1) : 12;
+            }
+        });
+        keys.put("AddRepellingHook", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                repellingHooks.add(new RepellingHook(toVec(s[0], s[1], s[2]), s.length >= 4 ? toInt(s[3], 1, 100000) : 10));
+            }
+        });
         keys.put("EntityWidth", v -> entityWidth = toFloat(v, -100.0F, 100.0F));
         keys.put("EntityHeight", v -> entityHeight = toFloat(v, -100.0F, 100.0F));
         keys.put("EntityPitch", v -> entityPitch = toFloat(v, -360.0F, 360.0F));
@@ -855,6 +872,11 @@ public abstract class AircraftDefinition extends Definition {
         }
         if (targetDrone) {
             uav = true;
+        }
+        // Ropes and parachute drops are one or the other; with both, the original kept neither.
+        if (parachuting && !repellingHooks.isEmpty()) {
+            parachuting = false;
+            repellingHooks.clear();
         }
         if (uav) {
             alwaysCameraView = true;
