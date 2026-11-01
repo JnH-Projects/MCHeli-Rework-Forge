@@ -16,6 +16,8 @@ import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
+import com.jnhprojects.mcheli.client.render.UavStationRenderer;
+import com.jnhprojects.mcheli.client.screen.UavStationScreen;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
@@ -88,11 +90,13 @@ public final class ClientHooks {
         renderers.register(ModEntities.GLTD.get(), GltdRenderer::new);
         renderers.register(ModEntities.CHAIN.get(), ChainRenderer::new);
         renderers.register(ModEntities.CONTAINER.get(), context -> new EquipmentRenderer<>(context, "container", 0.2F, 0xFFBFBFBF, 1.0F));
+        renderers.register(ModEntities.UAV_STATION.get(), UavStationRenderer::new);
     }
 
     /** On the main thread during client setup, once our menu types are registered. */
     public static void registerMenuScreens() {
         MenuScreens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
+        MenuScreens.register(ModMenus.UAV_STATION.get(), UavStationScreen::new);
     }
 
     public static List<KeyMapping> keyMappings() {
