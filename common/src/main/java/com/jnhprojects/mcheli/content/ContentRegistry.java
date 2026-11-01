@@ -7,6 +7,7 @@ import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.content.aircraft.VehicleDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.content.pack.PackProblem;
+import com.jnhprojects.mcheli.content.throwable.ThrowableDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.model.HullFill;
 import com.jnhprojects.mcheli.model.MeshLoader;
@@ -33,7 +34,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * Loaded vehicle and weapon definitions, keyed by file name.
+ * Loaded vehicle, weapon and throwable definitions, keyed by file name.
  *
  * <p>Definitions come from one or more {@linkplain ContentSource sources}: the imported 1.0.3
  * content and the content packs. A definition in a later source replaces the one with the same
@@ -61,7 +62,7 @@ public final class ContentRegistry {
 
     /** A registry with nothing in it, for when no content could be found. */
     public static ContentRegistry empty() {
-        return new ContentRegistry(new Snapshot(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), List.of()));
+        return new ContentRegistry(new Snapshot(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), List.of()));
     }
 
     /**
@@ -88,6 +89,7 @@ public final class ContentRegistry {
             loader.folder(source, PlaneDefinition.FOLDER, PlaneDefinition::new, loader::vehicle);
             loader.folder(source, TankDefinition.FOLDER, TankDefinition::new, loader::vehicle);
             loader.folder(source, VehicleDefinition.FOLDER, VehicleDefinition::new, loader::vehicle);
+            loader.folder(source, ThrowableDefinition.FOLDER, ThrowableDefinition::new, loader::throwable);
         }
         return new ContentRegistry(loader.finish(sources.size()));
     }
@@ -99,6 +101,7 @@ public final class ContentRegistry {
 
         private final Map<String, WeaponDefinition> weapons = new LinkedHashMap<>();
         private final Map<String, AircraftDefinition> vehicles = new LinkedHashMap<>();
+        private final Map<String, ThrowableDefinition> throwables = new LinkedHashMap<>();
         private final Map<String, Set<String>> unhandled = new TreeMap<>();
         private final List<PackProblem> problems = new ArrayList<>();
 
@@ -178,6 +181,10 @@ public final class ContentRegistry {
             replaced(vehicles.put(def.name(), def), def, def.folder());
         }
 
+        void throwable(ThrowableDefinition def) {
+            replaced(throwables.put(def.name(), def), def, ThrowableDefinition.FOLDER);
+        }
+
         private static void replaced(@Nullable Definition previous, Definition def, String folder) {
             if (previous != null && !previous.pack().equals(def.pack())) {
                 LOGGER.info("{} replaces {}/{} from {}", def.pack(), folder, def.name(), previous.pack());
@@ -215,12 +222,12 @@ public final class ContentRegistry {
                 }
             }
 
-            LOGGER.info("Loaded {} helicopters, {} planes, {} tanks, {} vehicles and {} weapons from {} sources",
-                    helicopters.size(), planes.size(), tanks.size(), other.size(), weapons.size(), sources);
+            LOGGER.info("Loaded {} helicopters, {} planes, {} tanks, {} vehicles, {} weapons and {} throwables from {} sources",
+                    helicopters.size(), planes.size(), tanks.size(), other.size(), weapons.size(), throwables.size(), sources);
             if (!unhandled.isEmpty()) {
                 LOGGER.debug("Definition keys not implemented yet: {}", unhandled.keySet());
             }
-            return new Snapshot(helicopters, planes, tanks, other, weapons, unhandled, problems);
+            return new Snapshot(helicopters, planes, tanks, other, weapons, throwables, unhandled, problems);
         }
     }
 
@@ -329,6 +336,14 @@ public final class ContentRegistry {
         return snapshot.weapons.get(name);
     }
 
+    public Collection<ThrowableDefinition> throwables() {
+        return snapshot.throwables.values();
+    }
+
+    public @Nullable ThrowableDefinition throwable(String name) {
+        return snapshot.throwables.get(name);
+    }
+
     /** Every definition of every kind: helicopters, planes, tanks, then vehicles. */
     public List<AircraftDefinition> all() {
         Snapshot s = snapshot;
@@ -361,7 +376,8 @@ public final class ContentRegistry {
     /** One consistent state of the registry. Never changed once published. */
     private record Snapshot(Map<String, HelicopterDefinition> helicopters, Map<String, PlaneDefinition> planes,
                             Map<String, TankDefinition> tanks, Map<String, VehicleDefinition> vehicles,
-                            Map<String, WeaponDefinition> weapons, Map<String, Set<String>> unhandledKeys,
+                            Map<String, WeaponDefinition> weapons, Map<String, ThrowableDefinition> throwables,
+                            Map<String, Set<String>> unhandledKeys,
                             List<PackProblem> problems) {
         Snapshot {
             helicopters = Collections.unmodifiableMap(helicopters);
@@ -369,6 +385,7 @@ public final class ContentRegistry {
             tanks = Collections.unmodifiableMap(tanks);
             vehicles = Collections.unmodifiableMap(vehicles);
             weapons = Collections.unmodifiableMap(weapons);
+            throwables = Collections.unmodifiableMap(throwables);
             unhandledKeys = Collections.unmodifiableMap(unhandledKeys);
             problems = List.copyOf(problems);
         }
@@ -389,27 +406,27 @@ public final class ContentRegistry {
 
         Snapshot without(String name) {
             return new Snapshot(remove(helicopters, name), remove(planes, name), remove(tanks, name), remove(vehicles, name),
-                    weapons, unhandledKeys, problems);
+                    weapons, throwables, unhandledKeys, problems);
         }
 
         Snapshot withHelicopters(Map<String, HelicopterDefinition> map) {
-            return new Snapshot(map, planes, tanks, vehicles, weapons, unhandledKeys, problems);
+            return new Snapshot(map, planes, tanks, vehicles, weapons, throwables, unhandledKeys, problems);
         }
 
         Snapshot withPlanes(Map<String, PlaneDefinition> map) {
-            return new Snapshot(helicopters, map, tanks, vehicles, weapons, unhandledKeys, problems);
+            return new Snapshot(helicopters, map, tanks, vehicles, weapons, throwables, unhandledKeys, problems);
         }
 
         Snapshot withTanks(Map<String, TankDefinition> map) {
-            return new Snapshot(helicopters, planes, map, vehicles, weapons, unhandledKeys, problems);
+            return new Snapshot(helicopters, planes, map, vehicles, weapons, throwables, unhandledKeys, problems);
         }
 
         Snapshot withVehicles(Map<String, VehicleDefinition> map) {
-            return new Snapshot(helicopters, planes, tanks, map, weapons, unhandledKeys, problems);
+            return new Snapshot(helicopters, planes, tanks, map, weapons, throwables, unhandledKeys, problems);
         }
 
         Snapshot withWeapons(Map<String, WeaponDefinition> map) {
-            return new Snapshot(helicopters, planes, tanks, vehicles, map, unhandledKeys, problems);
+            return new Snapshot(helicopters, planes, tanks, vehicles, map, throwables, unhandledKeys, problems);
         }
 
         private static <T> Map<String, T> remove(Map<String, T> map, String name) {
