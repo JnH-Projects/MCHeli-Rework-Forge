@@ -52,11 +52,26 @@ public class ChainEntity extends Entity {
         chain.length = Mth.clamp((int) towed.distanceTo(tow), MIN_LENGTH, MAX_LENGTH);
         chain.attach(towed, tow);
         level.addFreshEntity(chain);
-        ModSounds.playAt(tow, "chain_ct", 1.0F, 1.0F);
+        ModSounds.playAt(chain.tow, "chain_ct", 1.0F, 1.0F);
         return chain;
     }
 
+    /** Whether {@code entity} can pull the other end: only vehicles can. */
+    public static boolean canTow(Entity entity) {
+        return entity instanceof AircraftEntity;
+    }
+
+    /**
+     * Only a vehicle pulls. Hooked the other way round, a container would hold a helicopter down,
+     * so the ends swap whichever order they were clicked in (and chains saved that way are fixed
+     * when they load).
+     */
     private void attach(Entity towed, Entity tow) {
+        if (!canTow(tow) && canTow(towed)) {
+            Entity swap = tow;
+            tow = towed;
+            towed = swap;
+        }
         this.towed = towed;
         this.tow = tow;
         this.towedId = towed.getUUID();
