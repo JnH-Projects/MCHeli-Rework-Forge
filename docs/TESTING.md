@@ -558,6 +558,18 @@ Forge 26.3 only. Start from a world made by beta.5, in survival.
 - [ ] On a server, a spotted vehicle glows for 15 seconds; a teammate never glows. Mark point
       sends the coordinates to you and your team in chat.
 
+### Stinger and Javelin
+
+- [ ] Both launchers and both missiles are in the equipment tab; each missile recipe makes two.
+- [ ] Stinger raised at a flying helicopter: the lock tone quickens, LOCKED shows with the range,
+      left-click fires, and the missile chases the helicopter. A parked one does not lock.
+- [ ] Javelin raised at a tank: Z switches 4.2x and 9.2x, X switches direct and top attack. Top
+      attack under 40 blocks shows LOCKED in red and refuses to fire; further away the missile
+      climbs and dives onto the tank.
+- [ ] After firing the bar shows empty. Lower it with a missile in the inventory: "Reloading", the
+      reload sound, and after two seconds it is loaded and one missile is gone (none in creative).
+- [ ] Left-click without a lock plays the "no" sound and fires nothing.
+
 ### Container and chain
 
 - [ ] Placing a container sets it on the block; right-click opens a six row chest. Items survive a
