@@ -8,6 +8,7 @@ import com.jnhprojects.mcheli.item.FuelItem;
 import com.jnhprojects.mcheli.item.LegacyAircraftItem;
 import com.jnhprojects.mcheli.item.ParachuteItem;
 import com.jnhprojects.mcheli.item.PlacedEntityItem;
+import com.jnhprojects.mcheli.item.RangefinderItem;
 import com.jnhprojects.mcheli.item.ThrowableItem;
 import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.platform.Registered;
@@ -34,11 +35,12 @@ public final class ModItems {
     public static final Registered<Item> PARACHUTE = Registration.register(Registries.ITEM, "parachute", key -> new ParachuteItem(new Item.Properties().setId(key)));
     public static final Registered<Item> GLTD = Registration.register(Registries.ITEM, "gltd",
             key -> new PlacedEntityItem(ModEntities.GLTD, new Item.Properties().setId(key).stacksTo(1)));
+    public static final Registered<Item> RANGEFINDER = Registration.register(Registries.ITEM, "rangefinder", key -> new RangefinderItem(new Item.Properties().setId(key)));
     /** Every throwable; the stack says which (see {@link ThrowableItem}). */
     public static final Registered<Item> THROWABLE = Registration.register(Registries.ITEM, "throwable", key -> new ThrowableItem(new Item.Properties().setId(key)));
 
     /** The equipment tab, in the order it lists them. */
-    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD);
+    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER);
 
     private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
