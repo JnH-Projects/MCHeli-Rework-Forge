@@ -6,6 +6,7 @@ import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.item.AircraftItem;
 import com.jnhprojects.mcheli.item.ChainItem;
 import com.jnhprojects.mcheli.item.FuelItem;
+import com.jnhprojects.mcheli.item.LauncherItem;
 import com.jnhprojects.mcheli.item.LegacyAircraftItem;
 import com.jnhprojects.mcheli.item.ParachuteItem;
 import com.jnhprojects.mcheli.item.PlacedEntityItem;
@@ -40,11 +41,18 @@ public final class ModItems {
     public static final Registered<Item> CONTAINER = Registration.register(Registries.ITEM, "container",
             key -> new PlacedEntityItem(ModEntities.CONTAINER, new Item.Properties().setId(key)));
     public static final Registered<Item> CHAIN = Registration.register(Registries.ITEM, "chain", key -> new ChainItem(new Item.Properties().setId(key)));
+    public static final Registered<Item> STINGER_MISSILE = Registration.register(Registries.ITEM, "fim92_bullet", key -> new Item(new Item.Properties().setId(key).stacksTo(16)));
+    public static final Registered<Item> STINGER = Registration.register(Registries.ITEM, "fim92",
+            key -> new LauncherItem("fim92", () -> ModItems.STINGER_MISSILE.get(), new Item.Properties().setId(key)));
+    public static final Registered<Item> JAVELIN_MISSILE = Registration.register(Registries.ITEM, "fgm148_bullet", key -> new Item(new Item.Properties().setId(key).stacksTo(16)));
+    public static final Registered<Item> JAVELIN = Registration.register(Registries.ITEM, "fgm148",
+            key -> new LauncherItem("fgm148", () -> ModItems.JAVELIN_MISSILE.get(), new Item.Properties().setId(key)));
     /** Every throwable; the stack says which (see {@link ThrowableItem}). */
     public static final Registered<Item> THROWABLE = Registration.register(Registries.ITEM, "throwable", key -> new ThrowableItem(new Item.Properties().setId(key)));
 
     /** The equipment tab, in the order it lists them. */
-    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER, CONTAINER, CHAIN);
+    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER, CONTAINER, CHAIN,
+            STINGER, STINGER_MISSILE, JAVELIN, JAVELIN_MISSILE);
 
     private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
