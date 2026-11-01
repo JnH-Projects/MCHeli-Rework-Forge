@@ -12,6 +12,7 @@ import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.ParachuteEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
+import com.jnhprojects.mcheli.entity.RappelEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
 import com.jnhprojects.mcheli.entity.UavStationEntity;
 import com.jnhprojects.mcheli.entity.projectile.A10Entity;
@@ -107,6 +108,15 @@ public final class ModEntities {
             .clientTrackingRange(10)
             .updateInterval(2)
             .fireImmune()
+            .build(key));
+
+    public static final Registered<EntityType<RappelEntity>> RAPPEL = Registration.register(Registries.ENTITY_TYPE, "rappel", key -> EntityType.Builder
+            .<RappelEntity>of(RappelEntity::new, MobCategory.MISC)
+            .sized(1.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(1)
+            .fireImmune()
+            .noSave()
             .build(key));
 
     public static final Registered<EntityType<UavStationEntity>> UAV_STATION = Registration.register(Registries.ENTITY_TYPE, "uav_station", key -> EntityType.Builder
