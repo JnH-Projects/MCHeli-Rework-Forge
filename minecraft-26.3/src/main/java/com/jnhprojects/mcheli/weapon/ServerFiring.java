@@ -334,7 +334,9 @@ public final class ServerFiring implements WeaponSet.Trigger {
         WeaponDefinition w = set.definition();
         Entity aimer = shot.aimer();
         if ((w.target & WeaponDefinition.TARGET_BLOCK) != 0) {
-            sound(set, aimer, "ng");
+            // {@code MCH_Multiplay.markPoint}: the block under the crew's view, 300 blocks out, goes to the team.
+            boolean marked = aimer instanceof ServerPlayer player && Spotting.markPoint(player, new Vec3(shot.x, shot.y, shot.z), 300.0);
+            sound(set, aimer, marked ? w.sound : "ng");
             return true;
         }
         boolean spotted = false;
