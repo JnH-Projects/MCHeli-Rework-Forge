@@ -160,6 +160,9 @@ final class CrewController {
         while (KeyBindings.SWITCH_SEAT.consumeClick()) {
             send(vehicle, CrewActionPacket.Action.SWITCH_SEAT);
         }
+        while (KeyBindings.DROP_CREW.consumeClick()) {
+            send(vehicle, pilot ? CrewActionPacket.Action.DROP_CREW : CrewActionPacket.Action.JUMP_OUT);
+        }
         while (KeyBindings.SWITCH_CAMERA.consumeClick()) {
             switchCamera(vehicle, seat);
         }
