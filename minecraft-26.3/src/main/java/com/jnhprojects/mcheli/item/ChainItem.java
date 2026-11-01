@@ -15,10 +15,10 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 /**
- * The tow chain, {@code MCH_ItemChain}. Use it on what is to be towed, then on what pulls it,
- * between two and sixteen blocks away; use it on either end of a chain to take the chain off.
- * Using it on the hooked end again lets go of it. Vehicles and containers hand the click over
- * here, and every step is told to the player above the hotbar.
+ * The tow chain, {@code MCH_ItemChain}. Use it on both ends, in either order, two to sixteen
+ * blocks apart: the vehicle pulls, so one end must be a vehicle. Use it on either end of a chain
+ * to take the chain off, or on the hooked end again to let go of it. Vehicles and containers
+ * hand the click over here, and every step is told to the player above the hotbar.
  */
 public class ChainItem extends Item {
     private static final double MIN_DISTANCE = 2.0;
@@ -67,10 +67,19 @@ public class ChainItem extends Item {
             player.sendOverlayMessage(Component.translatable("message.mcheli.chain.too_close", String.format("%.1f", distance)));
             return InteractionResult.FAIL;
         }
-        MCHeli.LOGGER.debug("Chain: {} chains {} to {}", player.getName().getString(), first, target);
-        ChainEntity.connect(level, first, target);
+        if (!ChainEntity.canTow(first) && !ChainEntity.canTow(target)) {
+            MCHeli.LOGGER.debug("Chain: neither {} nor {} can tow", first, target);
+            ModSounds.playAt(player, "ng", 1.0F, 1.0F);
+            player.sendOverlayMessage(Component.translatable("message.mcheli.chain.no_vehicle"));
+            return InteractionResult.FAIL;
+        }
+        MCHeli.LOGGER.debug("Chain: {} chains {} and {}", player.getName().getString(), first, target);
+        ChainEntity chain = ChainEntity.connect(level, first, target);
         HOOKED.remove(player);
-        player.sendOverlayMessage(Component.translatable("message.mcheli.chain.connected", first.getDisplayName(), target.getDisplayName()));
+        Entity towed = chain.towed();
+        Entity tow = chain.tow();
+        player.sendOverlayMessage(Component.translatable("message.mcheli.chain.connected",
+                towed != null ? towed.getDisplayName() : first.getDisplayName(), tow != null ? tow.getDisplayName() : target.getDisplayName()));
         return InteractionResult.SUCCESS;
     }
 }
