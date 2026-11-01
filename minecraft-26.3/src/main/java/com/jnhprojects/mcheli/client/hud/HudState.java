@@ -214,7 +214,9 @@ final class HudState {
         v.set(HudVariable.INVENTORY, 0.0);
         v.set(HudVariable.HOVERING, vehicle instanceof HelicopterEntity && vehicle.isHoveringMode());
         v.set(HudVariable.IS_UAV, def.uav);
-        v.set(HudVariable.UAV_FS, 0.0);
+        double uavDistance = vehicle.stationDistance();
+        // {@code getUAV_Fs}: signal strength, full at the station and gone 120 blocks out.
+        v.set(HudVariable.UAV_FS, uavDistance < 0.0 ? 0.0 : 1.0 - Math.min(uavDistance, 120.0) / 120.0);
     }
 
     /**
@@ -341,7 +343,7 @@ final class HudState {
             case PLYR_PITCH -> -player.getXRot();
             case TVM_POS_X, TVM_POS_Y, TVM_POS_Z, TVM_DIFF -> tvMissile(arg, vehicle);
             case CAM_ZOOM -> VehicleCamera.zoom();
-            case UAV_DIST -> 0.0;
+            case UAV_DIST -> Math.max(vehicle.stationDistance(), 0.0);
             case THROTTLE -> vehicle.visibleThrottle() * 100.0;
         };
     }
