@@ -40,6 +40,9 @@ need the same version, since the network protocol changed (9).
 
 - The equipment tab lists the new items and every loaded throwable, and is rebuilt after a content
   reload.
+- The README is shorter: the full controls, equipment guide, commands and settings moved to
+  [docs/PLAYING.md](docs/PLAYING.md), and the screenshots of earlier phases to
+  [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
 
 ## [1.1.0-beta.5] - 2026-10-31
 
