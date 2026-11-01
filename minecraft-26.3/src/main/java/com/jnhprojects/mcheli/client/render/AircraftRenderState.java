@@ -17,12 +17,21 @@ public class AircraftRenderState extends EntityRenderState {
     public float roll;
     /** Helicopter main rotor or plane propeller angle. */
     public float rotorAngle;
+    /** Each helicopter blade's own angle, per rotor, so folding blades can leave the rotor's spin. */
+    public float[][] bladeAngles = new float[0][];
     public float throttle;
 
     // Part states, 0 to 90 degrees
     public float canopy;
     public float landingGear;
     public float hatch;
+    /** Rope length below the hooks while troops go down, 0 with the ropes in. */
+    public float ropeLength;
+    /** The beams of the search lights, or false with them off. */
+    public boolean searchLight;
+    /** Where the crew aim a turning search light, in world degrees. */
+    public float searchLightYaw;
+    public float searchLightPitch;
     public float nozzle;
     public float wing;
 

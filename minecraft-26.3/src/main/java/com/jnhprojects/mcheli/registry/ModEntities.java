@@ -5,11 +5,16 @@ import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
+import com.jnhprojects.mcheli.entity.ChainEntity;
+import com.jnhprojects.mcheli.entity.ContainerEntity;
+import com.jnhprojects.mcheli.entity.GltdEntity;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.ParachuteEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
+import com.jnhprojects.mcheli.entity.RappelEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
+import com.jnhprojects.mcheli.entity.UavStationEntity;
 import com.jnhprojects.mcheli.entity.projectile.A10Entity;
 import com.jnhprojects.mcheli.entity.projectile.AAMissileEntity;
 import com.jnhprojects.mcheli.entity.projectile.ASMissileEntity;
@@ -22,6 +27,7 @@ import com.jnhprojects.mcheli.entity.projectile.MarkerRocketEntity;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.RocketEntity;
 import com.jnhprojects.mcheli.entity.projectile.TorpedoEntity;
+import com.jnhprojects.mcheli.entity.projectile.ThrowableEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
@@ -71,6 +77,54 @@ public final class ModEntities {
             .sized(1.5F, 0.6F)
             .clientTrackingRange(10)
             .updateInterval(1)
+            .build(key));
+
+    public static final Registered<EntityType<ThrowableEntity>> THROWABLE = Registration.register(Registries.ENTITY_TYPE, "throwable", key -> EntityType.Builder
+            .<ThrowableEntity>of(ThrowableEntity::new, MobCategory.MISC)
+            .sized(0.25F, 0.25F)
+            .clientTrackingRange(8)
+            .updateInterval(2)
+            .noSave()
+            .build(key));
+
+    public static final Registered<EntityType<GltdEntity>> GLTD = Registration.register(Registries.ENTITY_TYPE, "gltd", key -> EntityType.Builder
+            .<GltdEntity>of(GltdEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
+            .build(key));
+
+    public static final Registered<EntityType<ContainerEntity>> CONTAINER = Registration.register(Registries.ENTITY_TYPE, "container", key -> EntityType.Builder
+            .<ContainerEntity>of(ContainerEntity::new, MobCategory.MISC)
+            .sized(2.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
+            .fireImmune()
+            .build(key));
+
+    public static final Registered<EntityType<ChainEntity>> CHAIN = Registration.register(Registries.ENTITY_TYPE, "chain", key -> EntityType.Builder
+            .<ChainEntity>of(ChainEntity::new, MobCategory.MISC)
+            .sized(1.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(2)
+            .fireImmune()
+            .build(key));
+
+    public static final Registered<EntityType<RappelEntity>> RAPPEL = Registration.register(Registries.ENTITY_TYPE, "rappel", key -> EntityType.Builder
+            .<RappelEntity>of(RappelEntity::new, MobCategory.MISC)
+            .sized(1.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(1)
+            .fireImmune()
+            .noSave()
+            .build(key));
+
+    public static final Registered<EntityType<UavStationEntity>> UAV_STATION = Registration.register(Registries.ENTITY_TYPE, "uav_station", key -> EntityType.Builder
+            .<UavStationEntity>of(UavStationEntity::new, MobCategory.MISC)
+            .sized(2.0F, 0.7F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
+            .fireImmune()
             .build(key));
 
     private ModEntities() {

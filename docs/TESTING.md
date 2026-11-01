@@ -524,6 +524,113 @@ Forge 26.3 only. Start from a world made by beta.4 with a few vehicles in it, in
       drop.
 - [ ] Park next to an `ammo_box`: weapons with a low reserve fill up a tenth at a time.
 
+## Phase 10 checklist (`1.1.0-beta.6`)
+
+Forge 26.3 only. Start from a world made by beta.5, in survival.
+
+### Smoke grenades
+
+- [ ] The equipment tab lists the four M18 grenades with their own icons and names; each recipe
+      (dye next to an iron ingot) makes one.
+- [ ] A short draw drops the grenade a few blocks away, a full draw throws it far. It bounces off
+      walls and the floor and settles.
+- [ ] After two seconds it pours out smoke in its colour, which pales as it rises, for about 30
+      seconds, then the grenade disappears.
+- [ ] A dispenser with a grenade in it throws it out when powered.
+
+### GLTD
+
+- [ ] Placing the GLTD on a block sets it up facing the way you look; right-click sits behind it.
+- [ ] First person looks out of the sight; the view stops 70 degrees either side and up or down.
+      Z steps the zoom up to x8 and back, K steps night vision, thermal view and back.
+- [ ] Right-click on terrain: the readout counts down, and three A-10 passes strafe the spot.
+      Clicking again before the countdown ends does nothing.
+- [ ] Another player sees the head turn with your aim and a faint red laser.
+- [ ] Shift leaves it; punching it drops the item (creative: it just goes).
+
+### Rangefinder
+
+- [ ] Holding use raises the scope after a moment; Z and X zoom in and out while held, the range
+      reads in metres, and `----` when nothing is in range.
+- [ ] C cycles the modes (in a single player world it skips players and vehicles).
+- [ ] Left-click on mobs in mobs mode: red markers appear over them, the charge drops by 10%, and
+      the "pi" sound plays. Ten spots empty it; then only the "no" sound. Crafting it with redstone fills it.
+- [ ] On a server, a spotted vehicle is marked for 15 seconds; a teammate is never marked. Mark
+      point sends the coordinates to you and your team in chat.
+
+### Stinger and Javelin
+
+- [ ] Both launchers and both missiles are in the equipment tab; each missile recipe makes two.
+- [ ] Stinger raised at a flying helicopter: the lock tone quickens, LOCKED shows with the range,
+      left-click fires, and the missile chases the helicopter. A parked one does not lock.
+- [ ] Javelin raised at a tank: Z switches 4.2x and 9.2x, X switches direct and top attack. Top
+      attack under 40 blocks shows LOCKED in red and refuses to fire; further away the missile
+      climbs and dives onto the tank.
+- [ ] After firing the bar shows empty. Lower it with a missile in the inventory: "Reloading", the
+      reload sound, and after two seconds it is loaded and one missile is gone (none in creative).
+- [ ] Left-click without a lock plays the "no" sound and fires nothing.
+
+### Container and chain
+
+- [ ] Placing a container sets it on the block; right-click opens a six row chest. Items survive a
+      reload. It floats in water. Punching it a few times breaks it and drops its contents.
+- [ ] Park a `ch47` by a container and press J: it loads. U at height over open ground drops it
+      under a parachute; on the ground it just sets it down.
+- [ ] Chain: right-click a container (or a car), then a truck within 16 blocks. Driving the truck
+      drags the other along at the chain's length. Right-click either end again: the chain comes
+      off. Save and reload while towing: the chain is still there.
+- [ ] Chain the other way round (truck first, container second): the truck still does the pulling.
+      Chain a container to a `ch47` and lift off: the container hangs below it. Two containers
+      cannot be chained ("One end of the chain must be a vehicle").
+
+### UAV station
+
+- [ ] Place a UAV station and right-click it: you sit down and its screen opens. The buttons move
+      the launch point; put an `mq-9` in the slot and it appears there and you fly it at once,
+      from its camera, with its HUD showing the range and link bars.
+- [ ] Shift: you stand beside the station again and the drone stays where it was. Continue takes
+      it back. Fly it past 123 blocks: "link is lost", the drone goes down and you are back.
+- [ ] While flying, another player sees no body in the drone, and hitting the drone does not hurt
+      you. Breaking the station while flying puts you back beside where it stood.
+- [ ] The portable controller opens with Shift and right-click, refuses the `mq-9` ("Small UAVs
+      only") and launches the `skylark`.
+- [ ] The E-767 can be crafted with a UAV station.
+
+### Troops, search lights, blade folding and particles
+
+- [ ] Stand two villagers next to a `ch47` and climb in: they take seats. Hover still and level,
+      press Y: ropes drop and the villagers slide down one by one. Y again pulls the ropes up. A
+      second player in the back presses Y to rappel.
+- [ ] An `an2` or `mv-22` flown high: Y opens the hatch and the villagers jump under
+      parachutes one after another.
+- [ ] The `mi-24ps` or `bnr32` at night: K in the pilot or first crew seat switches the beams;
+      a turning light follows the gunner's aim.
+- [ ] An `sh-60` (folding blades), landed with the engine stopped: Z folds the blades onto the
+      tail, the throttle does nothing, A and D turn it slowly; Z again unfolds them.
+- [ ] Hovering low raises dust (over water, spray). A Harrier in the hover blows smoke down; a jet
+      rolling fast kicks up the ground; a boat throws spray.
+- [ ] The `m1129` mortar shows the landing distance on the HUD. A block targeting pod marks the
+      point under the view for the team.
+
+### Drafting table
+
+- [ ] Craft and place the drafting table: it shows the original model, facing you. Shift and
+      right-click switches its lamp on and off.
+- [ ] Right-click: the five list buttons, << and >> step through the recipes, the grid shows the
+      ingredients cycling through their options, equipment shows its illustrated pages, vehicles
+      their numbers. Create is greyed out without the ingredients; with them it takes them and
+      fills the output slot. Closing the screen hands back what is left in it.
+
+### Team manager and markers
+
+- [ ] As an operator press M: the team manager opens; as a non-operator a message says it is for
+      operators only. Make two teams with colours; they show on the right and in `/team list`.
+- [ ] Shuffle puts every player in a team; Switch PvP says on or off; Everyone to spawn moves
+      everybody; Destroy all vehicles removes every vehicle and reports how many.
+- [ ] Rangefinder spot with two teams on a server: the spotter and their teammates see a red
+      triangle and distance over the targets, a diamond at the screen edge when looking away; the
+      other team sees nothing. Mark point shows a yellow diamond with coordinates for a minute.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did

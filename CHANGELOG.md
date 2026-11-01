@@ -5,6 +5,82 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [1.1.0-beta.6] - 2026-11-01
+
+Phase 10 of the road to 1.1.0: the rest of the equipment. Betas are not uploaded to CurseForge,
+and this one ships the Forge 26.3 jar only. Worlds from 1.1.0-beta.5 load as before; the original
+content is imported again on the first start. Players and servers need the same version, since
+the network protocol changed (9).
+
+### Added
+
+- M18 smoke grenades in red, green, violet and yellow, from the original `throwable` files. Hold
+  use to draw, release to throw: the longer the draw, the further it goes. They bounce off blocks
+  and pour out coloured smoke for half a minute. Dispensers throw them too. Packs can add their own
+  throwables in a `throwable` folder; they share one `mcheli:throwable` item, like the vehicles.
+- The GLTD target designator. Set it on the ground, right-click to sit behind it, and look through
+  its sight (70 degrees either way). Z zooms, K steps through night vision and thermal view, and
+  use marks the spot under the cross: an A-10 makes three gun runs over it. The sight shows when
+  the next A-10 can be called (about 22 seconds).
+- The laser rangefinder. Held up to the eye it is a scope that reads the range; Z and X zoom in and
+  out, C picks what to spot (players and vehicles, mobs, or a point), and the attack key spots.
+  Spotting uses one of ten charges; crafting it with redstone charges it again.
+- Spotted players, mobs and vehicles show up for the spotter and their team only, as markers on
+  the HUD: a triangle over the target with its distance, or a diamond at the screen edge when it is
+  out of view. They last 15 seconds (mobs a minute). Teammates are never spotted. A marked point
+  gets its own marker with distance and coordinates for a minute, and goes to the team's chat.
+- The cargo container: a crate with a large chest's worth of room that floats and can be pushed.
+  Racks that list `container` load and drop it like vehicles (J and U), and dropped with no ground
+  within 20 blocks it comes down under a parachute.
+- The FIM-92 Stinger and FGM-148 Javelin, shoulder launched. Hold use to raise the sight, keep a
+  target in the cross until it locks (aircraft for the Stinger, ground vehicles for the Javelin),
+  then attack to fire. Z zooms, and X switches the Javelin between direct and top attack. Each
+  holds one missile: lower an empty launcher with a missile in your inventory to reload it.
+- The tow chain. Use it on both ends, in either order, 2 to 16 blocks apart; one end must be a
+  vehicle, which always does the pulling, so a helicopter can lift a container on a sling. Use it
+  on either end again to take it off. Each step shows a message above the hotbar.
+- The UAV station and the portable UAV controller. Sit at one, put a drone in its slot and fly it
+  from there with the usual controls, HUD and weapons; the HUD shows the link's range and
+  strength. The launch point is set with the station's buttons, Continue takes the last drone
+  again, and Shift leaves it. The portable controller only takes small UAVs and opens with Shift
+  and right-click. A drone flown more than 123 blocks from its station is lost. A target drone
+  goes up with a full tank and flies itself, as something to shoot at. While flying, the pilot
+  is hidden and unhurt, and comes back beside the station when they leave or lose the drone.
+- Troops. When the pilot climbs in, mobs standing close by take the free crew seats. Y lets them
+  out: helicopters with rappelling hooks lower ropes from a steady hover and the mobs slide down
+  them; vehicles with `EnableParachuting` open the hatch and drop them one by one under parachutes
+  at the drop point; near the ground they simply get out. Players in the back press Y to slide down
+  a rope or jump with a parachute themselves.
+- Search lights, for vehicles that list them: K switches them on and off from the pilot or first
+  crew seat. A turning light follows the crew's aim, a fixed one points along the vehicle and a
+  steering one turns with the front wheels.
+- Helicopters with `EnableFoldBlade` fold their blades with Z when the engine is stopped, and
+  cannot take off until they unfold them; folded on the ground, A and D turn them slowly.
+- Rotor downwash raises dust or spray under a helicopter, boats with `EnableSeaSurfaceParticle`
+  throw spray off the sea, `AddParticleSplash` points spray through water, jet nozzles smoke with
+  the throttle, and fast landing gear kicks up the ground.
+- Targeting pods that mark blocks now mark the point under the crew's view for the team, and
+  mortars show where their shell would land on the HUD.
+- The drafting table. Right-click it to browse every MCHeli recipe by list (helicopters, planes,
+  vehicles, tanks, equipment): the recipe, a vehicle's numbers or the original's illustrated
+  description, and Create to make the item into the output slot from your inventory. Shift and
+  right-click switches its lamp. It is drawn with the original model.
+- The team manager, for operators, on M: switch PvP, shuffle every player into the teams, make a
+  team with a colour and friendly fire, send everyone to their spawn point, or remove every
+  vehicle. The teams and their players are listed beside it.
+- Recipes for the smoke grenades, GLTD, rangefinder, container, chain, launchers and missiles,
+  UAV station, portable controller and drafting table, from the original config.
+
+### Changed
+
+- The equipment tab lists the new items and every loaded throwable, and is rebuilt after a content
+  reload.
+- The E-767 can be crafted at last: its recipe needs a UAV station. The content is imported again
+  on the first start (import format 4).
+- The README is shorter: the full controls, equipment guide, commands and settings moved to
+  [docs/PLAYING.md](docs/PLAYING.md), and the screenshots of earlier phases to
+  [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
+
 ## [1.1.0-beta.5] - 2026-10-31
 
 Phase 9 of the road to 1.1.0: the vehicle screen and what goes with it, supply vehicles and
@@ -552,6 +628,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.6]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.6
 [1.1.0-beta.5]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.5
 [1.1.0-beta.4]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.4
 [1.1.0-beta.3]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.3

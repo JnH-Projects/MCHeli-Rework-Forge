@@ -12,6 +12,7 @@ import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.item.ChainItem;
 import com.jnhprojects.mcheli.item.FuelItem;
 import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.menu.VehicleMenu;
@@ -19,6 +20,7 @@ import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.physics.CrashSpin;
 import com.jnhprojects.mcheli.physics.GroundImpact;
+import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.supply.SupplyRules;
 import com.jnhprojects.mcheli.weapon.Explosions;
@@ -26,6 +28,7 @@ import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -43,14 +46,13 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LinearInterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -109,6 +111,13 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final EntityDataAccessor<Boolean> DATA_FLARE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SINKING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FUEL = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
+    /** The UAV station a drone is flown from, by entity id, or 0. */
+    private static final EntityDataAccessor<Integer> DATA_STATION = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_REPELLING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SEARCH_LIGHT = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
+
+    /** Marks a player flying a drone from a station, so a stale hide can be undone at login. */
+    public static final String REMOTE_PILOT_TAG = "mcheli_remote_pilot";
 
     // Bits of DATA_PARTS, the same assignment the original used for its part status word.
     protected static final int PART_CANOPY = 0;
@@ -151,6 +160,17 @@ public abstract class AircraftEntity extends VehicleEntity {
     private int pendingSeat = EMPTY;
     private final Map<UUID, Integer> savedSeats = new HashMap<>();
     private final Map<Integer, Integer> lastSeats = new HashMap<>();
+    /** The station a drone is flown from, and where its pilot goes back to. Server only. */
+    private @Nullable UUID station;
+    private @Nullable Vec3 stationReturn;
+    /** Remote pilots leaving this tick, by entity id, with where they come back down. */
+    private final Map<Integer, Vec3> remoteReturns = new HashMap<>();
+    /** How far the ropes hang below their hooks, as a negative number; both sides let them out. */
+    private float ropeLength;
+    private int repellingTicks;
+    private int lastRope;
+    /** Passengers are leaving one by one under parachutes. Server only. */
+    private boolean droppingTroops;
 
     private @Nullable VehicleWeapons weapons;
     private int @Nullable [] savedAmmo;
@@ -160,8 +180,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Damage factor of the extra hit box the last projectile ray struck, {@code lastBBDamageFactor}. */
     private float hitBoxFactor = 1.0F;
     private int timeSinceHit;
-    /** The night vision effect a crew member gets, topped up before it runs low: 15 seconds. */
-    private static final int NIGHT_VISION_TICKS = 300;
     /** The fuel load from which an aircraft counts as heavy: the H8K flying boat and up. */
     private static final int HEAVY_FUEL = 3000;
     /** How long a wreck stays, burning, before it disappears: 30 seconds. */
@@ -230,6 +248,9 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_FLARE, false);
         builder.define(DATA_SINKING, false);
         builder.define(DATA_FUEL, 0);
+        builder.define(DATA_STATION, 0);
+        builder.define(DATA_REPELLING, false);
+        builder.define(DATA_SEARCH_LIGHT, false);
     }
 
     // Definition
@@ -364,6 +385,11 @@ public abstract class AircraftEntity extends VehicleEntity {
         return maxFuel() <= 0 || fuel() > 1;
     }
 
+    /** Sets the tank outright; a drone leaves its station with 5%. Server only. */
+    public void setFuelLevel(int fuel) {
+        entityData.set(DATA_FUEL, Math.clamp(fuel, 0, Math.max(maxFuel(), 0)));
+    }
+
     /**
      * Pours up to {@code amount} into the tank. Server only.
      *
@@ -390,33 +416,29 @@ public abstract class AircraftEntity extends VehicleEntity {
             nightVisionSeats |= 1 << seat;
         } else if (hasNightVision(seat)) {
             nightVisionSeats &= ~(1 << seat);
-            endNightVision(player);
+            NightVision.end(player);
         }
     }
 
-    /**
-     * {@code MCH_Camera.updateViewer}: keeps a short night vision effect topped up on everyone who
-     * switched it on. It never runs below ten seconds, where vanilla starts to flicker the view.
-     */
+    /** Keeps night vision on for everyone in the crew who switched it on, see {@link NightVision}. */
     private void tickNightVision() {
         if (nightVisionSeats == 0) {
             return;
         }
         if (isDestroyed()) {
             for (int seat = 0; seat < seatIds.length; seat++) {
-                if (occupant(seat) instanceof LivingEntity crew) {
-                    endNightVision(crew);
+                Entity crew = occupant(seat);
+                if (crew != null) {
+                    NightVision.end(crew);
                 }
             }
             nightVisionSeats = 0;
             return;
         }
         for (int seat = 0; seat < seatIds.length; seat++) {
-            if (hasNightVision(seat) && occupant(seat) instanceof LivingEntity crew) {
-                MobEffectInstance current = crew.getEffect(MobEffects.NIGHT_VISION);
-                if (current == null || current.getDuration() < NIGHT_VISION_TICKS - 40) {
-                    crew.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, NIGHT_VISION_TICKS, 0, true, false, false));
-                }
+            Entity crew = occupant(seat);
+            if (hasNightVision(seat) && crew != null) {
+                NightVision.topUp(crew);
             }
         }
     }
@@ -424,16 +446,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Only the first 31 seats can switch it on; racks and the like come after them anyway. */
     private boolean hasNightVision(int seat) {
         return seat >= 0 && seat < 31 && (nightVisionSeats & 1 << seat) != 0;
-    }
-
-    /** Takes our night vision away again, but leaves a potion's longer one alone. */
-    private static void endNightVision(Entity entity) {
-        if (entity instanceof LivingEntity living) {
-            MobEffectInstance current = living.getEffect(MobEffects.NIGHT_VISION);
-            if (current != null && current.getDuration() <= NIGHT_VISION_TICKS) {
-                living.removeEffect(MobEffects.NIGHT_VISION);
-            }
-        }
     }
 
     /**
@@ -704,6 +716,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         super.tick();
         ticksAlive++;
         lastSeats.clear();
+        remoteReturns.clear();
         if (modeSwitchCooldown > 0) {
             modeSwitchCooldown--;
         }
@@ -733,11 +746,20 @@ public abstract class AircraftEntity extends VehicleEntity {
                 inventory.pourFuelCans(ticksAlive);
             }
             tickNightVision();
+            tickStation();
         }
+        tickRopes(def);
 
         if (isSimulatingHere()) {
             if (!(getControllingPassenger() instanceof Player) || isDestroyed()) {
                 input.clear();
+            }
+            if (isRepelling()) {
+                // {@code MCH_AircraftClientTickHandler}: the pilot holds a hover while the ropes are out.
+                input.throttleUp = false;
+                input.throttleDown = false;
+                input.left = false;
+                input.right = false;
             }
             if (!hasFuel()) {
                 // An empty tank: the throttle runs down by itself, as with the pilot's hand off it.
@@ -783,6 +805,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         if (level().isClientSide()) {
             damageSmoke(def);
+            VehicleParticles.tick(this, def);
         } else {
             tickImpacts(def, groundedBefore, fallBefore);
         }
@@ -1169,7 +1192,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     public void switchSeat(Entity entity) {
         AircraftDefinition def = definition();
         int current = seatOf(entity);
-        if (def == null || current < 0 || current >= def.seatCount()) {
+        if (def == null || current < 0 || current >= def.seatCount() || current == 0 && station != null) {
+            // A remote pilot stays at the controls; they are not really aboard.
             return;
         }
         int count = def.seatCount();
@@ -1190,6 +1214,120 @@ public abstract class AircraftEntity extends VehicleEntity {
         assignSeat(entity, current);
     }
 
+    // UAV stations
+
+    /** Whether a player at a station could take this drone's controls now. */
+    public boolean canTakeRemotePilot() {
+        AircraftDefinition def = definition();
+        return def != null && def.uav && !def.targetDrone && !isDestroyed() && isSeatFree(0);
+    }
+
+    /**
+     * Seats {@code player}, who sits at {@code from}, at this drone's controls. The pilot is hidden
+     * and takes no harm while flying, since in the original they never left the station. Server only.
+     */
+    public boolean takeRemotePilot(ServerPlayer player, UavStationEntity from) {
+        if (!canTakeRemotePilot()) {
+            return false;
+        }
+        pendingSeat = 0;
+        boolean seated = player.startRiding(this, true, true);
+        pendingSeat = EMPTY;
+        if (!seated) {
+            return false;
+        }
+        station = from.getUUID();
+        stationReturn = from.returnPosition();
+        entityData.set(DATA_STATION, from.getId());
+        player.addTag(REMOTE_PILOT_TAG);
+        player.setInvisible(true);
+        player.setPermanentlyInvulnerable(true);
+        return true;
+    }
+
+    /** Sends the remote pilot back to the station, if one is flying. Server only. */
+    public void releaseRemotePilot() {
+        Entity pilot = occupant(0);
+        if (station != null && pilot != null) {
+            pilot.stopRiding();
+        }
+    }
+
+    /** The station this drone is flown from, as the client sees it. */
+    public @Nullable UavStationEntity stationEntity() {
+        return level().getEntity(entityData.get(DATA_STATION)) instanceof UavStationEntity s ? s : null;
+    }
+
+    /** Flat distance to the station this drone is flown from, or -1 without one. */
+    public double stationDistance() {
+        UavStationEntity from = stationEntity();
+        if (from == null) {
+            return -1.0;
+        }
+        double dx = getX() - from.getX();
+        double dz = getZ() - from.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    /** Whether {@code entity} flies this drone from a station rather than sitting in it. */
+    public boolean isRemotePilot(Entity entity) {
+        return (station != null || entityData.get(DATA_STATION) != 0) && occupant(0) == entity;
+    }
+
+    private void endRemoteControl(Entity pilot) {
+        UavStationEntity from = level() instanceof ServerLevel server && station != null
+                && server.getEntity(station) instanceof UavStationEntity s ? s : null;
+        Vec3 home = from != null ? from.returnPosition() : stationReturn;
+        if (home != null) {
+            remoteReturns.put(pilot.getId(), home);
+        }
+        clearRemotePilot(pilot);
+        if (from != null) {
+            from.setLinked(false);
+        }
+        station = null;
+        stationReturn = null;
+        entityData.set(DATA_STATION, 0);
+    }
+
+    /** Undoes what {@link #takeRemotePilot} did to the player. */
+    public static void clearRemotePilot(Entity pilot) {
+        if (pilot.removeTag(REMOTE_PILOT_TAG)) {
+            pilot.setInvisible(false);
+            pilot.setPermanentlyInvulnerable(false);
+        }
+    }
+
+    /**
+     * {@code updateUAV}: the link breaks when the station is gone, and flying out of its range
+     * loses the drone, as in the original.
+     */
+    private void tickStation() {
+        if (station == null || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        Entity pilot = occupant(0);
+        if (pilot == null) {
+            station = null;
+            stationReturn = null;
+            entityData.set(DATA_STATION, 0);
+            return;
+        }
+        UavStationEntity from = server.getEntity(station) instanceof UavStationEntity s && s.isAlive() ? s : null;
+        if (from == null) {
+            pilot.stopRiding();
+            return;
+        }
+        entityData.set(DATA_STATION, from.getId());
+        if (!from.inRange(this) && !isDestroyed()) {
+            if (pilot instanceof Player player) {
+                player.sendOverlayMessage(Component.translatable("message.mcheli.uav.lost"));
+            }
+            pilot.stopRiding();
+            hurtServer(server, damageSources().fellOutOfWorld(), hp() + 10.0F);
+        }
+    }
+
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
         // A wreck is nobody's to fly; the server lets it fall, so its crash is seen the same way by everyone.
@@ -1205,8 +1343,13 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (pendingSeat >= 0) {
             return isSeatFree(pendingSeat);
         }
+        // Coming back aboard after a reload, a remote pilot included.
+        Integer saved = savedSeats.get(passenger.getUUID());
+        if (saved != null && isSeatFree(saved)) {
+            return true;
+        }
         // Cargo only boards through a rack, never into a crew seat.
-        return !(passenger instanceof AircraftEntity) && firstFreeCrewSeat() >= 0;
+        return !(passenger instanceof AircraftEntity || passenger instanceof ContainerEntity) && firstFreeCrewSeat() >= 0;
     }
 
     @Override
@@ -1234,7 +1377,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (seat >= 0) {
             if (hasNightVision(seat)) {
                 nightVisionSeats &= ~(1 << seat);
-                endNightVision(passenger);
+                NightVision.end(passenger);
             }
             lastSeats.put(passenger.getId(), seat);
             seatIds[seat] = EMPTY;
@@ -1245,6 +1388,9 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         if (seat == 0) {
             input.clear();
+            if (station != null) {
+                endRemoteControl(passenger);
+            }
         }
     }
 
@@ -1305,11 +1451,19 @@ public abstract class AircraftEntity extends VehicleEntity {
             cargo.setXRot(getXRot() + pitch);
             cargo.roll = roll();
             cargo.setDeltaMovement(Vec3.ZERO);
+        } else if (def != null && passenger instanceof ContainerEntity container) {
+            RackDefinition rack = def.rack(seatOf(passenger));
+            container.setYRot(getYRot() + (rack != null ? rack.yaw() : 0.0F));
+            container.setDeltaMovement(Vec3.ZERO);
         }
     }
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        Vec3 home = remoteReturns.remove(passenger.getId());
+        if (home != null) {
+            return home;
+        }
         AircraftDefinition def = definition();
         Integer seat = lastSeats.get(passenger.getId());
         if (def != null) {
@@ -1333,6 +1487,9 @@ public abstract class AircraftEntity extends VehicleEntity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         ItemStack held = player.getItemInHand(hand);
+        if (held.getItem() instanceof ChainItem) {
+            return ChainItem.useOn(this, player);
+        }
         if (definition() != null && (held.getItem() instanceof FuelItem || held.getItem() instanceof WrenchItem)) {
             if (level().isClientSide()) {
                 return InteractionResult.SUCCESS;
@@ -1372,6 +1529,7 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
             if (seatOf(player) == 0) {
                 closeCanopy();
+                boardNearbyMobs();
             }
         }
         return InteractionResult.SUCCESS;
@@ -1380,7 +1538,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     // Racks
 
     /** Loads {@code cargo} into the given rack seat. Server only. */
-    private boolean loadCargo(AircraftEntity cargo, int seat) {
+    private boolean loadCargo(Entity cargo, int seat) {
         if (!isSeatFree(seat) || cargo.isPassenger()) {
             return false;
         }
@@ -1418,13 +1576,21 @@ public abstract class AircraftEntity extends VehicleEntity {
         return false;
     }
 
+    /** Whether rack {@code seat} carries containers, {@code AddRack} naming {@code container}. */
+    public boolean acceptsContainer(ContainerEntity container, int seat) {
+        AircraftDefinition def = definition();
+        RackDefinition rack = def != null ? def.rack(seat) : null;
+        return rack != null && !isPassenger() && !container.isPassenger()
+                && rack.accepts(ContainerEntity.CARGO_NAME, ContainerEntity.CARGO_NAME);
+    }
+
     private boolean isNearRackEntry(AircraftEntity cargo, RackDefinition rack) {
         Vec3 entry = toWorld(rack.entry());
         float r = rack.range();
         return Math.abs(cargo.getX() - entry.x) <= r && Math.abs(cargo.getY() - entry.y) <= r && Math.abs(cargo.getZ() - entry.z) <= r;
     }
 
-    /** Carrier pilot loads every nearby vehicle that fits a free rack. Server only. */
+    /** Carrier pilot loads every nearby vehicle or container that fits a free rack. Server only. */
     public void loadNearbyCargo() {
         AircraftDefinition def = definition();
         if (def == null || def.racks.isEmpty() || throttle > 0.3 || !hasBlockBelow(1, 3, true)) {
@@ -1437,9 +1603,18 @@ public abstract class AircraftEntity extends VehicleEntity {
             RackDefinition rack = def.rack(seat);
             Vec3 entry = toWorld(rack.entry());
             AABB area = new AABB(entry, entry).inflate(rack.range());
+            boolean loaded = false;
             for (AircraftEntity cargo : level().getEntitiesOfClass(AircraftEntity.class, area)) {
                 if (acceptsCargo(cargo, seat) && loadCargo(cargo, seat)) {
+                    loaded = true;
                     break;
+                }
+            }
+            if (!loaded) {
+                for (ContainerEntity container : level().getEntitiesOfClass(ContainerEntity.class, area)) {
+                    if (acceptsContainer(container, seat) && loadCargo(container, seat)) {
+                        break;
+                    }
                 }
             }
         }
@@ -1465,6 +1640,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             Vec3 at = toWorld(drop);
             cargo.stopRiding();
             cargo.snapTo(at.x, at.y, at.z, getYRot() + rack.yaw(), 0.0F);
+            // As in the original, with no ground in the 20 blocks below it goes down under a canopy.
+            if (!(cargo instanceof AircraftEntity) && !hasBlockBelow(3, 20, false)) {
+                ParachuteEntity.open(level(), cargo, ParachuteEntity.Kind.DROP);
+            }
             return;
         }
     }
@@ -1561,6 +1740,257 @@ public abstract class AircraftEntity extends VehicleEntity {
             modeSwitchCooldown = 40;
         }
         ModSounds.playAt(entity, "eject_seat", 5.0F, 1.0F);
+    }
+
+    // Search lights
+
+    public boolean isSearchLightOn() {
+        AircraftDefinition def = definition();
+        return def != null && !def.searchLights.isEmpty() && entityData.get(DATA_SEARCH_LIGHT);
+    }
+
+    /** {@code canSwitchSearchLight}: the pilot or the first crew seat, in vehicles that have one. */
+    public boolean canSwitchSearchLight(Entity entity) {
+        AircraftDefinition def = definition();
+        int seat = seatOf(entity);
+        return def != null && !def.searchLights.isEmpty() && seat >= 0 && seat <= 1;
+    }
+
+    /** Server only. */
+    public void toggleSearchLight(Entity entity) {
+        if (canSwitchSearchLight(entity)) {
+            entityData.set(DATA_SEARCH_LIGHT, !entityData.get(DATA_SEARCH_LIGHT));
+        }
+    }
+
+    /**
+     * Where a turning search light points: the first crew seat's view, else the pilot's, as
+     * {@code renderLight} took them. Null with nobody aboard to aim it.
+     */
+    public @Nullable Entity searchLightAimer() {
+        Entity crew = occupant(1);
+        return crew != null ? crew : occupant(0);
+    }
+
+    // Troops: parachute drops and ropes
+
+    public boolean isRepelling() {
+        return entityData.get(DATA_REPELLING);
+    }
+
+    /** How far the ropes hang below their hooks, as a negative number. */
+    public float ropeLength() {
+        return ropeLength;
+    }
+
+    /** Where rope {@code index} hangs from, in the world. */
+    public Vec3 ropePosition(int index) {
+        AircraftDefinition def = definition();
+        return def != null && index >= 0 && index < def.repellingHooks.size() ? toWorld(def.repellingHooks.get(index).position()) : position();
+    }
+
+    /**
+     * {@code onUpdate_Repelling} and {@code onUpdate_UnmountCrew}: the ropes run out towards the
+     * ground, then the mobs aboard slide down them one per hook interval; a parachute drop lets one
+     * passenger out per {@code MobDropOption} interval while the hatch is open.
+     */
+    private void tickRopes(AircraftDefinition def) {
+        if (!def.repellingHooks.isEmpty()) {
+            if (isRepelling()) {
+                int clear = airBelow(50);
+                if (ropeLength > -50.0F && ropeLength > -clear) {
+                    ropeLength -= level().isClientSide() ? 0.3F : 0.25F;
+                }
+            } else {
+                ropeLength = 0.0F;
+            }
+        }
+        if (level().isClientSide()) {
+            return;
+        }
+        if (isRepelling() && isDestroyed()) {
+            entityData.set(DATA_REPELLING, false);
+        }
+        if (!isRepelling()) {
+            repellingTicks = 0;
+        } else if (repellingTicks < 60) {
+            repellingTicks++;
+        } else {
+            for (int rope = 0; rope < def.repellingHooks.size(); rope++) {
+                if (ticksAlive % def.repellingHooks.get(rope).interval() != 0) {
+                    continue;
+                }
+                for (int seat = 1; seat < def.seatCount(); seat++) {
+                    if (occupant(seat) instanceof Mob mob) {
+                        rappel(mob, rope);
+                        break;
+                    }
+                }
+            }
+        }
+        if (droppingTroops) {
+            if (hasBlockBelow(3, 10, false) || isDestroyed()) {
+                droppingTroops = false;
+            } else if ((hatch == null || hatch.isOn()) && ticksAlive % def.dropInterval == 0 && !dropNextTroop(def)) {
+                droppingTroops = false;
+            }
+        }
+    }
+
+    /** Air blocks straight below, up to {@code max}. */
+    private int airBelow(int max) {
+        BlockPos.MutableBlockPos pos = blockPosition().mutable();
+        int i = 0;
+        while (i < max && pos.getY() - i > level().getMinY() && level().getBlockState(pos.setY(blockPosition().getY() - i - 1)).isAir()) {
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * {@code canStartRepelling}: a helicopter in hover mode, level and holding still. The original
+     * compared against where it was a few ticks before.
+     */
+    private boolean canStartRepelling() {
+        return this instanceof HelicopterEntity && isHoveringMode() && Math.abs(getXRot()) < 3.0F && Math.abs(roll()) < 3.0F
+                && lastTickPos != null && position().distanceTo(lastTickPos) < 0.05;
+    }
+
+    /**
+     * The pilot's drop key, {@code unmountCrew}: with ropes, lets them down from a steady hover
+     * or pulls them up again; with {@code EnableParachuting}, starts or stops dropping the mobs
+     * aboard under parachutes; otherwise, or close to the ground, simply lets the mobs out.
+     * Server only.
+     *
+     * @return false if nothing could be done, so the pilot hears it
+     */
+    public boolean dropCrew() {
+        AircraftDefinition def = definition();
+        if (def == null || isDestroyed()) {
+            return false;
+        }
+        if (!def.repellingHooks.isEmpty()) {
+            if (isRepelling()) {
+                entityData.set(DATA_REPELLING, false);
+                return true;
+            }
+            if (hasBlockBelow(3, 4, false)) {
+                return unloadMobs();
+            }
+            if (!canStartRepelling()) {
+                return false;
+            }
+            entityData.set(DATA_REPELLING, true);
+            repellingTicks = 0;
+            return true;
+        }
+        if (droppingTroops) {
+            droppingTroops = false;
+            return true;
+        }
+        if (def.parachuting && !hasBlockBelow(3, 10, false)) {
+            droppingTroops = true;
+            if (hatch != null && hatch.isOff()) {
+                hatch.set(true, true);
+                modeSwitchCooldown = 20;
+            }
+            return true;
+        }
+        return unloadMobs();
+    }
+
+    /** Lets every mob in a crew seat out, as in {@code unmountCrew(false)}. */
+    private boolean unloadMobs() {
+        AircraftDefinition def = definition();
+        boolean any = false;
+        for (int seat = 1; def != null && seat < def.seatCount(); seat++) {
+            if (occupant(seat) instanceof Mob mob) {
+                mob.stopRiding();
+                any = true;
+            }
+        }
+        return any;
+    }
+
+    /** The next mob behind the second seat leaves at the drop point under a parachute. */
+    private boolean dropNextTroop(AircraftDefinition def) {
+        for (int seat = 2; seat < def.seatCount(); seat++) {
+            if (occupant(seat) instanceof Mob mob) {
+                parachuteOut(mob, def);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void parachuteOut(Entity entity, AircraftDefinition def) {
+        Vec3 out = toWorld(def.dropPosition);
+        entity.stopRiding();
+        entity.teleportTo(out.x, out.y, out.z);
+        entity.setDeltaMovement(getDeltaMovement());
+        entity.needsSync = true;
+        ParachuteEntity.open(level(), entity, ParachuteEntity.Kind.DROP);
+    }
+
+    /**
+     * A passenger's own drop key, {@code MCH_ClientSeatTickHandler}: slide down a rope once the
+     * ropes are out, or jump with a parachute from behind the second seat of a vehicle with
+     * {@code EnableParachuting} and room below. Server only.
+     *
+     * @return false if neither is possible right now
+     */
+    public boolean jumpOut(Player player) {
+        AircraftDefinition def = definition();
+        int seat = seatOf(player);
+        if (def == null || seat <= 0 || seat >= def.seatCount() || isDestroyed()) {
+            return false;
+        }
+        if (isRepelling() && repellingTicks > 50 && !def.repellingHooks.isEmpty()) {
+            lastRope = (lastRope + 1) % def.repellingHooks.size();
+            rappel(player, lastRope);
+            return true;
+        }
+        if (def.parachuting && seat >= 2 && !hasBlockBelow(3, 13, false)) {
+            parachuteOut(player, def);
+            return true;
+        }
+        return false;
+    }
+
+    /** {@code unmountEntityRepelling}: two blocks under the hook, onto a rope rider that lets them down. */
+    private void rappel(Entity entity, int rope) {
+        Vec3 at = ropePosition(rope).add(0.0, -2.0, 0.0);
+        entity.stopRiding();
+        entity.teleportTo(at.x, at.y, at.z);
+        entity.setDeltaMovement(Vec3.ZERO);
+        entity.resetFallDistance();
+        RappelEntity rider = new RappelEntity(ModEntities.RAPPEL.get(), level());
+        rider.attach(this, rope);
+        rider.setPos(at);
+        level().addFreshEntity(rider);
+        entity.startRiding(rider, true, true);
+        lastRope = rope;
+    }
+
+    /**
+     * {@code mountMobToSeats}: when the pilot climbs in, mobs standing close by take the free crew
+     * seats, so villagers and the like can be flown somewhere. Server only.
+     */
+    private void boardNearbyMobs() {
+        AircraftDefinition def = definition();
+        if (def == null || def.uav) {
+            return;
+        }
+        for (Mob mob : level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(3.0, 2.0, 3.0), m -> !m.isPassenger() && !m.isVehicle())) {
+            for (int seat = 1; seat < def.seatCount(); seat++) {
+                if (isSeatFree(seat)) {
+                    pendingSeat = seat;
+                    mob.startRiding(this, true, true);
+                    pendingSeat = EMPTY;
+                    break;
+                }
+            }
+        }
     }
 
     // Terrain helpers
@@ -2348,10 +2778,15 @@ public abstract class AircraftEntity extends VehicleEntity {
         output.putInt("DespawnCount", despawnCount);
         output.putInt("CookOff", cookOffBlasts);
         output.putBoolean("Sinking", entityData.get(DATA_SINKING));
+        output.putBoolean("SearchLight", entityData.get(DATA_SEARCH_LIGHT));
         if (weapons != null) {
             output.putIntArray("WeaponsAmmo", weapons.saveAmmo());
         }
         inventory.save(output);
+        if (station != null && stationReturn != null) {
+            output.store("Station", UUIDUtil.CODEC, station);
+            output.store("StationReturn", Vec3.CODEC, stationReturn);
+        }
         ValueOutput.TypedOutputList<String> seats = output.list("Seats", Codec.STRING);
         for (int i = 0; i < seatIds.length; i++) {
             Entity e = occupant(i);
@@ -2378,6 +2813,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         cookOffBlasts = input.getIntOr("CookOff", 0);
         cookOffDelay = cookOffBlasts > 0 ? 20 : 0;
         entityData.set(DATA_SINKING, input.getBooleanOr("Sinking", false));
+        entityData.set(DATA_SEARCH_LIGHT, input.getBooleanOr("SearchLight", false));
         exploded |= cookOffBlasts > 0 || entityData.get(DATA_SINKING);
         input.getIntArray("WeaponsAmmo").ifPresent(ammo -> {
             if (weapons != null) {
@@ -2387,6 +2823,8 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
         });
         inventory.load(input);
+        station = input.read("Station", UUIDUtil.CODEC).orElse(null);
+        stationReturn = input.read("StationReturn", Vec3.CODEC).orElse(null);
         savedSeats.clear();
         List<String> seats = input.listOrEmpty("Seats", Codec.STRING).stream().toList();
         for (int i = 0; i < seats.size(); i++) {

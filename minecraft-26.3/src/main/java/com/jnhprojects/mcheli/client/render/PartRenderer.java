@@ -114,7 +114,8 @@ final class PartRenderer {
     // Kind specific parts
 
     private void rotors(HelicopterDefinition heli) {
-        for (RotorDefinition rotor : heli.rotors) {
+        for (int r = 0; r < heli.rotors.size(); r++) {
+            RotorDefinition rotor = heli.rotors.get(r);
             List<MeshGroup> blade = part(rotor.part());
             if (blade.isEmpty() || isZero(rotor.axis())) {
                 continue;
@@ -125,7 +126,8 @@ final class PartRenderer {
                 pose.pushPose();
                 Vector3 p = rotor.position();
                 translate(p, 1.0F);
-                rotate(state.rotorAngle + i * step, rotor.axis());
+                float[] angles = r < state.bladeAngles.length ? state.bladeAngles[r] : null;
+                rotate(angles != null && i < angles.length ? angles[i] : state.rotorAngle + i * step, rotor.axis());
                 if (!rotor.legacyPivot()) {
                     translate(p, -1.0F);
                 }

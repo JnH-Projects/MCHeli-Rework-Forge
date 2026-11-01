@@ -44,6 +44,12 @@ public final class LegacyRecipe {
      * loader ignores the other two.
      */
     public static final List<String> INGREDIENT_TYPE_KEYS = List.of("type", "neoforge:ingredient_type", "fabric:type");
+    /**
+     * Equipment the mod registers as plain items, which a vehicle recipe may use as they are: the
+     * E-767 needs a UAV station.
+     */
+    public static final Set<String> EQUIPMENT_ITEMS = Set.of("mcheli:uav_station", "mcheli:uav_station2", "mcheli:gltd",
+            "mcheli:rangefinder", "mcheli:container", "mcheli:chain", "mcheli:parachute", "mcheli:fuel", "mcheli:wrench");
 
     /**
      * @param result      the crafted vehicle
@@ -201,6 +207,9 @@ public final class LegacyRecipe {
     private static String ingredient(String name, int damage, Predicate<String> modItems, ImportTarget target) {
         String lower = name.trim().toLowerCase(Locale.ROOT);
         if (lower.startsWith("mcheli:")) {
+            if (EQUIPMENT_ITEMS.contains(lower)) {
+                return '"' + lower + '"';
+            }
             if (!modItems.test(lower)) {
                 throw new InvalidRecipeException(lower + " does not exist (yet)");
             }

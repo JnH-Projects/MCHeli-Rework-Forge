@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.forge;
 import com.jnhprojects.mcheli.client.CameraAngles;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import net.minecraft.client.Camera;
 import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
@@ -29,7 +30,11 @@ final class ForgeClient {
         ClientHooks.init();
         FMLClientSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(ClientHooks::registerMenuScreens));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
-        RegisterParticleProvidersEvent.BUS.addListener(event -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
+        EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
+        RegisterParticleProvidersEvent.BUS.addListener(event -> {
+            event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
+        });
         RegisterKeyMappingsEvent.BUS.addListener(event -> ClientHooks.keyMappings().forEach(event::register));
         RegisterClientReloadListenersEvent.BUS.addListener(event -> ClientHooks.reloadListeners().values().forEach(event::registerReloadListener));
         AddGuiOverlayLayersEvent.BUS.addListener(event -> event.getLayeredDraw()

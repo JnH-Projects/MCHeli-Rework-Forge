@@ -16,6 +16,7 @@ import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
@@ -37,6 +38,7 @@ public final class McheliForge {
                     helper -> helper.register(VehicleIngredient.ID, ForgeVehicleIngredient.SERIALIZER));
         });
         ForgeNetwork.register();
+        FMLCommonSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(CommonHooks::commonSetup));
 
         AddPackFindersEvent.BUS.addListener(event -> event.addRepositorySource(CommonHooks.packSource()));
         ServerAboutToStartEvent.BUS.addListener(event -> CommonHooks.serverAboutToStart(event.getServer()));

@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import static com.jnhprojects.mcheli.content.DefinitionValues.hex;
 import static com.jnhprojects.mcheli.content.DefinitionValues.lower;
 import static com.jnhprojects.mcheli.content.DefinitionValues.split;
 import static com.jnhprojects.mcheli.content.DefinitionValues.splitSlash;
@@ -53,6 +54,10 @@ public abstract class AircraftDefinition extends Definition {
     public boolean smoothShading = true;
     public boolean hideEntity;
     public float particlesScale = 1.0F;
+    /** {@code EnableSeaSurfaceParticle}: spray off the water around a boat or amphibian under way. */
+    public boolean seaSurfaceParticles;
+    public final List<ParticleSplash> splashes = new ArrayList<>();
+    public final List<SearchLight> searchLights = new ArrayList<>();
 
     // Durability
     public int maxHp = 50;
@@ -130,6 +135,10 @@ public abstract class AircraftDefinition extends Definition {
     public boolean entityRadar;
     public boolean ejectionSeat;
     public boolean parachuting;
+    /** {@code MobDropOption}: where passengers leave under a parachute, and the ticks between two. */
+    public Vector3 dropPosition = Vector3.ZERO;
+    public int dropInterval = 1;
+    public final List<RepellingHook> repellingHooks = new ArrayList<>();
     public float entityWidth = 1.0F;
     public float entityHeight = 1.0F;
     public float entityPitch;
@@ -320,6 +329,22 @@ public abstract class AircraftDefinition extends Definition {
         keys.put("SmoothShading", v -> smoothShading = toBool(v));
         keys.put("HideEntity", v -> hideEntity = toBool(v));
         keys.put("ParticlesScale", v -> particlesScale = toFloat(v, 0.0F, 50.0F));
+        keys.put("EnableSeaSurfaceParticle", v -> seaSurfaceParticles = toBool(v));
+        keys.put("AddParticleSplash", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                splashes.add(new ParticleSplash(toVec(s[0], s[1], s[2]),
+                        s.length >= 4 ? toInt(s[3], 1, 100) : 2,
+                        s.length >= 5 ? toFloat(s[4]) : 2.0F,
+                        s.length >= 6 ? toFloat(s[5]) : 1.0F,
+                        s.length >= 7 ? toInt(s[6], 1, 100000) : 80,
+                        s.length >= 8 ? toFloat(s[7]) : 0.01F,
+                        s.length >= 9 ? toFloat(s[8]) : 0.0F));
+            }
+        });
+        keys.put("AddSearchLight", v -> addSearchLight(v, false, false));
+        keys.put("AddFixedSearchLight", v -> addSearchLight(v, true, false));
+        keys.put("AddSteeringSearchLight", v -> addSearchLight(v, true, true));
         // ItemID only mattered before 1.7 removed numeric ids; accept it so it is not reported.
         keys.put("ItemID", v -> { });
 
@@ -436,6 +461,19 @@ public abstract class AircraftDefinition extends Definition {
         keys.put("EnableEntityRadar", v -> entityRadar = toBool(v));
         keys.put("EnableEjectionSeat", v -> ejectionSeat = toBool(v));
         keys.put("EnableParachuting", v -> parachuting = toBool(v));
+        keys.put("MobDropOption", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                dropPosition = toVec(s[0], s[1], s[2]);
+                dropInterval = s.length >= 4 ? Math.max(toInt(s[3]), 1) : 12;
+            }
+        });
+        keys.put("AddRepellingHook", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                repellingHooks.add(new RepellingHook(toVec(s[0], s[1], s[2]), s.length >= 4 ? toInt(s[3], 1, 100000) : 10));
+            }
+        });
         keys.put("EntityWidth", v -> entityWidth = toFloat(v, -100.0F, 100.0F));
         keys.put("EntityHeight", v -> entityHeight = toFloat(v, -100.0F, 100.0F));
         keys.put("EntityPitch", v -> entityPitch = toFloat(v, -360.0F, 360.0F));
@@ -848,6 +886,15 @@ public abstract class AircraftDefinition extends Definition {
         markerWidth = (float) Math.max(markerWidth, Math.abs(offset.z() - halfWidth) / 2.0);
     }
 
+    private void addSearchLight(String v, boolean fixed, boolean steering) {
+        String[] s = split(v);
+        if (s.length >= 7) {
+            searchLights.add(new SearchLight(toVec(s[0], s[1], s[2]), hex(s[3]), hex(s[4]), toFloat(s[5]), toFloat(s[6]), fixed,
+                    s.length >= 8 ? toFloat(s[7]) : 0.0F, s.length >= 9 ? toFloat(s[8]) : 0.0F, steering,
+                    s.length >= 10 ? toFloat(s[9]) : 0.0F));
+        }
+    }
+
     @Override
     protected void validate() throws InvalidDefinitionException {
         if (cameraPositions.isEmpty()) {
@@ -855,6 +902,11 @@ public abstract class AircraftDefinition extends Definition {
         }
         if (targetDrone) {
             uav = true;
+        }
+        // Ropes and parachute drops are one or the other; with both, the original kept neither.
+        if (parachuting && !repellingHooks.isEmpty()) {
+            parachuting = false;
+            repellingHooks.clear();
         }
         if (uav) {
             alwaysCameraView = true;

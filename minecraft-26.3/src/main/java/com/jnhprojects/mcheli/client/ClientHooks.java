@@ -6,18 +6,30 @@ import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.client.hud.HudScripts;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
+import com.jnhprojects.mcheli.client.render.ChainRenderer;
+import com.jnhprojects.mcheli.client.render.DraftingTableRenderer;
+import com.jnhprojects.mcheli.client.render.EquipmentRenderer;
 import com.jnhprojects.mcheli.client.render.FlareRenderer;
+import com.jnhprojects.mcheli.client.render.GltdRenderer;
 import com.jnhprojects.mcheli.client.render.Glow;
 import com.jnhprojects.mcheli.client.render.MeshCache;
 import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
+import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
+import com.jnhprojects.mcheli.client.render.UavStationRenderer;
+import com.jnhprojects.mcheli.client.screen.DraftingTableScreen;
+import com.jnhprojects.mcheli.client.screen.TeamManagerScreen;
+import com.jnhprojects.mcheli.client.screen.UavStationScreen;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import com.jnhprojects.mcheli.platform.Platform;
+import com.jnhprojects.mcheli.registry.ModBlockEntities;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModMenus;
+import com.jnhprojects.mcheli.team.Markers;
+import com.jnhprojects.mcheli.team.TeamManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -26,13 +38,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.List;
 import java.util.Map;
@@ -80,11 +98,29 @@ public final class ClientHooks {
         renderers.register(ModEntities.FLARE.get(), FlareRenderer::new);
         renderers.register(ModEntities.A10.get(), A10Renderer::new);
         renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
+        renderers.register(ModEntities.THROWABLE.get(), ThrowableRenderer::new);
+        renderers.register(ModEntities.GLTD.get(), GltdRenderer::new);
+        renderers.register(ModEntities.CHAIN.get(), ChainRenderer::new);
+        renderers.register(ModEntities.CONTAINER.get(), context -> new EquipmentRenderer<>(context, "container", 0.2F, 0xFFBFBFBF, 1.0F));
+        renderers.register(ModEntities.UAV_STATION.get(), UavStationRenderer::new);
+        renderers.register(ModEntities.RAPPEL.get(), NoopRenderer::new);
+    }
+
+    /** How a loader registers a block entity renderer. */
+    public interface BlockEntityRenderers {
+        <T extends BlockEntity, S extends BlockEntityRenderState> void register(BlockEntityType<? extends T> type,
+                                                                               BlockEntityRendererProvider<T, S> provider);
+    }
+
+    public static void registerBlockEntityRenderers(BlockEntityRenderers renderers) {
+        renderers.register(ModBlockEntities.DRAFTING_TABLE.get(), DraftingTableRenderer::new);
     }
 
     /** On the main thread during client setup, once our menu types are registered. */
     public static void registerMenuScreens() {
         MenuScreens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
+        MenuScreens.register(ModMenus.UAV_STATION.get(), UavStationScreen::new);
+        MenuScreens.register(ModMenus.DRAFTING_TABLE.get(), DraftingTableScreen::new);
     }
 
     public static List<KeyMapping> keyMappings() {
@@ -104,15 +140,36 @@ public final class ClientHooks {
             Glow.assignShaderPrograms();
         }
         CrewController.onClientTick();
+        GltdController.onClientTick();
+        RangefinderController.onClientTick();
+        LauncherController.onClientTick();
         VehicleCamera.tick();
         WeaponController.onClientTick();
         HudRenderer.tick();
         EngineSoundPlayer.tick();
+        TargetMarkers.tick();
+        while (KeyBindings.TEAM_MANAGER.consumeClick()) {
+            openTeamManager();
+        }
+    }
+
+    /** Operators get the team manager; anyone else is told it is theirs to open. */
+    private static void openTeamManager() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gui.screen() != null) {
+            return;
+        }
+        if (TeamManager.mayManage(mc.player)) {
+            mc.gui.setScreen(new TeamManagerScreen());
+        } else {
+            mc.player.sendOverlayMessage(Component.translatable("message.mcheli.team.operators_only"));
+        }
     }
 
     /** Tilts the view with the hull and moves the eye into the cockpit or onto a TV missile. */
     public static void computeCameraAngles(CameraAngles angles) {
         CrewController.onCameraAngles(angles);
+        GltdController.onCameraAngles(angles);
     }
 
     /** Sets the camera's rotation, roll included, the way Forge's {@code Camera#setRotation} does. */
@@ -190,12 +247,12 @@ public final class ClientHooks {
 
     /** The field of view for this frame, narrowed while the player zooms through a sight. */
     public static float fov(float fov) {
-        return VehicleCamera.fov(fov);
+        return LauncherController.fov(RangefinderController.fov(VehicleCamera.fov(fov)));
     }
 
     /** Whether to skip drawing the first person hand this frame. */
     public static boolean hidesHand() {
-        return CrewController.hidesHand();
+        return CrewController.hidesHand() || GltdController.hidesHand() || RangefinderController.isScoped() || LauncherController.isRaised();
     }
 
     /** What happens to a press of the use key. */
@@ -209,7 +266,7 @@ public final class ClientHooks {
     }
 
     public static UseKey onUseKey(InteractionHand hand) {
-        if (WeaponController.onUseItem()) {
+        if (WeaponController.onUseItem() || GltdController.onUseItem()) {
             return UseKey.CONSUME;
         }
         return VehiclePicker.onUseItem(hand) ? UseKey.CONSUME_AND_SWING : UseKey.PASS;
@@ -226,6 +283,10 @@ public final class ClientHooks {
 
     public static void drawHud(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         WeaponHud.draw(graphics, delta);
+        GltdController.drawHud(graphics, delta);
+        RangefinderController.drawHud(graphics, delta);
+        LauncherController.drawHud(graphics, delta);
+        TargetMarkers.draw(graphics, delta);
     }
 
     /** Without the original zip there are no vehicles, so say so where the player will see it. */
@@ -235,5 +296,6 @@ public final class ClientHooks {
 
     public static void loggedOut() {
         ClientPacks.INSTANCE.loggedOut();
+        Markers.clear();
     }
 }
