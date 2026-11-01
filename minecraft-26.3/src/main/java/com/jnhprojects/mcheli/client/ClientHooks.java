@@ -6,6 +6,7 @@ import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.client.hud.HudScripts;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
+import com.jnhprojects.mcheli.client.render.ChainRenderer;
 import com.jnhprojects.mcheli.client.render.EquipmentRenderer;
 import com.jnhprojects.mcheli.client.render.FlareRenderer;
 import com.jnhprojects.mcheli.client.render.GltdRenderer;
@@ -85,6 +86,7 @@ public final class ClientHooks {
         renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
         renderers.register(ModEntities.THROWABLE.get(), ThrowableRenderer::new);
         renderers.register(ModEntities.GLTD.get(), GltdRenderer::new);
+        renderers.register(ModEntities.CHAIN.get(), ChainRenderer::new);
         renderers.register(ModEntities.CONTAINER.get(), context -> new EquipmentRenderer<>(context, "container", 0.2F, 0xFFBFBFBF, 1.0F));
     }
 
