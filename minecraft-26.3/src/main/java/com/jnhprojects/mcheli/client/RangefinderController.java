@@ -114,28 +114,41 @@ final class RangefinderController {
         int size = Math.max(w, h);
         g.blit(RenderPipelines.GUI_TEXTURED, SCOPE, (w - size) / 2, (h - size) / 2, 0.0F, 0.0F, size, size, 256, 256, 256, 256);
 
-        Font font = mc.font;
-        int cx = w / 2;
-        int cy = h / 2;
+        // The readouts sit on the scope texture's own labels: lay them out in its 512 wide space,
+        // centred, as the original did, and scale that with the scope.
+        float k = size / 512.0F;
+        g.pose().pushMatrix();
+        g.pose().translate(w / 2.0F, h / 2.0F);
+        g.pose().scale(k, k);
+        drawReadouts(g, mc.font, player, stack);
+        g.pose().popMatrix();
+    }
+
+    /** In scope space: the centre of the view is at 0, 0. */
+    private static void drawReadouts(GuiGraphicsExtractor g, Font font, LocalPlayer player, ItemStack stack) {
         int charge = RangefinderItem.charges(stack) * 100 / RangefinderItem.CHARGES;
-        g.text(font, Component.translatable("hud.mcheli.rangefinder.charge", charge), cx - 80, cy + 50, charge > 0 ? GREEN : RED);
+        // Over BATT.
+        g.text(font, String.format("%3d%%", charge), -100, 55, charge > 0 ? GREEN : RED);
         if (charge <= 0) {
-            g.text(font, Component.translatable("hud.mcheli.rangefinder.empty"), cx - 80, cy + 60, RED);
+            g.text(font, Component.translatable("hud.mcheli.rangefinder.empty"), -40, 55, RED);
         } else {
+            // Over RANGE METERS.
             Vec3 eye = player.getEyePosition();
             HitResult hit = player.level().clip(new ClipContext(eye, eye.add(player.getLookAngle().scale(RANGE)),
                     ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, player));
             String range = hit.getType() == HitResult.Type.MISS ? "----" : String.format("%4d", Math.round(hit.getLocation().distanceTo(eye)));
-            g.text(font, Component.translatable("hud.mcheli.rangefinder.range", range), cx - 20, cy + 50, GREEN);
+            g.text(font, range, 40, 55, hit.getType() == HitResult.Type.MISS ? RED : GREEN);
         }
-        g.fill(cx - 80, cy + 44, cx - 50, cy + 46, GREEN);
-        g.fill(cx - 80, cy + 44, cx - 80 + cooldown / 2, cy + 46, RED);
-        g.text(font, String.format("x%.1f", zoom), cx - 80, cy + 30, WHITE);
-        int y = cy + 20;
+        // The spot cooldown bar, and the zoom above it.
+        g.fill(-100, 51, -70, 53, GREEN);
+        g.fill(-100, 51, -100 + cooldown / 2, 53, RED);
+        g.text(font, String.format("x%.1f", zoom), -100, 31, WHITE);
+        int y = 21;
         for (SpotPacket.Mode m : SpotPacket.Mode.values()) {
-            String prefix = m == mode ? "> " : "  ";
-            g.text(font, Component.literal(prefix).append(Component.translatable("hud.mcheli.rangefinder." + m.name().toLowerCase(Locale.ROOT))),
-                    cx + 50, y, m == mode ? WHITE : GREY);
+            if (m == mode) {
+                g.text(font, ">", 30, y, WHITE);
+            }
+            g.text(font, Component.translatable("hud.mcheli.rangefinder." + m.name().toLowerCase(Locale.ROOT)), 40, y, m == mode ? WHITE : GREY);
             y += 10;
         }
     }
