@@ -99,7 +99,10 @@ final class CrewController {
             tracking = false;
             viewVehicle = null;
             viewSeat = -1;
-            VehicleCamera.reset();
+            // The GLTD's sight shares the zoom and camera mode; only leaving it resets them.
+            if (GltdController.gltdOf(player) == null) {
+                VehicleCamera.reset();
+            }
             return;
         }
         int seat = vehicle.seatOf(player);
@@ -433,7 +436,7 @@ final class CrewController {
         return missile;
     }
 
-    private static void placeCamera(Camera camera, Vec3 at) {
+    static void placeCamera(Camera camera, Vec3 at) {
         MethodHandle setter = cameraSetter();
         if (setter == null) {
             return;
