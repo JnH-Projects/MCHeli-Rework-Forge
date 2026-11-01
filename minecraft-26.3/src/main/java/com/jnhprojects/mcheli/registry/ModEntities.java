@@ -13,6 +13,7 @@ import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.ParachuteEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
+import com.jnhprojects.mcheli.entity.UavStationEntity;
 import com.jnhprojects.mcheli.entity.projectile.A10Entity;
 import com.jnhprojects.mcheli.entity.projectile.AAMissileEntity;
 import com.jnhprojects.mcheli.entity.projectile.ASMissileEntity;
@@ -105,6 +106,14 @@ public final class ModEntities {
             .sized(1.0F, 1.0F)
             .clientTrackingRange(10)
             .updateInterval(2)
+            .fireImmune()
+            .build(key));
+
+    public static final Registered<EntityType<UavStationEntity>> UAV_STATION = Registration.register(Registries.ENTITY_TYPE, "uav_station", key -> EntityType.Builder
+            .<UavStationEntity>of(UavStationEntity::new, MobCategory.MISC)
+            .sized(2.0F, 0.7F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
             .fireImmune()
             .build(key));
 
