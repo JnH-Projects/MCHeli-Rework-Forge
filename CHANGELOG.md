@@ -23,10 +23,10 @@ need the same version, since the network protocol changed (9).
 - The laser rangefinder. Held up to the eye it is a scope that reads the range; Z and X zoom in and
   out, C picks what to spot (players and vehicles, mobs, or a point), and the attack key spots.
   Spotting uses one of ten charges; crafting it with redstone charges it again.
-- Spotted players, mobs and vehicles get the glowing outline for 15 seconds (mobs a minute).
-  Teammates are never spotted. Unlike the original's team-only markers, everyone sees the outline
-  for now; team markers come with the team manager. A marked point is sent as coordinates to the
-  spotter's team.
+- Spotted players, mobs and vehicles show up for the spotter and their team only, as markers on
+  the HUD: a triangle over the target with its distance, or a diamond at the screen edge when it is
+  out of view. They last 15 seconds (mobs a minute). Teammates are never spotted. A marked point
+  gets its own marker with distance and coordinates for a minute, and goes to the team's chat.
 - The cargo container: a crate with a large chest's worth of room that floats and can be pushed.
   Racks that list `container` load and drop it like vehicles (J and U), and dropped with no ground
   within 20 blocks it comes down under a parachute.
@@ -37,13 +37,44 @@ need the same version, since the network protocol changed (9).
 - The tow chain. Use it on both ends, in either order, 2 to 16 blocks apart; one end must be a
   vehicle, which always does the pulling, so a helicopter can lift a container on a sling. Use it
   on either end again to take it off. Each step shows a message above the hotbar.
+- The UAV station and the portable UAV controller. Sit at one, put a drone in its slot and fly it
+  from there with the usual controls, HUD and weapons; the HUD shows the link's range and
+  strength. The launch point is set with the station's buttons, Continue takes the last drone
+  again, and Shift leaves it. The portable controller only takes small UAVs and opens with Shift
+  and right-click. A drone flown more than 123 blocks from its station is lost. A target drone
+  goes up with a full tank and flies itself, as something to shoot at. While flying, the pilot
+  is hidden and unhurt, and comes back beside the station when they leave or lose the drone.
+- Troops. When the pilot climbs in, mobs standing close by take the free crew seats. Y lets them
+  out: helicopters with rappelling hooks lower ropes from a steady hover and the mobs slide down
+  them; vehicles with `EnableParachuting` open the hatch and drop them one by one under parachutes
+  at the drop point; near the ground they simply get out. Players in the back press Y to slide down
+  a rope or jump with a parachute themselves.
+- Search lights, for vehicles that list them: K switches them on and off from the pilot or first
+  crew seat. A turning light follows the crew's aim, a fixed one points along the vehicle and a
+  steering one turns with the front wheels.
+- Helicopters with `EnableFoldBlade` fold their blades with Z when the engine is stopped, and
+  cannot take off until they unfold them; folded on the ground, A and D turn them slowly.
+- Rotor downwash raises dust or spray under a helicopter, boats with `EnableSeaSurfaceParticle`
+  throw spray off the sea, `AddParticleSplash` points spray through water, jet nozzles smoke with
+  the throttle, and fast landing gear kicks up the ground.
+- Targeting pods that mark blocks now mark the point under the crew's view for the team, and
+  mortars show where their shell would land on the HUD.
+- The drafting table. Right-click it to browse every MCHeli recipe by list (helicopters, planes,
+  vehicles, tanks, equipment): the recipe, a vehicle's numbers or the original's illustrated
+  description, and Create to make the item into the output slot from your inventory. Shift and
+  right-click switches its lamp. It is drawn with the original model.
+- The team manager, for operators, on M: switch PvP, shuffle every player into the teams, make a
+  team with a colour and friendly fire, send everyone to their spawn point, or remove every
+  vehicle. The teams and their players are listed beside it.
 - Recipes for the smoke grenades, GLTD, rangefinder, container, chain, launchers and missiles,
-  from the original config.
+  UAV station, portable controller and drafting table, from the original config.
 
 ### Changed
 
 - The equipment tab lists the new items and every loaded throwable, and is rebuilt after a content
   reload.
+- The E-767 can be crafted at last: its recipe needs a UAV station. The content is imported again
+  on the first start (import format 4).
 - The README is shorter: the full controls, equipment guide, commands and settings moved to
   [docs/PLAYING.md](docs/PLAYING.md), and the screenshots of earlier phases to
   [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md).
