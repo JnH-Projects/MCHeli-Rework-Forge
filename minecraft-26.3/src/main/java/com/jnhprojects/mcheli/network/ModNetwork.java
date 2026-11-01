@@ -31,6 +31,7 @@ public final class ModNetwork {
             new Serverbound<>(SpotPacket.TYPE, SpotPacket.STREAM_CODEC, SpotPacket::handle),
             new Serverbound<>(LauncherPacket.TYPE, LauncherPacket.STREAM_CODEC, LauncherPacket::handle),
             new Serverbound<>(DraftingTablePacket.TYPE, DraftingTablePacket.STREAM_CODEC, DraftingTablePacket::handle),
+            new Serverbound<>(TeamPacket.TYPE, TeamPacket.STREAM_CODEC, TeamPacket::handle),
             new Serverbound<>(FireWeaponPacket.TYPE, FireWeaponPacket.STREAM_CODEC, FireWeaponPacket::handle),
             new Serverbound<>(BoardVehiclePacket.TYPE, BoardVehiclePacket.STREAM_CODEC, BoardVehiclePacket::handle),
             new Serverbound<>(LockWarningPacket.TYPE, LockWarningPacket.STREAM_CODEC, LockWarningPacket::handle),
@@ -41,7 +42,8 @@ public final class ModNetwork {
             new Clientbound<>(WeaponStatePacket.TYPE, WeaponStatePacket.STREAM_CODEC, WeaponStatePacket::handle),
             new Clientbound<>(ExplosionEffectPacket.TYPE, ExplosionEffectPacket.STREAM_CODEC, ExplosionEffectPacket::handle),
             new Clientbound<>(PackListPacket.TYPE, PackListPacket.STREAM_CODEC, PackListPacket::handle),
-            new Clientbound<>(PackDataPacket.TYPE, PackDataPacket.STREAM_CODEC, PackDataPacket::handle));
+            new Clientbound<>(PackDataPacket.TYPE, PackDataPacket.STREAM_CODEC, PackDataPacket::handle),
+            new Clientbound<>(MarkerPacket.TYPE, MarkerPacket.STREAM_CODEC, MarkerPacket::handle));
 
     private ModNetwork() {
     }
