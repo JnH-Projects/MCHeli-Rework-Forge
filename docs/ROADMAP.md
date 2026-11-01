@@ -260,14 +260,14 @@ Built and tested on Forge 26.3 only. What was not done in this phase moved to ph
 
 - [x] Equipment: GLTD, rangefinder, chain towing, container, smoke grenades
 - [x] Equipment: Stinger and Javelin
-- [ ] Equipment: UAV station and portable controller
+- [x] Equipment: UAV station and portable controller
 - [x] Parachutes for rack drops, containers on racks
-- [ ] Repelling and troop drops
-- [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
-- [ ] Marking blocks with targeting pods, mortar distance
-- [ ] The drafting table and its recipe browser (pack vehicles included)
-- [x] Spotting with the rangefinder (glowing outline for now)
-- [ ] Multiplayer team manager, and team-only markers for spotted targets
+- [x] Repelling and troop drops
+- [x] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
+- [x] Marking blocks with targeting pods, mortar distance
+- [x] The drafting table and its recipe browser (pack vehicles included)
+- [x] Spotting with the rangefinder
+- [x] Multiplayer team manager, and team-only markers for spotted targets
 
 ## Phase 11: workshop, model, parts and tuning (`1.1.0-beta.7`)
 
