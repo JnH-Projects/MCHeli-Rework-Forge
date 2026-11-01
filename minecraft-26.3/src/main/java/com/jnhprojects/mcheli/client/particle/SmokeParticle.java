@@ -28,7 +28,7 @@ public class SmokeParticle extends SingleQuadParticle {
         // The original drew a puff 0.1 x its size out from the middle, so size 10 is two blocks across.
         this.size = options.size() * 0.1F * (0.8F + random.nextFloat() * 0.4F);
         this.quadSize = size * 0.4F;
-        this.lifetime = 60 + random.nextInt(40);
+        this.lifetime = options.lifetime() > 0 ? options.lifetime() : 60 + random.nextInt(40);
         this.friction = 0.96F;
         this.gravity = -0.002F;
         this.hasPhysics = true;
