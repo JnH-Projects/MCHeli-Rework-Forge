@@ -5,10 +5,12 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## [Unreleased]
+## [1.1.0-beta.6] - 2026-11-01
 
-Phase 10 of the road to 1.1.0: the rest of the equipment, Forge 26.3 only. Players and servers
-need the same version, since the network protocol changed (9).
+Phase 10 of the road to 1.1.0: the rest of the equipment. Betas are not uploaded to CurseForge,
+and this one ships the Forge 26.3 jar only. Worlds from 1.1.0-beta.5 load as before; the original
+content is imported again on the first start. Players and servers need the same version, since
+the network protocol changed (9).
 
 ### Added
 
@@ -626,6 +628,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.6]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.6
 [1.1.0-beta.5]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.5
 [1.1.0-beta.4]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.4
 [1.1.0-beta.3]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.3
