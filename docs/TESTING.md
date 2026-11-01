@@ -567,6 +567,9 @@ Forge 26.3 only. Start from a world made by beta.5, in survival.
 - [ ] Chain: right-click a container (or a car), then a truck within 16 blocks. Driving the truck
       drags the other along at the chain's length. Right-click either end again: the chain comes
       off. Save and reload while towing: the chain is still there.
+- [ ] Chain the other way round (truck first, container second): the truck still does the pulling.
+      Chain a container to a `ch47` and lift off: the container hangs below it. Two containers
+      cannot be chained ("One end of the chain must be a vehicle").
 
 ## Reporting problems
 
