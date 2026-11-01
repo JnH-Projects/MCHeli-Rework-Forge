@@ -5,6 +5,41 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+Phase 10 of the road to 1.1.0: the rest of the equipment, Forge 26.3 only. Players and servers
+need the same version, since the network protocol changed (9).
+
+### Added
+
+- M18 smoke grenades in red, green, violet and yellow, from the original `throwable` files. Hold
+  use to draw, release to throw: the longer the draw, the further it goes. They bounce off blocks
+  and pour out coloured smoke for half a minute. Dispensers throw them too. Packs can add their own
+  throwables in a `throwable` folder; they share one `mcheli:throwable` item, like the vehicles.
+- The GLTD target designator. Set it on the ground, right-click to sit behind it, and look through
+  its sight (70 degrees either way). Z zooms, K steps through night vision and thermal view, and
+  use marks the spot under the cross: an A-10 makes three gun runs over it. The sight shows when
+  the next A-10 can be called (about 22 seconds).
+- The laser rangefinder. Held up to the eye it is a scope that reads the range; Z and X zoom in and
+  out, C picks what to spot (players and vehicles, mobs, or a point), and the attack key spots.
+  Spotting uses one of ten charges; crafting it with redstone charges it again.
+- Spotted players, mobs and vehicles get the glowing outline for 15 seconds (mobs a minute).
+  Teammates are never spotted. Unlike the original's team-only markers, everyone sees the outline
+  for now; team markers come with the team manager. A marked point is sent as coordinates to the
+  spotter's team.
+- The cargo container: a crate with a large chest's worth of room that floats and can be pushed.
+  Racks that list `container` load and drop it like vehicles (J and U), and dropped with no ground
+  within 20 blocks it comes down under a parachute.
+- The tow chain. Use it on what is to be towed, then on the vehicle that pulls it (2 to 16 blocks
+  away); use it on either end again to take it off.
+- Recipes for the smoke grenades, GLTD, rangefinder, container and chain, from the original
+  config.
+
+### Changed
+
+- The equipment tab lists the new items and every loaded throwable, and is rebuilt after a content
+  reload.
+
 ## [1.1.0-beta.5] - 2026-10-31
 
 Phase 9 of the road to 1.1.0: the vehicle screen and what goes with it, supply vehicles and
