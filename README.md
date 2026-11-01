@@ -124,7 +124,8 @@ the throttle, the mouse flies or aims, right mouse fires and Shift gets out. Eve
 rebound under Controls, category MCHeli.
 
 The full controls for each kind of vehicle, fuel and repairs, the equipment (parachute, smoke
-grenades, GLTD, rangefinder, container, tow chain) and the commands and server settings are in
+grenades, GLTD, rangefinder, Stinger and Javelin, container, tow chain) and the commands and
+server settings are in
 [docs/PLAYING.md](docs/PLAYING.md).
 
 ## Content packs
