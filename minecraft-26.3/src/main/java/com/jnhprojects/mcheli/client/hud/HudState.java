@@ -47,6 +47,8 @@ final class HudState {
     final List<double[]> enemyBlips = new ArrayList<>();
 
     private @Nullable AircraftEntity vehicle;
+    /** Where the selected mortar would land, or -1. */
+    private float mortarDistance = -1.0F;
     private int radarRotate;
     private int radarRotateO;
     private int altitude;
@@ -284,16 +286,19 @@ final class HudState {
             vars.set(HudVariable.IS_HEAT_WPN, def.maxHeatCount > 0);
             vars.set(HudVariable.RELOADING, set.isInPreparation());
             vars.set(HudVariable.DSP_MT_DIST, def.displayMortarDistance);
+            // The original worked the arc out every fifth tick; it is cheap enough to follow every update.
+            mortarDistance = def.displayMortarDistance ? (float) set.landingDistance(vehicle) : -1.0F;
         } else {
             vars.set(HudVariable.IS_HEAT_WPN, 0.0);
             vars.set(HudVariable.RELOADING, 0.0);
             vars.set(HudVariable.DSP_MT_DIST, 0.0);
+            mortarDistance = -1.0F;
         }
         vars.set(HudVariable.RELOAD_TIME, reloadTime);
         vars.set(HudVariable.WPN_HEAT, heat);
         vars.set(HudVariable.SIGHT_TYPE, sightType);
         vars.set(HudVariable.LOCK, lock);
-        vars.set(HudVariable.MT_DIST, -1.0);
+        vars.set(HudVariable.MT_DIST, mortarDistance);
     }
 
     boolean hasWeapon() {
@@ -332,7 +337,7 @@ final class HudState {
             case WPN_RM_AMMO -> weaponRestAmmo;
             case RELOAD_PER -> reloadPercent;
             case RELOAD_SEC -> reloadSeconds;
-            case MORTAR_DIST -> -1.0F;
+            case MORTAR_DIST -> mortarDistance;
             case MC_VER -> "26.3";
             case MOD_VER -> Platform.get().modVersion();
             case MOD_NAME -> "MCHeli Rework";
