@@ -35,6 +35,7 @@
   "key.mcheli.vtol": "VTOLモード",
   "message.mcheli.content.import_failed": "MCHeli: 元の機体データを読み込めませんでした: %s。logs/latest.log を確認してください。",
   "message.mcheli.content.missing": "MCHeli: 機体データがありません。MCHeli の CurseForge ページから %s をダウンロードし、%s に置いてからゲームを再起動してください。",
+  "message.mcheli.mark_point": "%s がマーク: %s %s %s",
   "message.mcheli.no_parachute": "機体にパラシュートがありません。先にパラシュート欄に入れてください",
   "message.mcheli.pack.downloading": "MCHeli: サーバーからコンテンツパックを %s 個 (%s MB) ダウンロードしています",
   "message.mcheli.pack.failed": "MCHeli: コンテンツパック %s をダウンロードできませんでした: %s",
