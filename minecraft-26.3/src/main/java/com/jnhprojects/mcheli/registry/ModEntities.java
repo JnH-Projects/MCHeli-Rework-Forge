@@ -5,6 +5,7 @@ import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
+import com.jnhprojects.mcheli.entity.ContainerEntity;
 import com.jnhprojects.mcheli.entity.GltdEntity;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
@@ -88,6 +89,14 @@ public final class ModEntities {
             .sized(0.5F, 0.5F)
             .clientTrackingRange(10)
             .updateInterval(3)
+            .build(key));
+
+    public static final Registered<EntityType<ContainerEntity>> CONTAINER = Registration.register(Registries.ENTITY_TYPE, "container", key -> EntityType.Builder
+            .<ContainerEntity>of(ContainerEntity::new, MobCategory.MISC)
+            .sized(2.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
+            .fireImmune()
             .build(key));
 
     private ModEntities() {
