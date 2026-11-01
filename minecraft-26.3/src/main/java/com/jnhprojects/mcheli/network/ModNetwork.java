@@ -21,12 +21,13 @@ import java.util.function.Consumer;
  */
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    public static final int PROTOCOL_VERSION = 8;
+    public static final int PROTOCOL_VERSION = 9;
 
     /** Client to server. The handler gets the sending player. */
     public static final List<Serverbound<?>> SERVERBOUND = List.of(
             new Serverbound<>(PilotStatePacket.TYPE, PilotStatePacket.STREAM_CODEC, PilotStatePacket::handle),
             new Serverbound<>(CrewActionPacket.TYPE, CrewActionPacket.STREAM_CODEC, CrewActionPacket::handle),
+            new Serverbound<>(EquipmentActionPacket.TYPE, EquipmentActionPacket.STREAM_CODEC, EquipmentActionPacket::handle),
             new Serverbound<>(FireWeaponPacket.TYPE, FireWeaponPacket.STREAM_CODEC, FireWeaponPacket::handle),
             new Serverbound<>(BoardVehiclePacket.TYPE, BoardVehiclePacket.STREAM_CODEC, BoardVehiclePacket::handle),
             new Serverbound<>(LockWarningPacket.TYPE, LockWarningPacket.STREAM_CODEC, LockWarningPacket::handle),
