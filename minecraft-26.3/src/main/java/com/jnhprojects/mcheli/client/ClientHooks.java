@@ -10,6 +10,7 @@ import com.jnhprojects.mcheli.client.render.FlareRenderer;
 import com.jnhprojects.mcheli.client.render.Glow;
 import com.jnhprojects.mcheli.client.render.MeshCache;
 import com.jnhprojects.mcheli.client.render.ParachuteRenderer;
+import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
 import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
@@ -80,6 +81,7 @@ public final class ClientHooks {
         renderers.register(ModEntities.FLARE.get(), FlareRenderer::new);
         renderers.register(ModEntities.A10.get(), A10Renderer::new);
         renderers.register(ModEntities.PARACHUTE.get(), ParachuteRenderer::new);
+        renderers.register(ModEntities.THROWABLE.get(), ThrowableRenderer::new);
     }
 
     /** On the main thread during client setup, once our menu types are registered. */
