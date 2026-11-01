@@ -30,11 +30,15 @@ need the same version, since the network protocol changed (9).
 - The cargo container: a crate with a large chest's worth of room that floats and can be pushed.
   Racks that list `container` load and drop it like vehicles (J and U), and dropped with no ground
   within 20 blocks it comes down under a parachute.
+- The FIM-92 Stinger and FGM-148 Javelin, shoulder launched. Hold use to raise the sight, keep a
+  target in the cross until it locks (aircraft for the Stinger, ground vehicles for the Javelin),
+  then attack to fire. Z zooms, and X switches the Javelin between direct and top attack. Each
+  holds one missile: lower an empty launcher with a missile in your inventory to reload it.
 - The tow chain. Use it on both ends, in either order, 2 to 16 blocks apart; one end must be a
   vehicle, which always does the pulling, so a helicopter can lift a container on a sling. Use it
   on either end again to take it off. Each step shows a message above the hotbar.
-- Recipes for the smoke grenades, GLTD, rangefinder, container and chain, from the original
-  config.
+- Recipes for the smoke grenades, GLTD, rangefinder, container, chain, launchers and missiles,
+  from the original config.
 
 ### Changed
 
