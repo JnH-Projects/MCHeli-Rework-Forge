@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.registry;
 
+import com.jnhprojects.mcheli.menu.DraftingTableMenu;
 import com.jnhprojects.mcheli.menu.UavStationMenu;
 import com.jnhprojects.mcheli.menu.VehicleMenu;
 import com.jnhprojects.mcheli.platform.Registered;
@@ -12,6 +13,8 @@ import net.minecraft.world.inventory.MenuType;
 public final class ModMenus {
     public static final Registered<MenuType<VehicleMenu>> VEHICLE = Registration.register(Registries.MENU, "vehicle",
             key -> new MenuType<>(VehicleMenu::new, FeatureFlags.VANILLA_SET));
+    public static final Registered<MenuType<DraftingTableMenu>> DRAFTING_TABLE = Registration.register(Registries.MENU, "drafting_table",
+            key -> new MenuType<>(DraftingTableMenu::new, FeatureFlags.VANILLA_SET));
     public static final Registered<MenuType<UavStationMenu>> UAV_STATION = Registration.register(Registries.MENU, "uav_station",
             key -> new MenuType<>(UavStationMenu::new, FeatureFlags.VANILLA_SET));
 
