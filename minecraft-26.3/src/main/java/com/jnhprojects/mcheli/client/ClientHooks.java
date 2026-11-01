@@ -114,6 +114,7 @@ public final class ClientHooks {
         CrewController.onClientTick();
         GltdController.onClientTick();
         RangefinderController.onClientTick();
+        LauncherController.onClientTick();
         VehicleCamera.tick();
         WeaponController.onClientTick();
         HudRenderer.tick();
@@ -201,12 +202,12 @@ public final class ClientHooks {
 
     /** The field of view for this frame, narrowed while the player zooms through a sight. */
     public static float fov(float fov) {
-        return RangefinderController.fov(VehicleCamera.fov(fov));
+        return LauncherController.fov(RangefinderController.fov(VehicleCamera.fov(fov)));
     }
 
     /** Whether to skip drawing the first person hand this frame. */
     public static boolean hidesHand() {
-        return CrewController.hidesHand() || GltdController.hidesHand() || RangefinderController.isScoped();
+        return CrewController.hidesHand() || GltdController.hidesHand() || RangefinderController.isScoped() || LauncherController.isRaised();
     }
 
     /** What happens to a press of the use key. */
@@ -239,6 +240,7 @@ public final class ClientHooks {
         WeaponHud.draw(graphics, delta);
         GltdController.drawHud(graphics, delta);
         RangefinderController.drawHud(graphics, delta);
+        LauncherController.drawHud(graphics, delta);
     }
 
     /** Without the original zip there are no vehicles, so say so where the player will see it. */
