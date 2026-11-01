@@ -267,8 +267,9 @@ following `MCH_ItemRecipe`. `LegacyItems` maps the 1.7.10 item names and damage 
 wool by colour, the common `c:` tags where an item became a family (iron, glass, dyes) so other
 mods' materials count, vanilla tags for logs, planks and boats. As in 1.7.10, a pattern letter the
 key does not define is an empty slot. `RecipeDataTest` converts the whole set and spot checks
-the output. `CommonHooks.playerLoggedIn` puts every MCHeli recipe in a player's recipe book on login, standing in
-for the drafting table's recipe list.
+the output. `CommonHooks.playerLoggedIn` puts every MCHeli recipe in a player's recipe book on login, which
+is where the drafting table lists them from. Recipe ingredients may also name the equipment items
+(`LegacyRecipe.EQUIPMENT_ITEMS`): the E-767 needs a UAV station.
 
 ## Models
 
@@ -491,8 +492,8 @@ once it falls), the bare canopy for drops.
 ### Placed equipment, throwables and spotting
 
 Equipment that lives in the world is an entity set up by `item.PlacedEntityItem`: `GltdEntity`,
-`ContainerEntity` (and later the UAV station). Each is server simulated and eased on clients with
-a `LinearInterpolationHandler`.
+`ContainerEntity` and `UavStationEntity` (whose item sets its kind and facing first). Each is
+server simulated and eased on clients with a `LinearInterpolationHandler`.
 
 Throwables are content: `content.throwable.ThrowableDefinition` in `common`, loaded from the
 `throwable` folder of every source. Like the vehicles there is one item, `mcheli:throwable`, whose
@@ -506,10 +507,50 @@ client asks for strikes and night vision with `EquipmentActionPacket`, which equ
 against the rider like `CrewActionPacket`. Night vision for any sight goes through
 `entity.NightVision`.
 
-`weapon.Spotting` is the server half of the rangefinder (`SpotPacket`): a 40 degree cone out to
-400 blocks, line of sight, never the spotter's allies (`isAlliedTo`). Spotted living entities get
-the vanilla glowing effect, vehicles their glowing tag through `AircraftEntity.spot`, which is
-cleared again after a reload since the countdown is not saved.
+`weapon.Spotting` is the server half of the rangefinder (`SpotPacket`) and of targeting pods: a
+40 degree cone out to 400 blocks, line of sight, never the spotter's allies (`isAlliedTo`).
+Nothing on the target changes. The spotted ids, or a marked block, go to the spotter and their
+`team.TeamManager.teammates` in a `MarkerPacket`; its handler fills `team.Markers` (plain shared
+code, so the packet class stays loader and side neutral) and `client.TargetMarkers` draws them on
+the HUD with `GameRenderer.projectPointToScreen`, falling back to a diamond at the screen edge
+for points behind the camera or off screen.
+
+`entity.UavStationEntity` is the UAV station and portable controller in one entity, with a kind.
+Its one slot is `menu.UavStationMenu`; the launch offset buttons and Continue are container
+button clicks. The original kept the pilot at the station and let the drone read its controls
+from there. Movement here is the vanilla vehicle sync, which only runs for a vehicle's own
+passengers, so the pilot rides the drone's reserved seat 0 instead, hidden and permanently
+invulnerable, tagged `mcheli_remote_pilot`. The drone keeps the station's UUID and return point
+(saved), checks the 123 block range each tick, and on dismount sends the pilot back through
+`getDismountLocationForPassenger`. `CommonHooks.playerLoggedIn` undoes a stale tag, and a saved
+seat lets the pilot back into seat 0 after a reload.
+
+Troops: `AircraftEntity.boardNearbyMobs` seats mobs when the pilot boards. `dropCrew` (the pilot's
+`DROP_CREW` action) starts ropes or a parachute drop; `jumpOut` is a passenger's own way out. A
+rope descent is an `entity.RappelEntity` (the original's `MCH_EntityHide`) that the rider sits on;
+it follows its hook under the helicopter and lets go at the ground or the rope's end. The ropes
+themselves are drawn by `AircraftRenderer` from the synced repelling flag and a rope length both
+sides let out at their own pace, as in the original.
+
+`HelicopterEntity` folds its blades from a synced fold state (folded, folding, unfolded,
+unfolding); each side steps every blade towards the tail or back to the spinning rotor itself, and
+the renderer reads per blade angles. Search lights are an additive cone (`Glow.cone`) per lamp in
+the vehicle's frame. `entity.VehicleParticles` holds the client side downwash, spray, nozzle and
+landing gear particles, using `mcheli:smoke` with a lifetime.
+
+The drafting table is the mod's one block: `block.DraftingTableBlock` with an eight way rotation
+and a lamp, an invisible block model and a block entity whose `DraftingTableRenderer` draws the
+original MQO. The item uses a small cuboid model made of vanilla textures, since the jar may not
+carry the original's art. A 26.x client only knows the recipe book, not the server's recipes, so
+`DraftingTableScreen` lists the MCHeli entries of the player's recipe book and sends the chosen
+`RecipeDisplayId` in a `DraftingTablePacket`; `DraftingTableMenu.craft` resolves it through
+`RecipeManager.getRecipeFromDisplay`, checks and takes one stack per ingredient (so the vehicle
+ingredient's component check applies), and assembles the result into the output slot.
+
+`team.TeamManager` is the operators' team manager: vanilla scoreboard teams, the `pvp` game rule,
+respawn points and a sweep of loaded vehicles. `TeamPacket` carries the screen's buttons and the
+server checks the gamemaster permission again.
+
 
 Racks carry `ContainerEntity` as well as vehicles when their `AddRack` names `container`. Cargo
 other than vehicles that leaves a rack with no ground within 20 blocks rides down on a
