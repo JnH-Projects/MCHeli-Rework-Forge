@@ -12,6 +12,7 @@ import com.jnhprojects.mcheli.content.aircraft.SeatDefinition;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.item.ChainItem;
 import com.jnhprojects.mcheli.item.FuelItem;
 import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.menu.VehicleMenu;
@@ -1339,6 +1340,9 @@ public abstract class AircraftEntity extends VehicleEntity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         ItemStack held = player.getItemInHand(hand);
+        if (held.getItem() instanceof ChainItem) {
+            return ChainItem.useOn(this, player);
+        }
         if (definition() != null && (held.getItem() instanceof FuelItem || held.getItem() instanceof WrenchItem)) {
             if (level().isClientSide()) {
                 return InteractionResult.SUCCESS;
