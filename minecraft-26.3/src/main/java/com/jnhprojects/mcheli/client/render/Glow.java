@@ -44,7 +44,17 @@ public final class Glow {
             .withDepthStencilState(TEST_ONLY)
             .build();
 
-    private static final RenderPipeline ENTITY_PIPELINE = RenderPipeline.builder(RenderPipelines.ENTITY_NO_LIGHTMAP_SNIPPET, RenderPipelines.EYES_SNIPPET)
+    /**
+     * Vanilla's translucent particles with depth writes off. A puff's clear edge would otherwise
+     * hide the puffs drawn after it, and a smoke cloud is mostly overlapping puffs.
+     */
+    private static final RenderPipeline SMOKE_PIPELINE = RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
+            .withLocation(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "pipeline/smoke_particle"))
+            .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
+            .withDepthStencilState(TEST_ONLY)
+            .build();
+
+    private static final RenderPipeline ENTITY_PIPELINE =RenderPipeline.builder(RenderPipelines.ENTITY_NO_LIGHTMAP_SNIPPET, RenderPipelines.EYES_SNIPPET)
             .withLocation(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "pipeline/glow"))
             .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
             .withDepthStencilState(TEST_ONLY)
@@ -54,6 +64,11 @@ public final class Glow {
     @SuppressWarnings("deprecation") // Vanilla's own particle layers still name the atlas this way.
     public static final SingleQuadParticle.Layer PARTICLE_LAYER = new SingleQuadParticle.Layer(
             true, TextureAtlas.LOCATION_PARTICLES, PARTICLE_PIPELINE, RenderPipelines.OIT_PARTICLE);
+
+    /** The particle layer for {@code mcheli:smoke}. */
+    @SuppressWarnings("deprecation")
+    public static final SingleQuadParticle.Layer SMOKE_LAYER = new SingleQuadParticle.Layer(
+            true, TextureAtlas.LOCATION_PARTICLES, SMOKE_PIPELINE, RenderPipelines.OIT_PARTICLE);
 
     private static final RenderType HALO = RenderType.create(MCHeli.MOD_ID + "_glow", RenderSetup.builder(ENTITY_PIPELINE)
             .setOitPipelines(RenderPipelines.OIT_EYES)
@@ -67,13 +82,14 @@ public final class Glow {
     }
 
     /**
-     * Hands both glow pipelines to Iris, so a shader pack draws them with a matching program: the
-     * halos and tracers as emissive entities, the particle as a translucent particle. Called once
-     * the mods are loaded; without Iris it does nothing.
+     * Hands our pipelines to Iris, so a shader pack draws them with a matching program: the halos
+     * and tracers as emissive entities, the glow and smoke particles as translucent particles.
+     * Called once the mods are loaded; without Iris it does nothing.
      */
     public static void assignShaderPrograms() {
         IrisCompat.assign(ENTITY_PIPELINE, "EMISSIVE_ENTITIES");
         IrisCompat.assign(PARTICLE_PIPELINE, "PARTICLES_TRANSLUCENT");
+        IrisCompat.assign(SMOKE_PIPELINE, "PARTICLES_TRANSLUCENT");
     }
 
     /**
