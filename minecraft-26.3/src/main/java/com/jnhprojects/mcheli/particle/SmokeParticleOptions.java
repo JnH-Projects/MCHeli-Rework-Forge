@@ -15,7 +15,7 @@ import net.minecraft.util.ExtraCodecs;
  * with {@code toWhite} set. The smoke grenades use it to mark a spot.
  *
  * @param color RGB the puff starts with
- * @param size  the original's particle size; a puff ends up about {@code size / 4} blocks across
+ * @param size  the original's particle size; a puff ends up about {@code size / 5} blocks across
  */
 public record SmokeParticleOptions(int color, float size) implements ParticleOptions {
     public static final MapCodec<SmokeParticleOptions> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
