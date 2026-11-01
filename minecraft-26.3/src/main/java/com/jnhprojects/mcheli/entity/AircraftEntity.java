@@ -1208,7 +1208,7 @@ public abstract class AircraftEntity extends VehicleEntity {
             return isSeatFree(pendingSeat);
         }
         // Cargo only boards through a rack, never into a crew seat.
-        return !(passenger instanceof AircraftEntity) && firstFreeCrewSeat() >= 0;
+        return !(passenger instanceof AircraftEntity || passenger instanceof ContainerEntity) && firstFreeCrewSeat() >= 0;
     }
 
     @Override
@@ -1307,6 +1307,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             cargo.setXRot(getXRot() + pitch);
             cargo.roll = roll();
             cargo.setDeltaMovement(Vec3.ZERO);
+        } else if (def != null && passenger instanceof ContainerEntity container) {
+            RackDefinition rack = def.rack(seatOf(passenger));
+            container.setYRot(getYRot() + (rack != null ? rack.yaw() : 0.0F));
+            container.setDeltaMovement(Vec3.ZERO);
         }
     }
 
@@ -1382,7 +1386,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     // Racks
 
     /** Loads {@code cargo} into the given rack seat. Server only. */
-    private boolean loadCargo(AircraftEntity cargo, int seat) {
+    private boolean loadCargo(Entity cargo, int seat) {
         if (!isSeatFree(seat) || cargo.isPassenger()) {
             return false;
         }
@@ -1420,13 +1424,21 @@ public abstract class AircraftEntity extends VehicleEntity {
         return false;
     }
 
+    /** Whether rack {@code seat} carries containers, {@code AddRack} naming {@code container}. */
+    public boolean acceptsContainer(ContainerEntity container, int seat) {
+        AircraftDefinition def = definition();
+        RackDefinition rack = def != null ? def.rack(seat) : null;
+        return rack != null && !isPassenger() && !container.isPassenger()
+                && rack.accepts(ContainerEntity.CARGO_NAME, ContainerEntity.CARGO_NAME);
+    }
+
     private boolean isNearRackEntry(AircraftEntity cargo, RackDefinition rack) {
         Vec3 entry = toWorld(rack.entry());
         float r = rack.range();
         return Math.abs(cargo.getX() - entry.x) <= r && Math.abs(cargo.getY() - entry.y) <= r && Math.abs(cargo.getZ() - entry.z) <= r;
     }
 
-    /** Carrier pilot loads every nearby vehicle that fits a free rack. Server only. */
+    /** Carrier pilot loads every nearby vehicle or container that fits a free rack. Server only. */
     public void loadNearbyCargo() {
         AircraftDefinition def = definition();
         if (def == null || def.racks.isEmpty() || throttle > 0.3 || !hasBlockBelow(1, 3, true)) {
@@ -1439,9 +1451,18 @@ public abstract class AircraftEntity extends VehicleEntity {
             RackDefinition rack = def.rack(seat);
             Vec3 entry = toWorld(rack.entry());
             AABB area = new AABB(entry, entry).inflate(rack.range());
+            boolean loaded = false;
             for (AircraftEntity cargo : level().getEntitiesOfClass(AircraftEntity.class, area)) {
                 if (acceptsCargo(cargo, seat) && loadCargo(cargo, seat)) {
+                    loaded = true;
                     break;
+                }
+            }
+            if (!loaded) {
+                for (ContainerEntity container : level().getEntitiesOfClass(ContainerEntity.class, area)) {
+                    if (acceptsContainer(container, seat) && loadCargo(container, seat)) {
+                        break;
+                    }
                 }
             }
         }
@@ -1467,6 +1488,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             Vec3 at = toWorld(drop);
             cargo.stopRiding();
             cargo.snapTo(at.x, at.y, at.z, getYRot() + rack.yaw(), 0.0F);
+            // As in the original, with no ground in the 20 blocks below it goes down under a canopy.
+            if (!(cargo instanceof AircraftEntity) && !hasBlockBelow(3, 20, false)) {
+                ParachuteEntity.open(level(), cargo, ParachuteEntity.Kind.DROP);
+            }
             return;
         }
     }
