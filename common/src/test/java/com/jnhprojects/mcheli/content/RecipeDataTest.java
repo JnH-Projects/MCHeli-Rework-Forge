@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The crafting recipes are generated from the definitions' {@code AddRecipe} lines when the
@@ -24,9 +25,10 @@ class RecipeDataTest {
     }
 
     @Test
-    void everyRecipeConvertsExceptTheKnownGaps() {
-        assertEquals(List.of("e767: mcheli:uav_station does not exist (yet)"), generated.skipped().stream().sorted().toList());
-        assertEquals(108, generated.files().size());
+    void everyRecipeConverts() {
+        assertEquals(List.of(), generated.skipped());
+        assertEquals(109, generated.files().size());
+        assertTrue(generated.files().get("e767.json").contains("\"Y\": \"mcheli:uav_station\""));
     }
 
     @Test
