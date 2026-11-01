@@ -17,6 +17,7 @@
   "entity.mcheli.at_missile": "Anti-Tank Missile",
   "entity.mcheli.bomb": "Bomb",
   "entity.mcheli.bullet": "Bullet",
+  "entity.mcheli.container": "Container",
   "entity.mcheli.dispensed_item": "Dispensed Canister",
   "entity.mcheli.flare": "Flare",
   "entity.mcheli.gltd": "GLTD",
