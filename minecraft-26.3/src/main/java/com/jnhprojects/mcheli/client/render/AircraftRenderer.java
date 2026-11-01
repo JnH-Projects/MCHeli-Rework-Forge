@@ -3,6 +3,9 @@ package com.jnhprojects.mcheli.client.render;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
+import com.jnhprojects.mcheli.content.aircraft.RotorDefinition;
+import com.jnhprojects.mcheli.content.aircraft.SearchLight;
 import com.jnhprojects.mcheli.content.aircraft.RepellingHook;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponPart;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
@@ -30,6 +33,7 @@ import net.minecraft.gizmos.Gizmos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
@@ -101,7 +105,16 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
         state.canopy = angle(entity.canopy(), partialTicks);
         state.landingGear = angle(entity.landingGear(), partialTicks);
         state.hatch = angle(entity.hatch(), partialTicks);
+        if (entity instanceof HelicopterEntity heli && def instanceof HelicopterDefinition heliDef) {
+            bladeAngles(heli, heliDef, state, partialTicks);
+        }
         state.ropeLength = entity.isRepelling() ? entity.ropeLength() : 0.0F;
+        state.searchLight = entity.isSearchLightOn();
+        if (state.searchLight) {
+            Entity aimer = entity.searchLightAimer();
+            state.searchLightYaw = aimer != null ? aimer.getYRot(partialTicks) : state.yaw;
+            state.searchLightPitch = aimer != null ? aimer.getXRot(partialTicks) : state.pitch;
+        }
         if (entity instanceof PlaneEntity plane) {
             state.nozzle = angle(plane.nozzle(), partialTicks);
             state.wing = angle(plane.wing(), partialTicks);
@@ -250,9 +263,50 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
             if (state.ropeLength < 0.0F) {
                 ropes(def, state, poseStack, collector);
             }
+            if (state.searchLight) {
+                searchLights(def, state, poseStack, collector);
+            }
             poseStack.popPose();
         }
         super.submit(state, poseStack, collector, camera);
+    }
+
+    /**
+     * {@code renderLight}: each lamp's cone. A turning light follows the crew's aim; a fixed one
+     * points along the vehicle, and a steering one also turns with the front wheels.
+     */
+    private static void searchLights(AircraftDefinition def, AircraftRenderState state, PoseStack pose, SubmitNodeCollector collector) {
+        for (SearchLight light : def.searchLights) {
+            pose.pushPose();
+            pose.translate(light.position().x(), light.position().y(), light.position().z());
+            if (!light.fixed()) {
+                pose.rotateDegrees(Axis.YN, state.searchLightYaw - state.yaw + light.yaw());
+                pose.rotateDegrees(Axis.XP, state.searchLightPitch + 90.0F - state.pitch + light.pitch());
+            } else {
+                float steer = light.steering() ? -state.steer * light.steeringRotation() : 0.0F;
+                pose.rotateDegrees(Axis.YN, light.yaw() + steer);
+                pose.rotateDegrees(Axis.XP, 90.0F + light.pitch());
+            }
+            Glow.cone(pose, collector, light.height(), light.width() / 2.0F, light.colorStart(), light.colorEnd());
+            pose.popPose();
+        }
+    }
+
+    private static void bladeAngles(HelicopterEntity heli, HelicopterDefinition def, AircraftRenderState state, float partialTicks) {
+        if (state.bladeAngles.length != def.rotors.size()) {
+            state.bladeAngles = new float[def.rotors.size()][];
+        }
+        for (int r = 0; r < def.rotors.size(); r++) {
+            RotorDefinition rotor = def.rotors.get(r);
+            int blades = Math.max(rotor.blades(), 1);
+            int step = rotor.bladeStep() > 0 ? rotor.bladeStep() : 1;
+            if (state.bladeAngles[r] == null || state.bladeAngles[r].length != blades) {
+                state.bladeAngles[r] = new float[blades];
+            }
+            for (int b = 0; b < blades; b++) {
+                state.bladeAngles[r][b] = heli.bladeAngle(r, b, step, partialTicks);
+            }
+        }
     }
 
     /** {@code renderRope}: a dark line straight down from each hook, in the vehicle's own frame. */
