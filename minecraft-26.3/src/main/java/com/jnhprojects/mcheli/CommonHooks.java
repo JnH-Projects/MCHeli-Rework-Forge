@@ -1,12 +1,15 @@
 package com.jnhprojects.mcheli;
 
+import com.jnhprojects.mcheli.item.ThrowableItem;
 import com.jnhprojects.mcheli.network.PackSync;
+import com.jnhprojects.mcheli.registry.ModItems;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.util.List;
@@ -17,6 +20,11 @@ import java.util.List;
  */
 public final class CommonHooks {
     private CommonHooks() {
+    }
+
+    /** Once the registries are frozen, on the main thread: what vanilla keeps in its own tables. */
+    public static void commonSetup() {
+        DispenserBlock.registerBehavior(ModItems.THROWABLE.get(), new ThrowableItem.DispenseBehavior());
     }
 
     /**
