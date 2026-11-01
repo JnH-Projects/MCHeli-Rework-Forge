@@ -37,9 +37,11 @@ public final class KeyBindings {
     public static final KeyMapping VEHICLE_SCREEN = new KeyMapping("key.mcheli.vehicle_screen", InputConstants.KEY_I, CATEGORY);
     /** Night vision, thermal view and back in vehicles with {@code EnableNightVision}. The original used C, now the flare key. */
     public static final KeyMapping CAMERA_MODE = new KeyMapping("key.mcheli.camera_mode", InputConstants.KEY_K, CATEGORY);
+    /** The pilot lets the troops down; anyone else aboard slides down a rope or jumps. The original used Y for the pilot's part. */
+    public static final KeyMapping DROP_CREW = new KeyMapping("key.mcheli.drop_crew", InputConstants.KEY_Y, CATEGORY);
 
     public static final List<KeyMapping> ALL = List.of(FREE_LOOK, SWITCH_CAMERA, LANDING_GEAR, FOLD, VTOL, SWITCH_SEAT, RACK_LOAD, RACK_UNLOAD,
-            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE);
+            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE, DROP_CREW);
 
     private KeyBindings() {
     }
