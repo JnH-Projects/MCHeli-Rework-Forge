@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.client.particle;
 
+import com.jnhprojects.mcheli.client.render.Glow;
 import com.jnhprojects.mcheli.particle.SmokeParticleOptions;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -24,7 +25,8 @@ public class SmokeParticle extends SingleQuadParticle {
             SpriteSet sprites, RandomSource random) {
         super(level, x, y, z, sprites.get(random));
         setParticleSpeed(xd, yd, zd);
-        this.size = options.size() * 0.25F * (0.8F + random.nextFloat() * 0.4F);
+        // The original drew a puff 0.1 x its size out from the middle, so size 10 is two blocks across.
+        this.size = options.size() * 0.1F * (0.8F + random.nextFloat() * 0.4F);
         this.quadSize = size * 0.4F;
         this.lifetime = 60 + random.nextInt(40);
         this.friction = 0.96F;
@@ -62,7 +64,7 @@ public class SmokeParticle extends SingleQuadParticle {
 
     @Override
     protected Layer getLayer() {
-        return Layer.TRANSLUCENT;
+        return Glow.SMOKE_LAYER;
     }
 
     public static class Provider implements ParticleProvider<SmokeParticleOptions> {
