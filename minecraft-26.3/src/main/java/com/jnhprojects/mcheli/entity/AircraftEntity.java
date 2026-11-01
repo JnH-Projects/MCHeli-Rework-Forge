@@ -43,8 +43,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -160,8 +158,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Damage factor of the extra hit box the last projectile ray struck, {@code lastBBDamageFactor}. */
     private float hitBoxFactor = 1.0F;
     private int timeSinceHit;
-    /** The night vision effect a crew member gets, topped up before it runs low: 15 seconds. */
-    private static final int NIGHT_VISION_TICKS = 300;
     /** The fuel load from which an aircraft counts as heavy: the H8K flying boat and up. */
     private static final int HEAVY_FUEL = 3000;
     /** How long a wreck stays, burning, before it disappears: 30 seconds. */
@@ -390,33 +386,29 @@ public abstract class AircraftEntity extends VehicleEntity {
             nightVisionSeats |= 1 << seat;
         } else if (hasNightVision(seat)) {
             nightVisionSeats &= ~(1 << seat);
-            endNightVision(player);
+            NightVision.end(player);
         }
     }
 
-    /**
-     * {@code MCH_Camera.updateViewer}: keeps a short night vision effect topped up on everyone who
-     * switched it on. It never runs below ten seconds, where vanilla starts to flicker the view.
-     */
+    /** Keeps night vision on for everyone in the crew who switched it on, see {@link NightVision}. */
     private void tickNightVision() {
         if (nightVisionSeats == 0) {
             return;
         }
         if (isDestroyed()) {
             for (int seat = 0; seat < seatIds.length; seat++) {
-                if (occupant(seat) instanceof LivingEntity crew) {
-                    endNightVision(crew);
+                Entity crew = occupant(seat);
+                if (crew != null) {
+                    NightVision.end(crew);
                 }
             }
             nightVisionSeats = 0;
             return;
         }
         for (int seat = 0; seat < seatIds.length; seat++) {
-            if (hasNightVision(seat) && occupant(seat) instanceof LivingEntity crew) {
-                MobEffectInstance current = crew.getEffect(MobEffects.NIGHT_VISION);
-                if (current == null || current.getDuration() < NIGHT_VISION_TICKS - 40) {
-                    crew.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, NIGHT_VISION_TICKS, 0, true, false, false));
-                }
+            Entity crew = occupant(seat);
+            if (hasNightVision(seat) && crew != null) {
+                NightVision.topUp(crew);
             }
         }
     }
@@ -424,16 +416,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Only the first 31 seats can switch it on; racks and the like come after them anyway. */
     private boolean hasNightVision(int seat) {
         return seat >= 0 && seat < 31 && (nightVisionSeats & 1 << seat) != 0;
-    }
-
-    /** Takes our night vision away again, but leaves a potion's longer one alone. */
-    private static void endNightVision(Entity entity) {
-        if (entity instanceof LivingEntity living) {
-            MobEffectInstance current = living.getEffect(MobEffects.NIGHT_VISION);
-            if (current != null && current.getDuration() <= NIGHT_VISION_TICKS) {
-                living.removeEffect(MobEffects.NIGHT_VISION);
-            }
-        }
     }
 
     /**
@@ -1234,7 +1216,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         if (seat >= 0) {
             if (hasNightVision(seat)) {
                 nightVisionSeats &= ~(1 << seat);
-                endNightVision(passenger);
+                NightVision.end(passenger);
             }
             lastSeats.put(passenger.getId(), seat);
             seatIds[seat] = EMPTY;
