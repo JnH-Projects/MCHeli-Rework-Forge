@@ -114,6 +114,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** The UAV station a drone is flown from, by entity id, or 0. */
     private static final EntityDataAccessor<Integer> DATA_STATION = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_REPELLING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SEARCH_LIGHT = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** Marks a player flying a drone from a station, so a stale hide can be undone at login. */
     public static final String REMOTE_PILOT_TAG = "mcheli_remote_pilot";
@@ -251,6 +252,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_FUEL, 0);
         builder.define(DATA_STATION, 0);
         builder.define(DATA_REPELLING, false);
+        builder.define(DATA_SEARCH_LIGHT, false);
     }
 
     // Definition
@@ -823,6 +825,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         if (level().isClientSide()) {
             damageSmoke(def);
+            VehicleParticles.tick(this, def);
         } else {
             tickImpacts(def, groundedBefore, fallBefore);
         }
@@ -1757,6 +1760,36 @@ public abstract class AircraftEntity extends VehicleEntity {
             modeSwitchCooldown = 40;
         }
         ModSounds.playAt(entity, "eject_seat", 5.0F, 1.0F);
+    }
+
+    // Search lights
+
+    public boolean isSearchLightOn() {
+        AircraftDefinition def = definition();
+        return def != null && !def.searchLights.isEmpty() && entityData.get(DATA_SEARCH_LIGHT);
+    }
+
+    /** {@code canSwitchSearchLight}: the pilot or the first crew seat, in vehicles that have one. */
+    public boolean canSwitchSearchLight(Entity entity) {
+        AircraftDefinition def = definition();
+        int seat = seatOf(entity);
+        return def != null && !def.searchLights.isEmpty() && seat >= 0 && seat <= 1;
+    }
+
+    /** Server only. */
+    public void toggleSearchLight(Entity entity) {
+        if (canSwitchSearchLight(entity)) {
+            entityData.set(DATA_SEARCH_LIGHT, !entityData.get(DATA_SEARCH_LIGHT));
+        }
+    }
+
+    /**
+     * Where a turning search light points: the first crew seat's view, else the pilot's, as
+     * {@code renderLight} took them. Null with nobody aboard to aim it.
+     */
+    public @Nullable Entity searchLightAimer() {
+        Entity crew = occupant(1);
+        return crew != null ? crew : occupant(0);
     }
 
     // Troops: parachute drops and ropes
@@ -2765,6 +2798,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         output.putInt("DespawnCount", despawnCount);
         output.putInt("CookOff", cookOffBlasts);
         output.putBoolean("Sinking", entityData.get(DATA_SINKING));
+        output.putBoolean("SearchLight", entityData.get(DATA_SEARCH_LIGHT));
         if (weapons != null) {
             output.putIntArray("WeaponsAmmo", weapons.saveAmmo());
         }
@@ -2799,6 +2833,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         cookOffBlasts = input.getIntOr("CookOff", 0);
         cookOffDelay = cookOffBlasts > 0 ? 20 : 0;
         entityData.set(DATA_SINKING, input.getBooleanOr("Sinking", false));
+        entityData.set(DATA_SEARCH_LIGHT, input.getBooleanOr("SearchLight", false));
         exploded |= cookOffBlasts > 0 || entityData.get(DATA_SINKING);
         input.getIntArray("WeaponsAmmo").ifPresent(ammo -> {
             if (weapons != null) {
