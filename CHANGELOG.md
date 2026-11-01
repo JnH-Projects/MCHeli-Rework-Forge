@@ -30,8 +30,9 @@ need the same version, since the network protocol changed (9).
 - The cargo container: a crate with a large chest's worth of room that floats and can be pushed.
   Racks that list `container` load and drop it like vehicles (J and U), and dropped with no ground
   within 20 blocks it comes down under a parachute.
-- The tow chain. Use it on what is to be towed, then on the vehicle that pulls it (2 to 16 blocks
-  away); use it on either end again to take it off.
+- The tow chain. Use it on both ends, in either order, 2 to 16 blocks apart; one end must be a
+  vehicle, which always does the pulling, so a helicopter can lift a container on a sling. Use it
+  on either end again to take it off. Each step shows a message above the hotbar.
 - Recipes for the smoke grenades, GLTD, rangefinder, container and chain, from the original
   config.
 
