@@ -19,6 +19,7 @@ import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
 import com.jnhprojects.mcheli.client.render.UavStationRenderer;
 import com.jnhprojects.mcheli.client.screen.DraftingTableScreen;
+import com.jnhprojects.mcheli.client.screen.TeamManagerScreen;
 import com.jnhprojects.mcheli.client.screen.UavStationScreen;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
@@ -27,6 +28,8 @@ import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.registry.ModBlockEntities;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModMenus;
+import com.jnhprojects.mcheli.team.Markers;
+import com.jnhprojects.mcheli.team.TeamManager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -40,6 +43,7 @@ import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.world.InteractionHand;
@@ -143,6 +147,23 @@ public final class ClientHooks {
         WeaponController.onClientTick();
         HudRenderer.tick();
         EngineSoundPlayer.tick();
+        TargetMarkers.tick();
+        while (KeyBindings.TEAM_MANAGER.consumeClick()) {
+            openTeamManager();
+        }
+    }
+
+    /** Operators get the team manager; anyone else is told it is theirs to open. */
+    private static void openTeamManager() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gui.screen() != null) {
+            return;
+        }
+        if (TeamManager.mayManage(mc.player)) {
+            mc.gui.setScreen(new TeamManagerScreen());
+        } else {
+            mc.player.sendOverlayMessage(Component.translatable("message.mcheli.team.operators_only"));
+        }
     }
 
     /** Tilts the view with the hull and moves the eye into the cockpit or onto a TV missile. */
@@ -265,6 +286,7 @@ public final class ClientHooks {
         GltdController.drawHud(graphics, delta);
         RangefinderController.drawHud(graphics, delta);
         LauncherController.drawHud(graphics, delta);
+        TargetMarkers.draw(graphics, delta);
     }
 
     /** Without the original zip there are no vehicles, so say so where the player will see it. */
@@ -274,5 +296,6 @@ public final class ClientHooks {
 
     public static void loggedOut() {
         ClientPacks.INSTANCE.loggedOut();
+        Markers.clear();
     }
 }
