@@ -29,6 +29,7 @@ public final class ModNetwork {
             new Serverbound<>(CrewActionPacket.TYPE, CrewActionPacket.STREAM_CODEC, CrewActionPacket::handle),
             new Serverbound<>(EquipmentActionPacket.TYPE, EquipmentActionPacket.STREAM_CODEC, EquipmentActionPacket::handle),
             new Serverbound<>(SpotPacket.TYPE, SpotPacket.STREAM_CODEC, SpotPacket::handle),
+            new Serverbound<>(LauncherPacket.TYPE, LauncherPacket.STREAM_CODEC, LauncherPacket::handle),
             new Serverbound<>(FireWeaponPacket.TYPE, FireWeaponPacket.STREAM_CODEC, FireWeaponPacket::handle),
             new Serverbound<>(BoardVehiclePacket.TYPE, BoardVehiclePacket.STREAM_CODEC, BoardVehiclePacket::handle),
             new Serverbound<>(LockWarningPacket.TYPE, LockWarningPacket.STREAM_CODEC, LockWarningPacket::handle),
