@@ -39,9 +39,11 @@ public final class KeyBindings {
     public static final KeyMapping CAMERA_MODE = new KeyMapping("key.mcheli.camera_mode", InputConstants.KEY_K, CATEGORY);
     /** The pilot lets the troops down; anyone else aboard slides down a rope or jumps. The original used Y for the pilot's part. */
     public static final KeyMapping DROP_CREW = new KeyMapping("key.mcheli.drop_crew", InputConstants.KEY_Y, CATEGORY);
+    /** Operators open the team manager, as the original's multiplayer manager key M did. */
+    public static final KeyMapping TEAM_MANAGER = new KeyMapping("key.mcheli.team_manager", InputConstants.KEY_M, CATEGORY);
 
     public static final List<KeyMapping> ALL = List.of(FREE_LOOK, SWITCH_CAMERA, LANDING_GEAR, FOLD, VTOL, SWITCH_SEAT, RACK_LOAD, RACK_UNLOAD,
-            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE, DROP_CREW);
+            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE, DROP_CREW, TEAM_MANAGER);
 
     private KeyBindings() {
     }
