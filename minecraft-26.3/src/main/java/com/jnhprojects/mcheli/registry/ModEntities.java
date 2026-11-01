@@ -5,6 +5,7 @@ import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
+import com.jnhprojects.mcheli.entity.GltdEntity;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.ParachuteEntity;
@@ -80,6 +81,13 @@ public final class ModEntities {
             .clientTrackingRange(8)
             .updateInterval(2)
             .noSave()
+            .build(key));
+
+    public static final Registered<EntityType<GltdEntity>> GLTD = Registration.register(Registries.ENTITY_TYPE, "gltd", key -> EntityType.Builder
+            .<GltdEntity>of(GltdEntity::new, MobCategory.MISC)
+            .sized(0.5F, 0.5F)
+            .clientTrackingRange(10)
+            .updateInterval(3)
             .build(key));
 
     private ModEntities() {
