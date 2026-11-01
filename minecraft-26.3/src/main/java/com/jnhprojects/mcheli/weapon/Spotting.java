@@ -124,9 +124,16 @@ public final class Spotting {
      * @return whether the view ended on a block within range
      */
     public static boolean markPoint(ServerPlayer spotter) {
+        return markPoint(spotter, spotter.getEyePosition(), RANGE);
+    }
+
+    /**
+     * As above, looking from {@code from} along the spotter's view: a targeting pod marks from
+     * the vehicle, out to {@code range}.
+     */
+    public static boolean markPoint(ServerPlayer spotter, Vec3 from, double range) {
         ServerLevel level = spotter.level();
-        Vec3 eye = spotter.getEyePosition();
-        BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(spotter.getLookAngle().scale(RANGE)),
+        BlockHitResult hit = level.clip(new ClipContext(from, from.add(spotter.getLookAngle().scale(range)),
                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, spotter));
         if (hit.getType() != HitResult.Type.BLOCK) {
             return false;
