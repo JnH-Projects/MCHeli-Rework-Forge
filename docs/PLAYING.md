@@ -16,11 +16,10 @@ vehicles), right-click a block to place it, and right-click anywhere on the vehi
 first player aboard is the pilot; a closed canopy opens on the first click and closes once the
 pilot is in. Every key below can be rebound under Controls, category MCHeli.
 
-In survival, vehicles and equipment are crafted on a crafting table with the original's recipes
-(mostly iron blocks and ingots, glass, redstone and dyes). They appear in the recipe book as soon
-as you join. A few vehicles had no recipe in the original and are still creative only: the
-M1129, M26, MXT-MV, fuel truck and ammo box, and the E-767, whose recipe needs the UAV station
-that is not ported yet.
+In survival, vehicles and equipment are crafted with the original's recipes (mostly iron blocks
+and ingots, glass, redstone and dyes), on a crafting table or on the [drafting table](#equipment),
+which lists them all. They appear in the recipe book as soon as you join. A few vehicles had no
+recipe in the original and are creative only: the M1129, M26, MXT-MV, fuel truck and ammo box.
 
 ## Controls
 
@@ -32,6 +31,7 @@ that is not ported yet.
 | W / S | Throttle up / down |
 | A / D | Bank left / right |
 | Space | Toggle hover mode. Hover holds altitude; W/A/S/D then slide the helicopter. |
+| Z | Fold or unfold the blades, on helicopters that can, with the engine stopped. Folded, A/D turn it on the ground. |
 
 Lift drops as the helicopter tilts, so pitch the nose down gently to pick up speed and level out
 to climb.
@@ -67,7 +67,8 @@ to climb.
 | J | Load nearby vehicles and containers onto your racks, or drive onto a carrier's rack |
 | U | Unload the last vehicle or container from your racks, or leave the carrier |
 | Z | Through a camera, gunner sight or gunner mode: zoom (2x, 4x and so on up to the vehicle's limit, then back) |
-| K | Night vision, then thermal view, then back to normal, in vehicles that have night vision |
+| K | Night vision, then thermal view, then back to normal, in vehicles that have night vision. In vehicles with search lights, pilot and first crew seat: lights on and off. |
+| Y | Pilot: let the troops out (see [Troops](#troops)). Anyone else aboard: slide down a rope or jump with a parachute. |
 | I | The vehicle screen: fuel and parachute slots, reloading, and the cargo chest |
 | Shift | Leave the vehicle |
 
@@ -130,9 +131,11 @@ points at, in metres.
 | C | What to spot: players and vehicles, monsters and mobs, or a point |
 | Left mouse | Spot |
 
-Spotting outlines every target of that kind in a narrow cone out to 400 blocks for 15 seconds
-(mobs a minute), never your teammates, and uses one of ten charges. Marking a point sends its
-coordinates to you and your team in chat, and is free. Craft the rangefinder with redstone to
+Spotting marks every target of that kind in a narrow cone out to 400 blocks for 15 seconds
+(mobs a minute), never your teammates, and uses one of ten charges. Only you and your team see the
+marks: a triangle over each target with its distance, or a diamond at the screen edge pointing
+the way. Marking a point puts a diamond on it for a minute and sends its coordinates to your team
+in chat, and is free. Craft the rangefinder with redstone to
 charge it again.
 
 **Container.** A crate with a large chest's worth of room: place it on a block, right-click to
@@ -153,10 +156,37 @@ the target in the middle until the tone turns steady and the sight reads LOCKED.
 Each launcher holds one missile. Lower an empty one with a missile in your inventory and it
 reloads in two seconds. Missiles are crafted two at a time.
 
+**UAV station and portable UAV controller.** Place the station on a block and right-click to sit at
+it; its screen has a slot for a drone and buttons that set where the drone appears, up to 50
+blocks out each way. Put a UAV in the slot and you fly it straight away, with its own controls,
+HUD and weapons; the HUD shows how far the drone is and how strong the link is. Shift hands the
+drone back and puts you beside the station, and **Continue** takes the last drone again. Past
+123 blocks from the station the link breaks and the drone is lost. The portable controller works
+the same but only launches small UAVs; Shift and right-click opens and closes its lid. Drones put
+up from a station start with 5% fuel, target drones with a full tank, and those fly themselves.
+
+**Drafting table.** Right-click it to browse every MCHeli recipe, by list:
+helicopters, planes, vehicles, tanks and equipment. Each page shows the recipe, and either the
+original's illustrated description or the vehicle's hit points, speed, seats, fuel and weapons.
+**Create** takes the ingredients from your inventory and puts the item in the output slot; creative
+players need none. Shift and right-click switches its lamp.
+
 **Tow chain.** Right-click the two ends with the chain, in either order, 2 to 16 blocks apart.
 One end must be a vehicle, which does the pulling: a truck can drag a container or a broken down
 car, and a helicopter can lift a container as a sling load. Right-click either end again to take
 the chain off. Each step shows a message above the hotbar.
+
+### Troops
+
+When the pilot climbs in, mobs standing close by (villagers, for instance) take the free crew
+seats. The pilot's Y key lets them out:
+
+* Helicopters with rappelling hooks (the CH-47, MH-6, MH-60G and others) lower ropes when Y is
+  pressed in a steady, level hover. After three seconds the mobs slide down one by one; Y again pulls the
+  ropes in. Players in the back press Y to slide down a rope themselves.
+* Vehicles with parachute drops open the hatch at least 10 blocks up and drop the mobs behind the
+  second seat one by one under parachutes. Players behind the second seat can jump with Y.
+* Close to the ground the mobs simply get out.
 
 ## Commands and server settings
 
@@ -167,6 +197,11 @@ the chain off. Each step shows a message above the hotbar.
 | `/mcheli give <players> <vehicle> [count]` | operators | Hands out vehicles, for example `/mcheli give @s ah-64` |
 | `/mcheli packs` | everyone | The content packs in use, and any problems with them |
 | `/mcheli reload` | operators | Reads the vehicle and weapon files and the content packs again without a restart, and sends players the new packs |
+
+Operators can run a match from the **team manager** (M): switch PvP, shuffle every player online
+into the teams, make a team with a colour and friendly fire on or off, send everyone to their
+spawn point, and remove every vehicle. The teams are the vanilla scoreboard teams, so `/team` and
+the player list show the same ones, and only teammates see each other's spotted targets.
 
 Each world has `serverconfig/mcheli-server.toml` (created on first start, edits apply while the
 server runs):
