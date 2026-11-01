@@ -46,9 +46,10 @@ public final class LegacyImporter {
     /**
      * Bump whenever the output changes, so existing installs import again. 2: recipes craft the
      * generic vehicle items of 1.1.0. 3: vehicle ingredients name their type for every loader, and
-     * the output depends on the {@link ImportTarget}.
+     * the output depends on the {@link ImportTarget}. 4: recipes may use the equipment
+     * items, so the E-767 is crafted with a UAV station.
      */
-    public static final int FORMAT = 3;
+    public static final int FORMAT = 4;
 
     /**
      * Written at the pack root for {@link ImportTarget#V1_21_1}: each original vehicle's
