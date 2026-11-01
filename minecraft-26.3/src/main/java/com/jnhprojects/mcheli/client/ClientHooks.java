@@ -33,6 +33,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -91,6 +92,7 @@ public final class ClientHooks {
         renderers.register(ModEntities.CHAIN.get(), ChainRenderer::new);
         renderers.register(ModEntities.CONTAINER.get(), context -> new EquipmentRenderer<>(context, "container", 0.2F, 0xFFBFBFBF, 1.0F));
         renderers.register(ModEntities.UAV_STATION.get(), UavStationRenderer::new);
+        renderers.register(ModEntities.RAPPEL.get(), NoopRenderer::new);
     }
 
     /** On the main thread during client setup, once our menu types are registered. */
