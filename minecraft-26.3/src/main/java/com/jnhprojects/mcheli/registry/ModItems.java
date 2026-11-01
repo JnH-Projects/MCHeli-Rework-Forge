@@ -18,6 +18,7 @@ import com.jnhprojects.mcheli.item.WrenchItem;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 
 import java.util.List;
@@ -53,12 +54,14 @@ public final class ModItems {
             key -> new UavStationItem(UavStationEntity.STATION, new Item.Properties().setId(key).stacksTo(1)));
     public static final Registered<Item> UAV_CONTROLLER = Registration.register(Registries.ITEM, "uav_station2",
             key -> new UavStationItem(UavStationEntity.PORTABLE, new Item.Properties().setId(key).stacksTo(1)));
+    public static final Registered<Item> DRAFTING_TABLE = Registration.register(Registries.ITEM, "drafting_table",
+            key -> new BlockItem(ModBlocks.DRAFTING_TABLE.get(), new Item.Properties().setId(key).useBlockDescriptionPrefix()));
     /** Every throwable; the stack says which (see {@link ThrowableItem}). */
     public static final Registered<Item> THROWABLE = Registration.register(Registries.ITEM, "throwable", key -> new ThrowableItem(new Item.Properties().setId(key)));
 
     /** The equipment tab, in the order it lists them. */
     public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER, CONTAINER, CHAIN,
-            STINGER, STINGER_MISSILE, JAVELIN, JAVELIN_MISSILE, UAV_STATION, UAV_CONTROLLER);
+            STINGER, STINGER_MISSILE, JAVELIN, JAVELIN_MISSILE, UAV_STATION, UAV_CONTROLLER, DRAFTING_TABLE);
 
     private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
