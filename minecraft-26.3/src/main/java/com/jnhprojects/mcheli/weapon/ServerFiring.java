@@ -8,7 +8,6 @@ import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.entity.TankEntity;
-import com.jnhprojects.mcheli.entity.projectile.A10Entity;
 import com.jnhprojects.mcheli.entity.projectile.AAMissileEntity;
 import com.jnhprojects.mcheli.entity.projectile.ASMissileEntity;
 import com.jnhprojects.mcheli.entity.projectile.ATMissileEntity;
@@ -26,7 +25,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -384,12 +382,10 @@ public final class ServerFiring implements WeaponSet.Trigger {
         set.casX = at.x;
         set.casY = at.y;
         set.casZ = at.z;
-        int direction = (int) Mth.positiveModulo(shot.aimer().getYRot() + 45.0F, 360.0F) / 90;
-        direction += RANDOM.nextBoolean() ? -1 : 1;
-        set.casDirection = Math.floorMod(direction, 4);
+        set.casDirection = Math.floorMod(CasStrike.approach(shot.aimer().getYRot()), 4);
         set.casUser = shot.user;
         set.casShooter = shot.shooter;
-        set.casStartTick = 50;
+        set.casStartTick = CasStrike.FIRST_PASS;
         set.casCount = 0;
         if (shot.user instanceof ServerPlayer player) {
             ModSounds.playTo(player, set.definition().sound, 1.0F, 1.0F);
@@ -403,55 +399,10 @@ public final class ServerFiring implements WeaponSet.Trigger {
                 || !(vehicle.level() instanceof ServerLevel level)) {
             return;
         }
-        double x = 0.0;
-        double z = 0.0;
-        if (set.casCount >= 1) {
-            double sign = set.casCount == 1 ? 1.0 : -1.0;
-            if (set.casDirection % 2 == 0) {
-                x = RANDOM.nextDouble() * 10.0 * sign;
-                z = (RANDOM.nextDouble() - 0.5) * 10.0;
-            } else {
-                z = RANDOM.nextDouble() * 10.0 * sign;
-                x = (RANDOM.nextDouble() - 0.5) * 10.0;
-            }
-        }
-        spawnA10(level, set, set.casX + x, set.casY + 20.0, set.casZ + z);
+        Vec3 offset = CasStrike.passOffset(set.casCount, set.casDirection);
+        CasStrike.spawnA10(level, set.name(), set.definition(), set.casDirection, set.casX + offset.x, set.casY + 20.0,
+                set.casZ + offset.z, set.casShooter, set.casUser);
         set.casStartTick = set.ticksSinceShot(0) + 45;
         set.casCount++;
-    }
-
-    private static void spawnA10(ServerLevel level, WeaponSet set, double x, double y, double z) {
-        double mx = 0.0;
-        double mz = 0.0;
-        switch (set.casDirection) {
-            case 0 -> {
-                mz = 3.0;
-                z -= 90.0;
-            }
-            case 1 -> {
-                mx = -3.0;
-                x += 90.0;
-            }
-            case 2 -> {
-                mz = -3.0;
-                z += 90.0;
-            }
-            default -> {
-                mx = 3.0;
-                x -= 90.0;
-            }
-        }
-        A10Entity a10 = ModEntities.A10.get().create(level, EntitySpawnReason.TRIGGERED);
-        if (a10 == null) {
-            return;
-        }
-        a10.setPos(x, y, z);
-        WeaponDefinition w = set.definition();
-        a10.setup(set.name(), set.casDirection, mx, mz, set.casShooter, set.casUser);
-        a10.power = w.power;
-        a10.explosionPower = w.explosion;
-        a10.acceleration = w.acceleration;
-        level.addFreshEntity(a10);
-        ModSounds.playAt(level, x, y, z, "a-10_snd", 150.0F, 1.0F);
     }
 }
