@@ -36,11 +36,13 @@ public final class ModItems {
     public static final Registered<Item> GLTD = Registration.register(Registries.ITEM, "gltd",
             key -> new PlacedEntityItem(ModEntities.GLTD, new Item.Properties().setId(key).stacksTo(1)));
     public static final Registered<Item> RANGEFINDER = Registration.register(Registries.ITEM, "rangefinder", key -> new RangefinderItem(new Item.Properties().setId(key)));
+    public static final Registered<Item> CONTAINER = Registration.register(Registries.ITEM, "container",
+            key -> new PlacedEntityItem(ModEntities.CONTAINER, new Item.Properties().setId(key)));
     /** Every throwable; the stack says which (see {@link ThrowableItem}). */
     public static final Registered<Item> THROWABLE = Registration.register(Registries.ITEM, "throwable", key -> new ThrowableItem(new Item.Properties().setId(key)));
 
     /** The equipment tab, in the order it lists them. */
-    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER);
+    public static final List<Registered<Item>> EQUIPMENT = List.of(FUEL, WRENCH, PARACHUTE, GLTD, RANGEFINDER, CONTAINER);
 
     private static final Map<String, Registered<Item>> BY_KIND =
             Map.of("helicopter", HELICOPTER, "plane", PLANE, "tank", TANK, "vehicle", VEHICLE);
