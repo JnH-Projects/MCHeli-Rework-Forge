@@ -18,6 +18,13 @@ public final class ModDataComponents {
                     .networkSynchronized(ByteBufCodecs.STRING_UTF8)
                     .build());
 
+    /** The definition a throwable item throws, such as {@code m18_red}. */
+    public static final Registered<DataComponentType<String>> THROWABLE = Registration.register(Registries.DATA_COMPONENT_TYPE, "throwable",
+            key -> DataComponentType.<String>builder()
+                    .persistent(Codec.STRING)
+                    .networkSynchronized(ByteBufCodecs.STRING_UTF8)
+                    .build());
+
     private ModDataComponents() {
     }
 
