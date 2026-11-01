@@ -26,8 +26,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -39,6 +37,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * What each weapon type does when the server fires it: the {@code shot} methods of the
@@ -339,17 +340,19 @@ public final class ServerFiring implements WeaponSet.Trigger {
             sound(set, aimer, marked ? w.sound : "ng");
             return true;
         }
-        boolean spotted = false;
+        List<Integer> spotted = new ArrayList<>();
         double range = Math.max(w.length, 1.0F);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, aimer.getBoundingBox().inflate(range))) {
             if (entity == aimer || shot.shooter.hasPassenger(entity) || aimer.distanceToSqr(entity) > range * range
                     || !matchesTarget(entity, w.target) || !Guidance.inCone(aimer, aimer.getYRot(), aimer.getXRot(), entity, w.angle)) {
                 continue;
             }
-            entity.addEffect(new MobEffectInstance(MobEffects.GLOWING, Math.max(w.markTime, 20)));
-            spotted = true;
+            spotted.add(entity.getId());
         }
-        sound(set, shot.shooter, spotted ? w.sound : "ng");
+        if (aimer instanceof ServerPlayer player) {
+            Spotting.tellTeam(player, spotted, Math.max(w.markTime, 20));
+        }
+        sound(set, shot.shooter, !spotted.isEmpty() ? w.sound : "ng");
         return true;
     }
 
