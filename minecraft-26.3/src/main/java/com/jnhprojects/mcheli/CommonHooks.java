@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli;
 
+import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.item.ThrowableItem;
 import com.jnhprojects.mcheli.network.PackSync;
 import com.jnhprojects.mcheli.registry.ModItems;
@@ -66,6 +67,10 @@ public final class CommonHooks {
      */
     public static void playerLoggedIn(ServerPlayer player) {
         PackSync.onLogin(player);
+        // A remote pilot whose drone did not come back with them is shown and made mortal again.
+        if (!(player.getVehicle() instanceof AircraftEntity uav && uav.isRemotePilot(player))) {
+            AircraftEntity.clearRemotePilot(player);
+        }
         List<RecipeHolder<?>> ours = player.level().getServer().getRecipeManager().getRecipes().stream()
                 .filter(holder -> holder.id().identifier().getNamespace().equals(MCHeli.MOD_ID))
                 .toList();
