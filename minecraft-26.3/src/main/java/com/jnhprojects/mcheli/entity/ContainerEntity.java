@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.entity;
 
 import com.jnhprojects.mcheli.ModSounds;
+import com.jnhprojects.mcheli.item.ChainItem;
 import com.jnhprojects.mcheli.registry.ModItems;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -80,6 +81,9 @@ public class ContainerEntity extends Entity {
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
+        if (player.getItemInHand(hand).getItem() instanceof ChainItem) {
+            return ChainItem.useOn(this, player);
+        }
         if (player.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         }
