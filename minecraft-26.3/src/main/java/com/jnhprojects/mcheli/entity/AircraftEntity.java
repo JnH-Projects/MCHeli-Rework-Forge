@@ -180,8 +180,6 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** Damage factor of the extra hit box the last projectile ray struck, {@code lastBBDamageFactor}. */
     private float hitBoxFactor = 1.0F;
     private int timeSinceHit;
-    /** Ticks this vehicle stays outlined after a rangefinder spotted it. */
-    private int spottedTicks;
     /** The fuel load from which an aircraft counts as heavy: the H8K flying boat and up. */
     private static final int HEAVY_FUEL = 3000;
     /** How long a wreck stays, burning, before it disappears: 30 seconds. */
@@ -403,23 +401,6 @@ public abstract class AircraftEntity extends VehicleEntity {
             entityData.set(DATA_FUEL, fuel() + added);
         }
         return added;
-    }
-
-    // Spotting
-
-    /** A rangefinder spotted this vehicle: it shows the glowing outline for {@code ticks}. Server only. */
-    public void spot(int ticks) {
-        spottedTicks = Math.max(spottedTicks, ticks);
-        setGlowingTag(true);
-    }
-
-    private void tickSpotted() {
-        if (spottedTicks > 0) {
-            spottedTicks--;
-        } else if (isCurrentlyGlowing()) {
-            // The glowing tag is saved but the countdown is not; a reload must not leave it on.
-            setGlowingTag(false);
-        }
     }
 
     // Night vision
@@ -760,7 +741,6 @@ public abstract class AircraftEntity extends VehicleEntity {
             supplyFuel(def);
             supplyAmmo(def);
             repairOthers(def);
-            tickSpotted();
             burnFuel(def);
             if (def.maxFuel > 0 && fuel() < def.maxFuel && !isDestroyed()) {
                 inventory.pourFuelCans(ticksAlive);
