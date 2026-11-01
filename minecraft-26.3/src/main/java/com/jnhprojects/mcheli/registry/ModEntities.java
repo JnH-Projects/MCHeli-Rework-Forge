@@ -22,6 +22,7 @@ import com.jnhprojects.mcheli.entity.projectile.MarkerRocketEntity;
 import com.jnhprojects.mcheli.entity.projectile.ProjectileEntity;
 import com.jnhprojects.mcheli.entity.projectile.RocketEntity;
 import com.jnhprojects.mcheli.entity.projectile.TorpedoEntity;
+import com.jnhprojects.mcheli.entity.projectile.ThrowableEntity;
 import com.jnhprojects.mcheli.entity.projectile.TvMissileEntity;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
@@ -71,6 +72,14 @@ public final class ModEntities {
             .sized(1.5F, 0.6F)
             .clientTrackingRange(10)
             .updateInterval(1)
+            .build(key));
+
+    public static final Registered<EntityType<ThrowableEntity>> THROWABLE = Registration.register(Registries.ENTITY_TYPE, "throwable", key -> EntityType.Builder
+            .<ThrowableEntity>of(ThrowableEntity::new, MobCategory.MISC)
+            .sized(0.25F, 0.25F)
+            .clientTrackingRange(8)
+            .updateInterval(2)
+            .noSave()
             .build(key));
 
     private ModEntities() {
