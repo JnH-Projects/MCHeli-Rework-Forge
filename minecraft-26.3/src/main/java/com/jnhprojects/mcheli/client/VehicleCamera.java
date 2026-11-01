@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * The local crew member's sight, {@code MCH_Camera}: zoom for vehicles with a {@code CameraZoom}
@@ -75,8 +76,12 @@ public final class VehicleCamera {
      */
     static void onZoomKey(LocalPlayer player, AircraftEntity vehicle) {
         AircraftDefinition def = vehicle.definition();
-        int max = def != null ? def.cameraZoom : 1;
-        if (max <= 1 || vehicle.isDestroyed()) {
+        zoomStep(player, def != null && !vehicle.isDestroyed() ? def.cameraZoom : 1);
+    }
+
+    /** One press of the zoom key on a sight that zooms up to {@code max}. */
+    static void zoomStep(LocalPlayer player, int max) {
+        if (max <= 1) {
             refuse(player);
             return;
         }
@@ -95,10 +100,18 @@ public final class VehicleCamera {
             refuse(player);
             return;
         }
+        nextMode(player, on -> ModNetwork.sendToServer(new CrewActionPacket(vehicle.getId(),
+                on ? CrewActionPacket.Action.NIGHT_VISION_ON : CrewActionPacket.Action.NIGHT_VISION_OFF)));
+    }
+
+    /**
+     * Steps to the next camera mode on a sight that has night vision. {@code nightVision} asks
+     * the server to switch the effect on or off, only when that changes.
+     */
+    static void nextMode(LocalPlayer player, Consumer<Boolean> nightVision) {
         Mode next = Mode.values()[(mode.ordinal() + 1) % Mode.values().length];
         if (mode == Mode.NORMAL || next == Mode.NORMAL) {
-            ModNetwork.sendToServer(new CrewActionPacket(vehicle.getId(),
-                    next == Mode.NORMAL ? CrewActionPacket.Action.NIGHT_VISION_OFF : CrewActionPacket.Action.NIGHT_VISION_ON));
+            nightVision.accept(next != Mode.NORMAL);
         }
         mode = next;
         player.level().playLocalSound(player, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.3F, 1.0F);
