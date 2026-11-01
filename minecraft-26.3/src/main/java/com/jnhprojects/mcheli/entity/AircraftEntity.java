@@ -27,6 +27,7 @@ import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -108,6 +109,11 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final EntityDataAccessor<Boolean> DATA_FLARE = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SINKING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FUEL = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
+    /** The UAV station a drone is flown from, by entity id, or 0. */
+    private static final EntityDataAccessor<Integer> DATA_STATION = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
+
+    /** Marks a player flying a drone from a station, so a stale hide can be undone at login. */
+    public static final String REMOTE_PILOT_TAG = "mcheli_remote_pilot";
 
     // Bits of DATA_PARTS, the same assignment the original used for its part status word.
     protected static final int PART_CANOPY = 0;
@@ -150,6 +156,11 @@ public abstract class AircraftEntity extends VehicleEntity {
     private int pendingSeat = EMPTY;
     private final Map<UUID, Integer> savedSeats = new HashMap<>();
     private final Map<Integer, Integer> lastSeats = new HashMap<>();
+    /** The station a drone is flown from, and where its pilot goes back to. Server only. */
+    private @Nullable UUID station;
+    private @Nullable Vec3 stationReturn;
+    /** Remote pilots leaving this tick, by entity id, with where they come back down. */
+    private final Map<Integer, Vec3> remoteReturns = new HashMap<>();
 
     private @Nullable VehicleWeapons weapons;
     private int @Nullable [] savedAmmo;
@@ -229,6 +240,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_FLARE, false);
         builder.define(DATA_SINKING, false);
         builder.define(DATA_FUEL, 0);
+        builder.define(DATA_STATION, 0);
     }
 
     // Definition
@@ -361,6 +373,11 @@ public abstract class AircraftEntity extends VehicleEntity {
     /** {@code canUseFuel}: a vehicle without a tank never runs dry. */
     public boolean hasFuel() {
         return maxFuel() <= 0 || fuel() > 1;
+    }
+
+    /** Sets the tank outright; a drone leaves its station with 5%. Server only. */
+    public void setFuelLevel(int fuel) {
+        entityData.set(DATA_FUEL, Math.clamp(fuel, 0, Math.max(maxFuel(), 0)));
     }
 
     /**
@@ -706,6 +723,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         super.tick();
         ticksAlive++;
         lastSeats.clear();
+        remoteReturns.clear();
         if (modeSwitchCooldown > 0) {
             modeSwitchCooldown--;
         }
@@ -736,6 +754,7 @@ public abstract class AircraftEntity extends VehicleEntity {
                 inventory.pourFuelCans(ticksAlive);
             }
             tickNightVision();
+            tickStation();
         }
 
         if (isSimulatingHere()) {
@@ -1172,7 +1191,8 @@ public abstract class AircraftEntity extends VehicleEntity {
     public void switchSeat(Entity entity) {
         AircraftDefinition def = definition();
         int current = seatOf(entity);
-        if (def == null || current < 0 || current >= def.seatCount()) {
+        if (def == null || current < 0 || current >= def.seatCount() || current == 0 && station != null) {
+            // A remote pilot stays at the controls; they are not really aboard.
             return;
         }
         int count = def.seatCount();
@@ -1193,6 +1213,120 @@ public abstract class AircraftEntity extends VehicleEntity {
         assignSeat(entity, current);
     }
 
+    // UAV stations
+
+    /** Whether a player at a station could take this drone's controls now. */
+    public boolean canTakeRemotePilot() {
+        AircraftDefinition def = definition();
+        return def != null && def.uav && !def.targetDrone && !isDestroyed() && isSeatFree(0);
+    }
+
+    /**
+     * Seats {@code player}, who sits at {@code from}, at this drone's controls. The pilot is hidden
+     * and takes no harm while flying, since in the original they never left the station. Server only.
+     */
+    public boolean takeRemotePilot(ServerPlayer player, UavStationEntity from) {
+        if (!canTakeRemotePilot()) {
+            return false;
+        }
+        pendingSeat = 0;
+        boolean seated = player.startRiding(this, true, true);
+        pendingSeat = EMPTY;
+        if (!seated) {
+            return false;
+        }
+        station = from.getUUID();
+        stationReturn = from.returnPosition();
+        entityData.set(DATA_STATION, from.getId());
+        player.addTag(REMOTE_PILOT_TAG);
+        player.setInvisible(true);
+        player.setPermanentlyInvulnerable(true);
+        return true;
+    }
+
+    /** Sends the remote pilot back to the station, if one is flying. Server only. */
+    public void releaseRemotePilot() {
+        Entity pilot = occupant(0);
+        if (station != null && pilot != null) {
+            pilot.stopRiding();
+        }
+    }
+
+    /** The station this drone is flown from, as the client sees it. */
+    public @Nullable UavStationEntity stationEntity() {
+        return level().getEntity(entityData.get(DATA_STATION)) instanceof UavStationEntity s ? s : null;
+    }
+
+    /** Flat distance to the station this drone is flown from, or -1 without one. */
+    public double stationDistance() {
+        UavStationEntity from = stationEntity();
+        if (from == null) {
+            return -1.0;
+        }
+        double dx = getX() - from.getX();
+        double dz = getZ() - from.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    /** Whether {@code entity} flies this drone from a station rather than sitting in it. */
+    public boolean isRemotePilot(Entity entity) {
+        return (station != null || entityData.get(DATA_STATION) != 0) && occupant(0) == entity;
+    }
+
+    private void endRemoteControl(Entity pilot) {
+        UavStationEntity from = level() instanceof ServerLevel server && station != null
+                && server.getEntity(station) instanceof UavStationEntity s ? s : null;
+        Vec3 home = from != null ? from.returnPosition() : stationReturn;
+        if (home != null) {
+            remoteReturns.put(pilot.getId(), home);
+        }
+        clearRemotePilot(pilot);
+        if (from != null) {
+            from.setLinked(false);
+        }
+        station = null;
+        stationReturn = null;
+        entityData.set(DATA_STATION, 0);
+    }
+
+    /** Undoes what {@link #takeRemotePilot} did to the player. */
+    public static void clearRemotePilot(Entity pilot) {
+        if (pilot.removeTag(REMOTE_PILOT_TAG)) {
+            pilot.setInvisible(false);
+            pilot.setPermanentlyInvulnerable(false);
+        }
+    }
+
+    /**
+     * {@code updateUAV}: the link breaks when the station is gone, and flying out of its range
+     * loses the drone, as in the original.
+     */
+    private void tickStation() {
+        if (station == null || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        Entity pilot = occupant(0);
+        if (pilot == null) {
+            station = null;
+            stationReturn = null;
+            entityData.set(DATA_STATION, 0);
+            return;
+        }
+        UavStationEntity from = server.getEntity(station) instanceof UavStationEntity s && s.isAlive() ? s : null;
+        if (from == null) {
+            pilot.stopRiding();
+            return;
+        }
+        entityData.set(DATA_STATION, from.getId());
+        if (!from.inRange(this) && !isDestroyed()) {
+            if (pilot instanceof Player player) {
+                player.sendOverlayMessage(Component.translatable("message.mcheli.uav.lost"));
+            }
+            pilot.stopRiding();
+            hurtServer(server, damageSources().fellOutOfWorld(), hp() + 10.0F);
+        }
+    }
+
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
         // A wreck is nobody's to fly; the server lets it fall, so its crash is seen the same way by everyone.
@@ -1207,6 +1341,11 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         if (pendingSeat >= 0) {
             return isSeatFree(pendingSeat);
+        }
+        // Coming back aboard after a reload, a remote pilot included.
+        Integer saved = savedSeats.get(passenger.getUUID());
+        if (saved != null && isSeatFree(saved)) {
+            return true;
         }
         // Cargo only boards through a rack, never into a crew seat.
         return !(passenger instanceof AircraftEntity || passenger instanceof ContainerEntity) && firstFreeCrewSeat() >= 0;
@@ -1248,6 +1387,9 @@ public abstract class AircraftEntity extends VehicleEntity {
         }
         if (seat == 0) {
             input.clear();
+            if (station != null) {
+                endRemoteControl(passenger);
+            }
         }
     }
 
@@ -1317,6 +1459,10 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     @Override
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        Vec3 home = remoteReturns.remove(passenger.getId());
+        if (home != null) {
+            return home;
+        }
         AircraftDefinition def = definition();
         Integer seat = lastSeats.get(passenger.getId());
         if (def != null) {
@@ -2383,6 +2529,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             output.putIntArray("WeaponsAmmo", weapons.saveAmmo());
         }
         inventory.save(output);
+        if (station != null && stationReturn != null) {
+            output.store("Station", UUIDUtil.CODEC, station);
+            output.store("StationReturn", Vec3.CODEC, stationReturn);
+        }
         ValueOutput.TypedOutputList<String> seats = output.list("Seats", Codec.STRING);
         for (int i = 0; i < seatIds.length; i++) {
             Entity e = occupant(i);
@@ -2418,6 +2568,8 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
         });
         inventory.load(input);
+        station = input.read("Station", UUIDUtil.CODEC).orElse(null);
+        stationReturn = input.read("StationReturn", Vec3.CODEC).orElse(null);
         savedSeats.clear();
         List<String> seats = input.listOrEmpty("Seats", Codec.STRING).stream().toList();
         for (int i = 0; i < seats.size(); i++) {
