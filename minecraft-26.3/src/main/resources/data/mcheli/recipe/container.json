@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": "#c:chests/wooden",
+    "I": "#c:ingots/iron"
+  },
+  "pattern": [
+    "CCI"
+  ],
+  "result": {
+    "id": "mcheli:container"
+  }
+}
