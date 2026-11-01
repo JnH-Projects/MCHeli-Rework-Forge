@@ -22,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
@@ -165,6 +166,25 @@ public final class Glow {
             vertex(buffer, p, tx - sx, ty - sy, tz - sz, 1.0F, 0.5F, end);
             vertex(buffer, p, -sx, -sy, -sz, 1.0F, 0.5F, head);
             vertex(buffer, p, sx, sy, sz, 0.0F, 0.5F, head);
+        });
+    }
+
+    /**
+     * A search light's beam, {@code renderLight}: a cone {@code height} long along +Y to a disc
+     * {@code radius} across, fading from {@code start} at the lamp to {@code end} at the rim (ARGB).
+     */
+    public static void cone(PoseStack pose, SubmitNodeCollector collector, float height, float radius, int start, int end) {
+        collector.submitCustomGeometry(pose, HALO, (p, buffer) -> {
+            int segments = 24;
+            for (int i = 0; i < segments; i++) {
+                float a0 = i * Mth.TWO_PI / segments;
+                float a1 = (i + 1) * Mth.TWO_PI / segments;
+                // A quad with the apex twice is the fan's triangle; the texture's bright middle colours it.
+                vertex(buffer, p, 0.0F, 0.0F, 0.0F, 0.5F, 0.5F, start);
+                vertex(buffer, p, 0.0F, 0.0F, 0.0F, 0.5F, 0.5F, start);
+                vertex(buffer, p, Mth.sin(a0) * radius, height, Mth.cos(a0) * radius, 0.5F, 0.5F, end);
+                vertex(buffer, p, Mth.sin(a1) * radius, height, Mth.cos(a1) * radius, 0.5F, 0.5F, end);
+            }
         });
     }
 
