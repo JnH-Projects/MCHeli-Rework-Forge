@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.registry;
 
 import com.jnhprojects.mcheli.particle.GlowParticleOptions;
+import com.jnhprojects.mcheli.particle.SmokeParticleOptions;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
 import com.mojang.serialization.MapCodec;
@@ -21,6 +22,20 @@ public final class ModParticles {
                 @Override
                 public StreamCodec<? super RegistryFriendlyByteBuf, GlowParticleOptions> streamCodec() {
                     return GlowParticleOptions.STREAM_CODEC;
+                }
+            });
+
+    /** Smoke grenades: a marker that vanishes under the particle limit is no marker. */
+    public static final Registered<ParticleType<SmokeParticleOptions>> SMOKE = Registration.register(Registries.PARTICLE_TYPE, "smoke",
+            key -> new ParticleType<>(true) {
+                @Override
+                public MapCodec<SmokeParticleOptions> codec() {
+                    return SmokeParticleOptions.CODEC;
+                }
+
+                @Override
+                public StreamCodec<? super RegistryFriendlyByteBuf, SmokeParticleOptions> streamCodec() {
+                    return SmokeParticleOptions.STREAM_CODEC;
                 }
             });
 
