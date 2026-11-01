@@ -7,6 +7,7 @@ import com.jnhprojects.mcheli.client.hud.HudScripts;
 import com.jnhprojects.mcheli.client.render.A10Renderer;
 import com.jnhprojects.mcheli.client.render.AircraftRenderer;
 import com.jnhprojects.mcheli.client.render.ChainRenderer;
+import com.jnhprojects.mcheli.client.render.DraftingTableRenderer;
 import com.jnhprojects.mcheli.client.render.EquipmentRenderer;
 import com.jnhprojects.mcheli.client.render.FlareRenderer;
 import com.jnhprojects.mcheli.client.render.GltdRenderer;
@@ -17,11 +18,13 @@ import com.jnhprojects.mcheli.client.render.ProjectileRenderer;
 import com.jnhprojects.mcheli.client.render.RiderPose;
 import com.jnhprojects.mcheli.client.render.ThrowableRenderer;
 import com.jnhprojects.mcheli.client.render.UavStationRenderer;
+import com.jnhprojects.mcheli.client.screen.DraftingTableScreen;
 import com.jnhprojects.mcheli.client.screen.UavStationScreen;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import com.jnhprojects.mcheli.platform.Platform;
+import com.jnhprojects.mcheli.registry.ModBlockEntities;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModMenus;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -32,6 +35,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -40,6 +45,8 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.List;
 import java.util.Map;
@@ -95,10 +102,21 @@ public final class ClientHooks {
         renderers.register(ModEntities.RAPPEL.get(), NoopRenderer::new);
     }
 
+    /** How a loader registers a block entity renderer. */
+    public interface BlockEntityRenderers {
+        <T extends BlockEntity, S extends BlockEntityRenderState> void register(BlockEntityType<? extends T> type,
+                                                                               BlockEntityRendererProvider<T, S> provider);
+    }
+
+    public static void registerBlockEntityRenderers(BlockEntityRenderers renderers) {
+        renderers.register(ModBlockEntities.DRAFTING_TABLE.get(), DraftingTableRenderer::new);
+    }
+
     /** On the main thread during client setup, once our menu types are registered. */
     public static void registerMenuScreens() {
         MenuScreens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
         MenuScreens.register(ModMenus.UAV_STATION.get(), UavStationScreen::new);
+        MenuScreens.register(ModMenus.DRAFTING_TABLE.get(), DraftingTableScreen::new);
     }
 
     public static List<KeyMapping> keyMappings() {
