@@ -553,10 +553,10 @@ Forge 26.3 only. Start from a world made by beta.5, in survival.
 - [ ] Holding use raises the scope after a moment; Z and X zoom in and out while held, the range
       reads in metres, and `----` when nothing is in range.
 - [ ] C cycles the modes (in a single player world it skips players and vehicles).
-- [ ] Left-click on mobs in mobs mode: they glow, the charge drops by 10%, and the "pi" sound
-      plays. Ten spots empty it; then only the "no" sound. Crafting it with redstone fills it.
-- [ ] On a server, a spotted vehicle glows for 15 seconds; a teammate never glows. Mark point
-      sends the coordinates to you and your team in chat.
+- [ ] Left-click on mobs in mobs mode: red markers appear over them, the charge drops by 10%, and
+      the "pi" sound plays. Ten spots empty it; then only the "no" sound. Crafting it with redstone fills it.
+- [ ] On a server, a spotted vehicle is marked for 15 seconds; a teammate is never marked. Mark
+      point sends the coordinates to you and your team in chat.
 
 ### Stinger and Javelin
 
@@ -582,6 +582,54 @@ Forge 26.3 only. Start from a world made by beta.5, in survival.
 - [ ] Chain the other way round (truck first, container second): the truck still does the pulling.
       Chain a container to a `ch47` and lift off: the container hangs below it. Two containers
       cannot be chained ("One end of the chain must be a vehicle").
+
+### UAV station
+
+- [ ] Place a UAV station and right-click it: you sit down and its screen opens. The buttons move
+      the launch point; put an `mq-9` in the slot and it appears there and you fly it at once,
+      from its camera, with its HUD showing the range and link bars.
+- [ ] Shift: you stand beside the station again and the drone stays where it was. Continue takes
+      it back. Fly it past 123 blocks: "link is lost", the drone goes down and you are back.
+- [ ] While flying, another player sees no body in the drone, and hitting the drone does not hurt
+      you. Breaking the station while flying puts you back beside where it stood.
+- [ ] The portable controller opens with Shift and right-click, refuses the `mq-9` ("Small UAVs
+      only") and launches the `skylark`.
+- [ ] The E-767 can be crafted with a UAV station.
+
+### Troops, search lights, blade folding and particles
+
+- [ ] Stand two villagers next to a `ch47` and climb in: they take seats. Hover still and level,
+      press Y: ropes drop and the villagers slide down one by one. Y again pulls the ropes up. A
+      second player in the back presses Y to rappel.
+- [ ] An `an2` or `mv-22` flown high: Y opens the hatch and the villagers jump under
+      parachutes one after another.
+- [ ] The `mi-24ps` or `bnr32` at night: K in the pilot or first crew seat switches the beams;
+      a turning light follows the gunner's aim.
+- [ ] An `sh-60` (folding blades), landed with the engine stopped: Z folds the blades onto the
+      tail, the throttle does nothing, A and D turn it slowly; Z again unfolds them.
+- [ ] Hovering low raises dust (over water, spray). A Harrier in the hover blows smoke down; a jet
+      rolling fast kicks up the ground; a boat throws spray.
+- [ ] The `m1129` mortar shows the landing distance on the HUD. A block targeting pod marks the
+      point under the view for the team.
+
+### Drafting table
+
+- [ ] Craft and place the drafting table: it shows the original model, facing you. Shift and
+      right-click switches its lamp on and off.
+- [ ] Right-click: the five list buttons, << and >> step through the recipes, the grid shows the
+      ingredients cycling through their options, equipment shows its illustrated pages, vehicles
+      their numbers. Create is greyed out without the ingredients; with them it takes them and
+      fills the output slot. Closing the screen hands back what is left in it.
+
+### Team manager and markers
+
+- [ ] As an operator press M: the team manager opens; as a non-operator a message says it is for
+      operators only. Make two teams with colours; they show on the right and in `/team list`.
+- [ ] Shuffle puts every player in a team; Switch PvP says on or off; Everyone to spawn moves
+      everybody; Destroy all vehicles removes every vehicle and reports how many.
+- [ ] Rangefinder spot with two teams on a server: the spotter and their teammates see a red
+      triangle and distance over the targets, a diamond at the screen edge when looking away; the
+      other team sees nothing. Mark point shows a yellow diamond with coordinates for a minute.
 
 ## Reporting problems
 
