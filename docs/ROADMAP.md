@@ -136,7 +136,7 @@ Rules that hold for every beta:
 | 7 | `1.1.0-beta.3` | Loaders (Forge, NeoForge, Fabric) and 1.21.1 | Released |
 | 8 | `1.1.0-beta.4` | Fuel, first equipment, hull hit boxes (Forge 26.3 only) | Released |
 | 9 | `1.1.0-beta.5` | Vehicle screen, cargo, supply vehicles, thermal view (Forge 26.3 only) | Released |
-| 10 | `1.1.0-beta.6` | The rest of the equipment (Forge 26.3 only) | Planned |
+| 10 | `1.1.0-beta.6` | The rest of the equipment (Forge 26.3 only) | Released |
 | 11 | `1.1.0-beta.7` | Workshop: model, parts and tuning (Forge 26.3 only) | Planned |
 | 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
 | 13 | `1.1.0-beta.9` | Every loader, 1.21.1 and 1.20.1 | Planned |
