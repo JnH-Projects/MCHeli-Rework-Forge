@@ -55,7 +55,9 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
         /** Let the troops down: ropes from a hover, a parachute drop, or out on the ground. Pilot only. */
         DROP_CREW,
         /** Slide down a rope or jump with a parachute. Crew other than the pilot. */
-        JUMP_OUT
+        JUMP_OUT,
+        /** Turn the search light on or off. Pilot and first crew seat. */
+        SEARCH_LIGHT
     }
 
     public static void encode(CrewActionPacket msg, FriendlyByteBuf buf) {
@@ -146,6 +148,7 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
                     ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
                 }
             }
+            case SEARCH_LIGHT -> vehicle.toggleSearchLight(sender);
             case JUMP_OUT -> {
                 if (!pilot && !vehicle.jumpOut(sender)) {
                     ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
