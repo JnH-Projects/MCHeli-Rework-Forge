@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.client;
 
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.ModSounds;
 import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
@@ -21,6 +22,7 @@ import com.jnhprojects.mcheli.weapon.WeaponSet;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
@@ -179,7 +181,13 @@ final class CrewController {
             }
         }
         while (KeyBindings.CAMERA_MODE.consumeClick()) {
-            VehicleCamera.onCameraModeKey(player, vehicle);
+            // As in the original, the key works the search light in vehicles that have one.
+            if (vehicle.canSwitchSearchLight(player)) {
+                send(vehicle, CrewActionPacket.Action.SEARCH_LIGHT);
+                player.level().playLocalSound(player, ModSounds.get("pi"), SoundSource.PLAYERS, 0.5F, 1.0F);
+            } else {
+                VehicleCamera.onCameraModeKey(player, vehicle);
+            }
         }
         while (KeyBindings.VEHICLE_SCREEN.consumeClick()) {
             if (!vehicle.isDestroyed()) {
