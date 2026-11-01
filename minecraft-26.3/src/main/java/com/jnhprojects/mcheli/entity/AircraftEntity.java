@@ -20,6 +20,7 @@ import com.jnhprojects.mcheli.particle.GlowParticleOptions;
 import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.physics.CrashSpin;
 import com.jnhprojects.mcheli.physics.GroundImpact;
+import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
 import com.jnhprojects.mcheli.supply.SupplyRules;
 import com.jnhprojects.mcheli.weapon.Explosions;
@@ -51,6 +52,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LinearInterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -111,6 +113,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     private static final EntityDataAccessor<Integer> DATA_FUEL = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
     /** The UAV station a drone is flown from, by entity id, or 0. */
     private static final EntityDataAccessor<Integer> DATA_STATION = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_REPELLING = SynchedEntityData.defineId(AircraftEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** Marks a player flying a drone from a station, so a stale hide can be undone at login. */
     public static final String REMOTE_PILOT_TAG = "mcheli_remote_pilot";
@@ -161,6 +164,12 @@ public abstract class AircraftEntity extends VehicleEntity {
     private @Nullable Vec3 stationReturn;
     /** Remote pilots leaving this tick, by entity id, with where they come back down. */
     private final Map<Integer, Vec3> remoteReturns = new HashMap<>();
+    /** How far the ropes hang below their hooks, as a negative number; both sides let them out. */
+    private float ropeLength;
+    private int repellingTicks;
+    private int lastRope;
+    /** Passengers are leaving one by one under parachutes. Server only. */
+    private boolean droppingTroops;
 
     private @Nullable VehicleWeapons weapons;
     private int @Nullable [] savedAmmo;
@@ -241,6 +250,7 @@ public abstract class AircraftEntity extends VehicleEntity {
         builder.define(DATA_SINKING, false);
         builder.define(DATA_FUEL, 0);
         builder.define(DATA_STATION, 0);
+        builder.define(DATA_REPELLING, false);
     }
 
     // Definition
@@ -756,10 +766,18 @@ public abstract class AircraftEntity extends VehicleEntity {
             tickNightVision();
             tickStation();
         }
+        tickRopes(def);
 
         if (isSimulatingHere()) {
             if (!(getControllingPassenger() instanceof Player) || isDestroyed()) {
                 input.clear();
+            }
+            if (isRepelling()) {
+                // {@code MCH_AircraftClientTickHandler}: the pilot holds a hover while the ropes are out.
+                input.throttleUp = false;
+                input.throttleDown = false;
+                input.left = false;
+                input.right = false;
             }
             if (!hasFuel()) {
                 // An empty tank: the throttle runs down by itself, as with the pilot's hand off it.
@@ -1528,6 +1546,7 @@ public abstract class AircraftEntity extends VehicleEntity {
             }
             if (seatOf(player) == 0) {
                 closeCanopy();
+                boardNearbyMobs();
             }
         }
         return InteractionResult.SUCCESS;
@@ -1738,6 +1757,227 @@ public abstract class AircraftEntity extends VehicleEntity {
             modeSwitchCooldown = 40;
         }
         ModSounds.playAt(entity, "eject_seat", 5.0F, 1.0F);
+    }
+
+    // Troops: parachute drops and ropes
+
+    public boolean isRepelling() {
+        return entityData.get(DATA_REPELLING);
+    }
+
+    /** How far the ropes hang below their hooks, as a negative number. */
+    public float ropeLength() {
+        return ropeLength;
+    }
+
+    /** Where rope {@code index} hangs from, in the world. */
+    public Vec3 ropePosition(int index) {
+        AircraftDefinition def = definition();
+        return def != null && index >= 0 && index < def.repellingHooks.size() ? toWorld(def.repellingHooks.get(index).position()) : position();
+    }
+
+    /**
+     * {@code onUpdate_Repelling} and {@code onUpdate_UnmountCrew}: the ropes run out towards the
+     * ground, then the mobs aboard slide down them one per hook interval; a parachute drop lets one
+     * passenger out per {@code MobDropOption} interval while the hatch is open.
+     */
+    private void tickRopes(AircraftDefinition def) {
+        if (!def.repellingHooks.isEmpty()) {
+            if (isRepelling()) {
+                int clear = airBelow(50);
+                if (ropeLength > -50.0F && ropeLength > -clear) {
+                    ropeLength -= level().isClientSide() ? 0.3F : 0.25F;
+                }
+            } else {
+                ropeLength = 0.0F;
+            }
+        }
+        if (level().isClientSide()) {
+            return;
+        }
+        if (isRepelling() && isDestroyed()) {
+            entityData.set(DATA_REPELLING, false);
+        }
+        if (!isRepelling()) {
+            repellingTicks = 0;
+        } else if (repellingTicks < 60) {
+            repellingTicks++;
+        } else {
+            for (int rope = 0; rope < def.repellingHooks.size(); rope++) {
+                if (ticksAlive % def.repellingHooks.get(rope).interval() != 0) {
+                    continue;
+                }
+                for (int seat = 1; seat < def.seatCount(); seat++) {
+                    if (occupant(seat) instanceof Mob mob) {
+                        rappel(mob, rope);
+                        break;
+                    }
+                }
+            }
+        }
+        if (droppingTroops) {
+            if (hasBlockBelow(3, 10, false) || isDestroyed()) {
+                droppingTroops = false;
+            } else if ((hatch == null || hatch.isOn()) && ticksAlive % def.dropInterval == 0 && !dropNextTroop(def)) {
+                droppingTroops = false;
+            }
+        }
+    }
+
+    /** Air blocks straight below, up to {@code max}. */
+    private int airBelow(int max) {
+        BlockPos.MutableBlockPos pos = blockPosition().mutable();
+        int i = 0;
+        while (i < max && pos.getY() - i > level().getMinY() && level().getBlockState(pos.setY(blockPosition().getY() - i - 1)).isAir()) {
+            i++;
+        }
+        return i;
+    }
+
+    /**
+     * {@code canStartRepelling}: a helicopter in hover mode, level and holding still. The original
+     * compared against where it was a few ticks before.
+     */
+    private boolean canStartRepelling() {
+        return this instanceof HelicopterEntity && isHoveringMode() && Math.abs(getXRot()) < 3.0F && Math.abs(roll()) < 3.0F
+                && lastTickPos != null && position().distanceTo(lastTickPos) < 0.05;
+    }
+
+    /**
+     * The pilot's drop key, {@code unmountCrew}: with ropes, lets them down from a steady hover
+     * or pulls them up again; with {@code EnableParachuting}, starts or stops dropping the mobs
+     * aboard under parachutes; otherwise, or close to the ground, simply lets the mobs out.
+     * Server only.
+     *
+     * @return false if nothing could be done, so the pilot hears it
+     */
+    public boolean dropCrew() {
+        AircraftDefinition def = definition();
+        if (def == null || isDestroyed()) {
+            return false;
+        }
+        if (!def.repellingHooks.isEmpty()) {
+            if (isRepelling()) {
+                entityData.set(DATA_REPELLING, false);
+                return true;
+            }
+            if (hasBlockBelow(3, 4, false)) {
+                return unloadMobs();
+            }
+            if (!canStartRepelling()) {
+                return false;
+            }
+            entityData.set(DATA_REPELLING, true);
+            repellingTicks = 0;
+            return true;
+        }
+        if (droppingTroops) {
+            droppingTroops = false;
+            return true;
+        }
+        if (def.parachuting && !hasBlockBelow(3, 10, false)) {
+            droppingTroops = true;
+            if (hatch != null && hatch.isOff()) {
+                hatch.set(true, true);
+                modeSwitchCooldown = 20;
+            }
+            return true;
+        }
+        return unloadMobs();
+    }
+
+    /** Lets every mob in a crew seat out, as in {@code unmountCrew(false)}. */
+    private boolean unloadMobs() {
+        AircraftDefinition def = definition();
+        boolean any = false;
+        for (int seat = 1; def != null && seat < def.seatCount(); seat++) {
+            if (occupant(seat) instanceof Mob mob) {
+                mob.stopRiding();
+                any = true;
+            }
+        }
+        return any;
+    }
+
+    /** The next mob behind the second seat leaves at the drop point under a parachute. */
+    private boolean dropNextTroop(AircraftDefinition def) {
+        for (int seat = 2; seat < def.seatCount(); seat++) {
+            if (occupant(seat) instanceof Mob mob) {
+                parachuteOut(mob, def);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void parachuteOut(Entity entity, AircraftDefinition def) {
+        Vec3 out = toWorld(def.dropPosition);
+        entity.stopRiding();
+        entity.teleportTo(out.x, out.y, out.z);
+        entity.setDeltaMovement(getDeltaMovement());
+        entity.needsSync = true;
+        ParachuteEntity.open(level(), entity, ParachuteEntity.Kind.DROP);
+    }
+
+    /**
+     * A passenger's own drop key, {@code MCH_ClientSeatTickHandler}: slide down a rope once the
+     * ropes are out, or jump with a parachute from behind the second seat of a vehicle with
+     * {@code EnableParachuting} and room below. Server only.
+     *
+     * @return false if neither is possible right now
+     */
+    public boolean jumpOut(Player player) {
+        AircraftDefinition def = definition();
+        int seat = seatOf(player);
+        if (def == null || seat <= 0 || seat >= def.seatCount() || isDestroyed()) {
+            return false;
+        }
+        if (isRepelling() && repellingTicks > 50 && !def.repellingHooks.isEmpty()) {
+            lastRope = (lastRope + 1) % def.repellingHooks.size();
+            rappel(player, lastRope);
+            return true;
+        }
+        if (def.parachuting && seat >= 2 && !hasBlockBelow(3, 13, false)) {
+            parachuteOut(player, def);
+            return true;
+        }
+        return false;
+    }
+
+    /** {@code unmountEntityRepelling}: two blocks under the hook, onto a rope rider that lets them down. */
+    private void rappel(Entity entity, int rope) {
+        Vec3 at = ropePosition(rope).add(0.0, -2.0, 0.0);
+        entity.stopRiding();
+        entity.teleportTo(at.x, at.y, at.z);
+        entity.setDeltaMovement(Vec3.ZERO);
+        entity.resetFallDistance();
+        RappelEntity rider = new RappelEntity(ModEntities.RAPPEL.get(), level());
+        rider.attach(this, rope);
+        rider.setPos(at);
+        level().addFreshEntity(rider);
+        entity.startRiding(rider, true, true);
+        lastRope = rope;
+    }
+
+    /**
+     * {@code mountMobToSeats}: when the pilot climbs in, mobs standing close by take the free crew
+     * seats, so villagers and the like can be flown somewhere. Server only.
+     */
+    private void boardNearbyMobs() {
+        AircraftDefinition def = definition();
+        if (def == null || def.uav) {
+            return;
+        }
+        for (Mob mob : level().getEntitiesOfClass(Mob.class, getBoundingBox().inflate(3.0, 2.0, 3.0), m -> !m.isPassenger() && !m.isVehicle())) {
+            for (int seat = 1; seat < def.seatCount(); seat++) {
+                if (isSeatFree(seat)) {
+                    pendingSeat = seat;
+                    mob.startRiding(this, true, true);
+                    pendingSeat = EMPTY;
+                    break;
+                }
+            }
+        }
     }
 
     // Terrain helpers
