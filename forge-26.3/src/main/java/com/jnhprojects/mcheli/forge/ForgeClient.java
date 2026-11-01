@@ -30,6 +30,7 @@ final class ForgeClient {
         ClientHooks.init();
         FMLClientSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(ClientHooks::registerMenuScreens));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
+        EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
         RegisterParticleProvidersEvent.BUS.addListener(event -> {
             event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
             event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
