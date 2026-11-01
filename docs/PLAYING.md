@@ -140,6 +140,19 @@ open it. It floats and can be pushed. Vehicles whose racks take containers (the 
 load it with J and drop it with U; dropped with no ground in the 20 blocks below, it comes down
 under a parachute. Punching it a few times breaks it and drops what is inside.
 
+**Stinger and Javelin.** Shoulder launched missiles: the FIM-92 Stinger locks onto aircraft, the
+FGM-148 Javelin onto ground vehicles and players in vehicles. Hold use to raise the sight and keep
+the target in the middle until the tone turns steady and the sight reads LOCKED.
+
+| Input (sight up) | Action |
+|-------|--------|
+| Left mouse | Fire at the locked target |
+| Z | Zoom: the Javelin has two steps |
+| X | Javelin: direct or top attack. Top attack climbs and dives onto the target, and needs 40 blocks of room. |
+
+Each launcher holds one missile. Lower an empty one with a missile in your inventory and it
+reloads in two seconds. Missiles are crafted two at a time.
+
 **Tow chain.** Right-click the two ends with the chain, in either order, 2 to 16 blocks apart.
 One end must be a vehicle, which does the pulling: a truck can drag a container or a broken down
 car, and a helicopter can lift a container as a sling load. Right-click either end again to take
