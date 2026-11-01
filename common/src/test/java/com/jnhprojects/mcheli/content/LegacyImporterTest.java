@@ -38,7 +38,7 @@ class LegacyImporterTest {
         assertTrue(Files.isRegularFile(assets.resolve("models/item/ah-64.json")), "item model");
         assertTrue(Files.readString(assets.resolve("sounds.json")).contains("\"wrench\": {\n    \"sounds\": [\"mcheli:wrench1\""),
                 "numbered sound files share one event");
-        assertEquals(108, countFiles(TestResources.pack().resolve("data/mcheli/recipe")));
+        assertEquals(109, countFiles(TestResources.pack().resolve("data/mcheli/recipe")));
     }
 
     /** Minecraft merges lang files across packs, so the import and the jar must not fight over a key. */
