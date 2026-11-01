@@ -5,6 +5,7 @@ import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
 import com.jnhprojects.mcheli.content.aircraft.PlaneDefinition;
 import com.jnhprojects.mcheli.content.aircraft.TankDefinition;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
+import com.jnhprojects.mcheli.entity.ChainEntity;
 import com.jnhprojects.mcheli.entity.ContainerEntity;
 import com.jnhprojects.mcheli.entity.GltdEntity;
 import com.jnhprojects.mcheli.entity.GroundVehicleEntity;
@@ -96,6 +97,14 @@ public final class ModEntities {
             .sized(2.0F, 1.0F)
             .clientTrackingRange(10)
             .updateInterval(3)
+            .fireImmune()
+            .build(key));
+
+    public static final Registered<EntityType<ChainEntity>> CHAIN = Registration.register(Registries.ENTITY_TYPE, "chain", key -> EntityType.Builder
+            .<ChainEntity>of(ChainEntity::new, MobCategory.MISC)
+            .sized(1.0F, 1.0F)
+            .clientTrackingRange(10)
+            .updateInterval(2)
             .fireImmune()
             .build(key));
 
