@@ -259,7 +259,8 @@ Built and tested on Forge 26.3 only. What was not done in this phase moved to ph
 ## Phase 10: the rest of the equipment (`1.1.0-beta.6`)
 
 - [x] Equipment: GLTD, rangefinder, chain towing, container, smoke grenades
-- [ ] Equipment: UAV station and portable controller, Stinger and Javelin
+- [x] Equipment: Stinger and Javelin
+- [ ] Equipment: UAV station and portable controller
 - [x] Parachutes for rack drops, containers on racks
 - [ ] Repelling and troop drops
 - [ ] `HideEntity`, search lights, splash and exhaust particles, helicopter blade folding
