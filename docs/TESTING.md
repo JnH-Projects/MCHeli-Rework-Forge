@@ -524,6 +524,50 @@ Forge 26.3 only. Start from a world made by beta.4 with a few vehicles in it, in
       drop.
 - [ ] Park next to an `ammo_box`: weapons with a low reserve fill up a tenth at a time.
 
+## Phase 10 checklist (`1.1.0-beta.6`)
+
+Forge 26.3 only. Start from a world made by beta.5, in survival.
+
+### Smoke grenades
+
+- [ ] The equipment tab lists the four M18 grenades with their own icons and names; each recipe
+      (dye next to an iron ingot) makes one.
+- [ ] A short draw drops the grenade a few blocks away, a full draw throws it far. It bounces off
+      walls and the floor and settles.
+- [ ] After two seconds it pours out smoke in its colour, which pales as it rises, for about 30
+      seconds, then the grenade disappears.
+- [ ] A dispenser with a grenade in it throws it out when powered.
+
+### GLTD
+
+- [ ] Placing the GLTD on a block sets it up facing the way you look; right-click sits behind it.
+- [ ] First person looks out of the sight; the view stops 70 degrees either side and up or down.
+      Z steps the zoom up to x8 and back, K steps night vision, thermal view and back.
+- [ ] Right-click on terrain: the readout counts down, and three A-10 passes strafe the spot.
+      Clicking again before the countdown ends does nothing.
+- [ ] Another player sees the head turn with your aim and a faint red laser.
+- [ ] Shift leaves it; punching it drops the item (creative: it just goes).
+
+### Rangefinder
+
+- [ ] Holding use raises the scope after a moment; Z and X zoom in and out while held, the range
+      reads in metres, and `----` when nothing is in range.
+- [ ] C cycles the modes (in a single player world it skips players and vehicles).
+- [ ] Left-click on mobs in mobs mode: they glow, the charge drops by 10%, and the "pi" sound
+      plays. Ten spots empty it; then only the "no" sound. Crafting it with redstone fills it.
+- [ ] On a server, a spotted vehicle glows for 15 seconds; a teammate never glows. Mark point
+      sends the coordinates to you and your team in chat.
+
+### Container and chain
+
+- [ ] Placing a container sets it on the block; right-click opens a six row chest. Items survive a
+      reload. It floats in water. Punching it a few times breaks it and drops its contents.
+- [ ] Park a `ch47` by a container and press J: it loads. U at height over open ground drops it
+      under a parachute; on the ground it just sets it down.
+- [ ] Chain: right-click a container (or a car), then a truck within 16 blocks. Driving the truck
+      drags the other along at the chain's length. Right-click either end again: the chain comes
+      off. Save and reload while towing: the chain is still there.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did
