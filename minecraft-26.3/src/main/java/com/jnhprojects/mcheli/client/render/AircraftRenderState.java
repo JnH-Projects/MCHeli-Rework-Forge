@@ -23,6 +23,8 @@ public class AircraftRenderState extends EntityRenderState {
     public float canopy;
     public float landingGear;
     public float hatch;
+    /** Rope length below the hooks while troops go down, 0 with the ropes in. */
+    public float ropeLength;
     public float nozzle;
     public float wing;
 
