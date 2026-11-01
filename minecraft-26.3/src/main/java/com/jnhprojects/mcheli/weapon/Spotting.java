@@ -3,12 +3,13 @@ package com.jnhprojects.mcheli.weapon;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
+import com.jnhprojects.mcheli.network.MarkerPacket;
+import com.jnhprojects.mcheli.network.ModNetwork;
+import com.jnhprojects.mcheli.team.TeamManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
@@ -18,12 +19,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Spotting with the rangefinder, {@code MCH_Multiplay.spotEntity} and {@code markPoint}.
  *
- * <p>The original sent spotted targets to the spotter's team as screen markers. Here they get the
- * vanilla glowing outline instead, drawn in their team's colour and seen by everyone, until the
- * team markers arrive with the team manager. A marked point is still told only to the team.
+ * <p>Spotted targets and marked points go to the spotter and their team only, as screen markers
+ * the HUD draws ({@code MCH_GuiTargetMarker}); nobody else sees them.
  */
 public final class Spotting {
     // The original's target filter bits.
@@ -77,7 +80,7 @@ public final class Spotting {
         Vec3 eye = spotter.getEyePosition();
         Vec3 look = spotter.getLookAngle();
         int ticks = (filter & ~(OTHERS | MONSTERS)) == 0 ? MOB_TIME : PLAYER_TIME;
-        boolean spotted = false;
+        List<Integer> spotted = new ArrayList<>();
         for (Entity entity : level.getEntities(spotter, spotter.getBoundingBox().inflate(RANGE), e -> matches(filter, e))) {
             if (isFriendly(spotter, entity)) {
                 continue;
@@ -91,10 +94,21 @@ public final class Spotting {
                     ClipContext.Fluid.NONE, spotter)).getType() == HitResult.Type.BLOCK) {
                 continue;
             }
-            mark(entity, ticks);
-            spotted = true;
+            spotted.add(entity.getId());
         }
-        return spotted;
+        tellTeam(spotter, spotted, ticks);
+        return !spotted.isEmpty();
+    }
+
+    /** Sends the spotted entities to {@code spotter} and their team, {@code MCH_PacketNotifySpotedEntity}. */
+    public static void tellTeam(ServerPlayer spotter, List<Integer> entities, int ticks) {
+        if (entities.isEmpty()) {
+            return;
+        }
+        MarkerPacket packet = MarkerPacket.spotted(entities.stream().mapToInt(Integer::intValue).toArray(), ticks);
+        for (ServerPlayer player : TeamManager.teammates(spotter)) {
+            ModNetwork.sendToPlayer(player, packet);
+        }
     }
 
     /** Teammates, and a vehicle crewed by one, are never spotted. */
@@ -108,14 +122,6 @@ public final class Spotting {
             return false;
         }
         return entity.isAlliedTo(spotter);
-    }
-
-    private static void mark(Entity entity, int ticks) {
-        if (entity instanceof LivingEntity living) {
-            living.addEffect(new MobEffectInstance(MobEffects.GLOWING, ticks, 0, false, false));
-        } else if (entity instanceof AircraftEntity vehicle) {
-            vehicle.spot(ticks);
-        }
     }
 
     /**
@@ -139,10 +145,12 @@ public final class Spotting {
             return false;
         }
         BlockPos pos = hit.getBlockPos();
+        MarkerPacket marker = MarkerPacket.point(pos);
         Component message = Component.translatable("message.mcheli.mark_point", spotter.getDisplayName(), pos.getX(), pos.getY(), pos.getZ());
         for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             if (player == spotter || player.isAlliedTo(spotter)) {
                 player.sendSystemMessage(message);
+                ModNetwork.sendToPlayer(player, marker);
             }
         }
         return true;
