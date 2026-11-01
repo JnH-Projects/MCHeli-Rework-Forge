@@ -488,6 +488,34 @@ player, steered by the rider's forward input from `ServerPlayer.getLastClientInp
 `Kind` picks the model: the round canopy for the item, the seat for ejection (whose canopy opens
 once it falls), the bare canopy for drops.
 
+### Placed equipment, throwables and spotting
+
+Equipment that lives in the world is an entity set up by `item.PlacedEntityItem`: `GltdEntity`,
+`ContainerEntity` (and later the UAV station). Each is server simulated and eased on clients with
+a `LinearInterpolationHandler`.
+
+Throwables are content: `content.throwable.ThrowableDefinition` in `common`, loaded from the
+`throwable` folder of every source. Like the vehicles there is one item, `mcheli:throwable`, whose
+`mcheli:throwable` data component names the definition, so packs add throwables without new
+items. `ThrowableEntity` flies and bounces on the server; clients spawn the `mcheli:smoke`
+particle (`SmokeParticleOptions`, coloured, using vanilla's campfire smoke sprites).
+
+The GLTD calls a `weapon.CasStrike`, the three-pass A-10 run that vehicles with a CAS weapon also
+use through `ServerFiring`. Its sight reuses `VehicleCamera`'s zoom steps and camera modes; the
+client asks for strikes and night vision with `EquipmentActionPacket`, which equipment checks
+against the rider like `CrewActionPacket`. Night vision for any sight goes through
+`entity.NightVision`.
+
+`weapon.Spotting` is the server half of the rangefinder (`SpotPacket`): a 40 degree cone out to
+400 blocks, line of sight, never the spotter's allies (`isAlliedTo`). Spotted living entities get
+the vanilla glowing effect, vehicles their glowing tag through `AircraftEntity.spot`, which is
+cleared again after a reload since the countdown is not saved.
+
+Racks carry `ContainerEntity` as well as vehicles when their `AddRack` names `container`. Cargo
+other than vehicles that leaves a rack with no ground within 20 blocks rides down on a
+`ParachuteEntity` of kind `DROP`. `ChainEntity` keeps the towed end within its length of the end
+that pulls; vehicles and containers hand chain clicks to `ChainItem` before boarding or opening.
+
 ### Vehicle inventory and supply
 
 `entity.VehicleInventory` is the original's `MCH_AircraftInventory` plus the container half of
