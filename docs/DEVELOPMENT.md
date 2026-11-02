@@ -4,11 +4,11 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| JDK | 25 (and 21 for the 1.21.1 modules) | Gradle provisions them through the Foojay resolver if none is installed. |
+| JDK | 25 (21 for 1.20.6 to 1.21.11, 17 for 1.19.4 and 1.20.2) | Gradle provisions them through the Foojay resolver if none is installed. |
 | Gradle | 9.8.2 | Use the wrapper (`./gradlew`). Loom 1.19 needs 9.8. |
 | ForgeGradle | 7.x | Forge modules. Sets up Minecraft through the Mavenizer on first build. |
 | ModDevGradle | 2.0.x | NeoForge modules. |
-| Fabric Loom | 1.19 | Fabric modules: `net.fabricmc.fabric-loom` for 26.x, `-remap` for 1.21.1. |
+| Fabric Loom | 1.19 | Fabric modules: `net.fabricmc.fabric-loom` for 26.x, `-remap` for 1.21.11 and older. |
 | Forge | 66.1.0 for Minecraft 26.3 | |
 | NeoForge | 26.3.0.99 for Minecraft 26.3 | |
 | Fabric | Loader 0.20.1, Fabric API 0.165.0+26.3 | |
@@ -16,7 +16,9 @@
 | NeoForge | 21.1.265 for Minecraft 1.21.1 | |
 | Fabric | Fabric API 0.116.17+1.21.1 | Loom remaps the jar, which is obfuscated on 1.21.1. |
 
-All three use Mojang's official names, so the shared code reads the same on every loader.
+All three use Mojang's official names, so the shared code reads the same on every loader. The
+loader versions of the [placeholder modules](#placeholder-modules) are in their own
+`gradle.properties`.
 
 The first build downloads and decompiles Minecraft once per loader, which takes a few minutes.
 Avoid running a second Gradle build (for example an IDE import) while that is in progress: both
@@ -37,9 +39,9 @@ wait for the other process to finish and build again.
 
 Shared properties live in the root `gradle.properties`: `mod_version`, the mod metadata, the list
 of loader modules (`platforms`) and the library versions `common` compiles against. Each loader
-module has its own `gradle.properties` with its loader, Minecraft and Java versions. During betas
-4 to 8, `platforms` lists only `forge-26.3`, so CI and the release build one jar; the other modules
-stay in the repository and come back to the list for 1.1.0 (roadmap phase 13).
+module has its own `gradle.properties` with its loader, Minecraft and Java versions. During the
+betas, `platforms` lists only `forge-26.3`, so CI and the release build one jar; the other modules
+stay in the repository and come back to the list for each final release (roadmap phase 13).
 `mods.toml`, `neoforge.mods.toml`, `fabric.mod.json` and `pack.mcmeta` are filled in from them
 at build time. What every loader module shares (source folders, jar contents, manifest, file
 names) is in `gradle/loader.gradle`.
@@ -59,6 +61,7 @@ neoforge-26.3/                 NeoForge glue, plus a camera mixin
 fabric-26.3/                   Fabric glue, plus mixins for what Fabric API has no event for
 minecraft-1.21.1/              the same shared code, backported to Minecraft 1.21.1
 forge-1.21.1/, neoforge-1.21.1/, fabric-1.21.1/   the loader glue for 1.21.1
+<loader>-<version>/            placeholders for the other supported versions (see below)
 gradle/loader.gradle           what every loader module shares
 docs/                          documentation and content format guides
 .github/workflows              CI and release pipelines
@@ -97,6 +100,31 @@ IDEs import the project as one Gradle project per module. A file under `minecraf
 to all three loader modules, so the IDE shows it under whichever it picked; it compiles under all
 of them on the command line. After pulling the split, re-import the Gradle project; the old
 `forge-26.3` run configurations still work, the NeoForge and Fabric ones are new.
+
+### Placeholder modules
+
+Every [supported version](ROADMAP.md#supported-versions) has a loader module, but only 26.3 and
+1.21.1 are ported. The other 19 (`forge-`, `neoforge-` and `fabric-` for 26.2, 26.1, 1.21.11,
+1.21.5 and 1.20.6, plus `forge-` and `fabric-` for 1.20.2 and 1.19.4) are placeholders: each pins
+its loader, mappings and Java version, and holds only an entry point that logs a line at startup
+and the mod metadata. Their `gradle.properties` sets `scaffold=true`, which tells
+`gradle/loader.gradle` to leave out `common` and `minecraft-<version>`, so they build before that
+code has been ported to their version.
+
+They are not in `platforms`, so CI and the betas never build them. Build or run one by passing
+the list on the command line:
+
+```
+./gradlew :forge-1.20.2:build -Pplatforms=forge-1.20.2
+./gradlew :fabric-1.19.4:runServer -Pplatforms=fabric-1.19.4    # runs from ./run-1.19.4
+```
+
+Porting a version for a final release: add `minecraft-<version>` (copied from the nearest ported
+version), copy the loader glue from the ported module of the same loader, remove `scaffold=true`
+and add the module to `platforms`.
+
+There is no `neoforge-1.20.2`: ModDevGradle needs a "moddev bundle" that NeoForge 20.2 does not
+publish, so NeoForge support starts at 1.20.6, the next supported version.
 
 `Mod/` holds the original `MC1.7.10_mcheli_1.0.3.zip`. It is git-ignored. Download it from the
 [MCHeli CurseForge page](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files)
