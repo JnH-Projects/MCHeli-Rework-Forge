@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.neoforged.moddev'
+}
+
+apply from: rootProject.file('gradle/loader.gradle')
+
+neoForge {
+    version = neoforge_version
+
+    runs {
+        configureEach {
+            gameDirectory = rootProject.file("run-${minecraft_version}")
+        }
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        mcheli {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
