@@ -12,7 +12,7 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, 1.21.1, equipment, workshop, 1.20.1 ([plan](#road-to-110)) | In progress |
+| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, equipment, workshop, every release version from 1.19.4 to 26.3 ([plan](#road-to-110)) | In progress |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
@@ -139,35 +139,40 @@ Rules that hold for every beta:
 | 10 | `1.1.0-beta.6` | The rest of the equipment (Forge 26.3 only) | Released |
 | 11 | `1.1.0-beta.7` | Workshop: model, parts and tuning (Forge 26.3 only) | Planned |
 | 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
-| 13 | `1.1.0-beta.9` | Every loader, 1.21.1 and 1.20.1 | Planned |
+| 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.19.4 to 26.3 | Planned |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
 sits on them. Content packs come before the workshop, since the workshop's output is a pack.
 The loader split and 1.21.1 come right after packs, while the code is still close to 1.0.0;
 from then on each feature is built once in shared code and only its Minecraft glue is written per
-version and loader. Betas 4 to 8 build only the Forge 26.3 jar, since six modules on three
-toolchains made every build slow; phase 13 writes the glue for the rest, adds 1.20.1 and ships
+version and loader. Betas build only the Forge 26.3 jar, since many modules on three toolchains
+made every build slow; phase 13 writes the glue for every other version and loader and ships
 every jar again.
 
 ### Supported versions
 
-MCHeli stopped at Minecraft 1.7.10. 1.1.0 is the bridge back: it runs on the versions most
-players and modpacks are on today, so anyone can pick the mod up again, and then follows the
-latest Minecraft.
+MCHeli stopped at Minecraft 1.7.10. Final releases (1.1.0, 1.2.0 and so on) run on a wide range
+of versions, so players and modpacks can pick the mod up wherever they are. Betas are Forge 26.3
+only.
 
-| Minecraft | Also runs on | Java | Forge | NeoForge | Fabric |
-|-----------|--------------|------|-------|----------|--------|
-| 26.3 | | 25 | yes | yes | yes |
-| 1.21.1 | 1.21 | 21 | yes | yes | yes |
-| 1.20.1 | 1.20 | 17 | yes | the Forge jar (NeoForge 1.20.1 is a Forge fork) | yes |
+| Minecraft | Java | Forge | NeoForge | Fabric |
+|-----------|------|-------|----------|--------|
+| 26.3 | 25 | yes | yes | yes |
+| 26.2 | 25 | yes | yes | yes |
+| 26.1 | 25 | yes | yes | yes |
+| 1.21.11 | 21 | yes | yes | yes |
+| 1.21.5 | 21 | yes | yes | yes |
+| 1.21.1 | 21 | yes | yes | yes |
+| 1.20.6 | 21 | yes | yes | yes |
+| 1.20.2 | 17 | yes | no | yes |
+| 1.19.4 | 17 | yes | no | yes |
 
-Each major version gets its most played minor rather than its last one (1.20.6 and 1.21.11 have
-few players). Nothing below 1.20.
-
-**After 1.1.0, the 1.20.1 and 1.21.1 builds are frozen.** They get no further fixes or features;
-development continues on the latest Minecraft version only, and players are expected to move
-up with it.
+That is 25 jars per final release. NeoForge starts at 1.20.6 (ModDevGradle, which builds the
+NeoForge jars, cannot set up NeoForge 1.20.2), and 1.19.4 is the oldest version.
+Older versions are not frozen: every final release ships on the whole list again. Every pair
+already has a Gradle module; the ones not ported yet are placeholders that only load and log
+(see [DEVELOPMENT.md](DEVELOPMENT.md#placeholder-modules)).
 
 ## Phase 5: groundwork (`1.1.0-beta.1`)
 
@@ -290,21 +295,24 @@ built here syncs to other players with no extra work.
 - [ ] Package browser, author credits shown in game
 - [ ] Operator approval before a player's new vehicle goes live on a server
 
-## Phase 13: every loader, 1.21.1 and 1.20.1 (`1.1.0-beta.9`)
+## Phase 13: every loader on every supported version (`1.1.0-beta.9`)
 
 Betas 4 to 8 ship only the Forge 26.3 jar, to keep builds fast. This phase brings the features
-added since beta.3 to NeoForge, Fabric and 1.21.1, and adds 1.20.1, the largest modpack version
-and the furthest from 26.3. All jars ship again from here on.
+added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest of the
+[supported versions](#supported-versions), down to 1.19.4. All 25 jars ship from here on.
 
-- [ ] Every module back in `platforms`; phases 8 to 12 ported to NeoForge and Fabric on 26.3 and
-      to all three loaders on 1.21.1
+- [x] A Gradle module for every version and loader pair, the missing ones as placeholders that
+      download their loader and only load and log
+- [ ] Every module in `platforms`; phases 8 to 12 ported to NeoForge and Fabric on 26.3 and to all
+      three loaders on 1.21.1
+- [ ] `minecraft-26.2`, `minecraft-26.1`, `minecraft-1.21.11`, `minecraft-1.21.5`,
+      `minecraft-1.20.6`, `minecraft-1.20.2` and `minecraft-1.19.4`, each replacing its
+      placeholder modules with real glue
 - [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
       methods)
-- [ ] 1.20.1 on Forge and Fabric. NeoForge's 1.20.1 is a fork of Forge 47, so the Forge jar is
-      tested there instead of built twice
-- [ ] Vehicle items keep their vehicle in NBT, since data components only arrived in 1.20.5
-- [ ] Rendering, networking and registration for 1.20.1
-- [ ] Legacy importer and content packs checked on 1.20.1
+- [ ] Vehicle items keep their vehicle in NBT on 1.20.2 and 1.19.4, since data components only
+      arrived in 1.20.5
+- [ ] Legacy importer and content packs checked on every version
 - [ ] The phase 7 smoke tests for every jar
 
 ## 1.1.0 release
@@ -314,7 +322,7 @@ No new features after beta.9; a `1.1.0-rc.N` follows only if beta.9 testing find
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
 - [ ] A pack made in the workshop on one version loads on every other supported version
-- [ ] Tag `v1.1.0` in both repositories; upload one CurseForge file per Minecraft version, with
+- [ ] Tag `v1.1.0` in both repositories; upload one CurseForge file per Minecraft version and loader, with
       the player-facing changelog from `docs/CURSEFORGE.md`
 
 ## Open decisions

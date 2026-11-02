@@ -50,6 +50,11 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
+Only 26.3 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
+against that version's loader and toolchain. Porting a version means adding its
+`minecraft-<version>` folder, copying the loader glue in and dropping the flag.
+
 The shared code reaches the loader in two ways only:
 
 - **`Platform`**, installed by the loader module before anything else runs: the game and config
@@ -78,9 +83,9 @@ NeoForge rolls the camera the other way round from Forge, so its mixin negates t
 
 ### Minecraft 1.21.1
 
-`minecraft-1.21.1` is a copy of `minecraft-26.3` ported back, so the two read side by side. After
-1.1.0 it is frozen (see [supported versions](ROADMAP.md#supported-versions)), so the copy is not
-kept in step by hand beyond that. What differs:
+`minecraft-1.21.1` is a copy of `minecraft-26.3` ported back, so the two read side by side. During
+the betas it is not kept in step; each final release brings it, and every other
+[supported version](ROADMAP.md#supported-versions), up to date again. What differs:
 
 - **Rendering.** 1.21.1 has no render states or submit step. Each renderer fills the same state
   object itself at the start of `render` and draws straight into the `MultiBufferSource`, so

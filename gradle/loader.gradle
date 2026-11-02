@@ -16,19 +16,33 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version as int)
 // Minecraft version. Both are compiled into this module, so the mod stays one jar. common checks
 // on its own that it needs nothing from Minecraft; compiling minecraft-<version> under three
 // loaders keeps it free of any one loader's API.
-def shared = rootProject.file("minecraft-${minecraft_version}")
-sourceSets.main.java.srcDir(project(':common').file('src/main/java'))
-sourceSets.main.resources.srcDir(project(':common').file('src/main/resources'))
-sourceSets.main.java.srcDir(new File(shared, 'src/main/java'))
-sourceSets.main.resources.srcDir(new File(shared, 'src/main/resources'))
+//
+// Placeholder modules (scaffold=true) are versions that are set up but not ported yet: they hold
+// only an entry point that logs, take nothing from common or minecraft-<version>, and borrow the
+// mod icon from 26.3. They are not in the default platforms list; see docs/DEVELOPMENT.md.
+def scaffold = (findProperty('scaffold') ?: 'false').toBoolean()
+if (scaffold) {
+    tasks.named('processResources', ProcessResources) {
+        from(rootProject.file('minecraft-26.3/src/main/resources/mcheli_logo.png'))
+    }
+} else {
+    def shared = rootProject.file("minecraft-${minecraft_version}")
+    sourceSets.main.java.srcDir(project(':common').file('src/main/java'))
+    sourceSets.main.resources.srcDir(project(':common').file('src/main/resources'))
+    sourceSets.main.java.srcDir(new File(shared, 'src/main/java'))
+    sourceSets.main.resources.srcDir(new File(shared, 'src/main/resources'))
+}
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    // Annotations only; Minecraft ships JSpecify from 1.21.6 on, so older versions need it to compile.
-    compileOnly "org.jspecify:jspecify:${jspecify_version}"
+if (!scaffold) {
+    dependencies {
+        // Annotations only; Minecraft ships JSpecify from 1.21.6 on, so older versions need it to
+        // compile. Placeholders have no code that uses it, and some NeoForge versions pin 1.0.0.
+        compileOnly "org.jspecify:jspecify:${jspecify_version}"
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle'
+}
+
+apply from: rootProject.file('gradle/loader.gradle')
+
+minecraft {
+    runs {
+        configureEach {
+            workingDir = rootProject.layout.projectDirectory.dir("run-${minecraft_version}")
+        }
+
+        register('client')
+
+        register('server') {
+            args '--nogui'
+        }
+    }
+}
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+}
+
+dependencies {
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+}

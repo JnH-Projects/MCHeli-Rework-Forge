@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Pre-releases (`1.0.0-alpha.N`) mark the phases on the
 way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+### Added
+
+- Placeholder loader modules for every supported version that is not ported yet: Forge, NeoForge
+  and Fabric on 26.2, 26.1, 1.21.11, 1.21.5 and 1.20.6, and Forge and Fabric on 1.20.2 and 1.19.4.
+  Each downloads its loader and only logs at startup; none of them is built by default or shipped
+  in a beta. See docs/DEVELOPMENT.md.
+
+### Changed
+
+- The supported version list for final releases is now 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1,
+  and 1.20.6 on Forge, NeoForge and Fabric, and 1.20.2 and 1.19.4 on Forge and Fabric (25 jars). 1.20.1
+  is no longer planned, and older versions are no longer frozen after 1.1.0.
+
 ## [1.1.0-beta.6] - 2026-11-01
 
 Phase 10 of the road to 1.1.0: the rest of the equipment. Betas are not uploaded to CurseForge,

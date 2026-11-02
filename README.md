@@ -12,8 +12,9 @@ textures and sounds load unchanged.
 > **Status:** on the way to 1.1.0, now at phase 10 (`1.1.0-beta.6`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
-> equipment are in, down to UAV stations, the drafting table and the team manager. Betas 4 to 8
-> ship the Forge 26.3 jar only; every loader and Minecraft version comes back for 1.1.0. See the
+> equipment are in, down to UAV stations, the drafting table and the team manager. Betas ship the
+> Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
+> on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
 > [roadmap](docs/ROADMAP.md).
 
 ## Showcase video
