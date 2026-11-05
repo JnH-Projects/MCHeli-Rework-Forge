@@ -488,8 +488,10 @@ final class PartRenderer {
             collector.submitCustomGeometry(pose, opaqueType, (p, buffer) -> MeshRenderer.emit(split.opaque(), p, buffer, light, overlay));
         }
         if (!split.glass().isEmpty()) {
-            collector.submitCustomGeometry(pose, glassType,
-                    (p, buffer) -> MeshRenderer.emitFrontFaces(split.glass(), p, buffer, light, overlay, glassColor));
+            // Culling glass relies on the camera sitting at the origin, which is not so in a GUI.
+            collector.submitCustomGeometry(pose, glassType, state.inGui
+                    ? (p, buffer) -> MeshRenderer.emit(split.glass(), p, buffer, light, overlay, glassColor)
+                    : (p, buffer) -> MeshRenderer.emitFrontFaces(split.glass(), p, buffer, light, overlay, glassColor));
         }
     }
 
