@@ -3,6 +3,20 @@
 Every phase of MCHeli Rework in development builds, newest first. The [README](../README.md)
 shows the latest phase only.
 
+## Phase 11 (on the way to `1.1.0-beta.7`)
+
+The vehicle workshop: importing a model, placing its parts, tuning, test flights and saving a pack.
+The helicopter is the example pack's Rework Scout.
+
+| | |
+|---|---|
+| ![The workshop editor: a small helicopter on a grid, a hit box outlined around its cockpit, coloured handles on its parts, and the main rotor selected with arrows, its axis and its values in the side panel](images/phase-11/workshop-editor.png) | ![The tuning page beside the helicopter, listing hit points, top speed, gravity, turn rates, fuel and armor](images/phase-11/workshop-tuning.png) |
+| Place every part by dragging it on the model | Tune how it flies; values you changed stand out from the defaults |
+| ![The workshop's first screen: vehicles in the packs on the left, and a form for a new vehicle with a dropped OBJ file on the right](images/phase-11/workshop-import.png) | ![The view from the helicopter's cockpit in flight over a desert coast, with the instruments on the HUD](images/phase-11/workshop-test-flight.png) |
+| Drop an OBJ on the window to start a vehicle | Test flight straight from the editor |
+| ![The pack page with the vehicle's name, author, version and description, and a message that the pack was exported to a zip](images/phase-11/workshop-pack.png) | ![The finished helicopter parked on a red desert hill, a CH-47 flying past behind it](images/phase-11/workshop-finished-vehicle.png) |
+| Name the pack and export a zip to share | The result is an ordinary content pack |
+
 ## Phase 10 (`1.1.0-beta.6`)
 
 The rest of the equipment: smoke grenades, the GLTD target designator, the rangefinder, cargo
