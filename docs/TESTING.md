@@ -631,6 +631,55 @@ Forge 26.3 only. Start from a world made by beta.5, in survival.
       triangle and distance over the targets, a diamond at the screen edge when looking away; the
       other team sees nothing. Mark point shows a yellow diamond with coordinates for a minute.
 
+## Phase 11 checklist (`1.1.0-beta.7`)
+
+Forge 26.3 only, in single player unless it says otherwise. The guide is
+[docs/content/workshop.md](content/workshop.md). `examples/rework-example-pack` has a model to use.
+
+### Opening and importing
+
+- [ ] The drafting table has a Workshop button. It hands back what was in the table and opens the
+      workshop, which lists the vehicles in `mcheli/packs`.
+- [ ] Drop an OBJ on the window: its path and a vehicle name fill in, and the pack id follows the
+      name. Create opens the editor with the model showing, the right way up, nose towards `+Z`.
+- [ ] A PNG next to the OBJ shows as its texture, glass included; without one the model is grey.
+- [ ] These are refused with a clear message: an `.fbx`, a binary file renamed to `.obj`, an OBJ with
+      a bad vertex number (the line is named), a name with capitals, a pack id already in use.
+- [ ] A model made 16 times too large, or without `$body`, opens with a warning at the bottom.
+
+### Editor
+
+- [ ] Left drag turns the view, right drag moves it, the wheel zooms, R resets. Gizmos stay on their
+      parts through all of it, at every GUI scale.
+- [ ] Add each part type for the kind: it appears in the list and on the model. A wing pylon or
+      propeller blades without a wing or hub ask for one first.
+- [ ] Drag a seat's square and each of its arrows: it follows the mouse, snaps to 1/16 of a block,
+      moves freely with Shift held, and the numbers on the right follow. An arrow pointing at the
+      viewer does nothing rather than jump.
+- [ ] Type a position, an axis and a number; a value that is not a number turns red and is not used.
+- [ ] Rotors spin about the purple line when flown, wheels and gear hinge where placed.
+- [ ] Mirror adds a copy across the middle. Delete removes a part; deleting a wing takes its pylons.
+- [ ] Ctrl + Z steps back through all of that, one drag or one typed value at a time; Ctrl + Y
+      goes forward again.
+- [ ] A part the model has no `$` object for is named at the bottom of the screen.
+- [ ] Removing every seat shows that the game would reject the vehicle, and Test flight says so.
+
+### Tuning, test flight and saving
+
+- [ ] The Tuning tab lists only what the kind has. Defaults show dim; a changed value shows bright
+      and an emptied box goes back to the default. Out of range numbers turn red.
+- [ ] Test flight saves and seats you in the vehicle. It flies with the tuned values and takes no
+      damage. Getting out puts you back where you started, removes the vehicle and reopens the editor
+      with undo intact.
+- [ ] Test flight in a LAN world: another player gets the pack sent and sees the vehicle.
+- [ ] On a dedicated server the button is off with a tooltip saying why; the rest still works.
+- [ ] Closing with unsaved changes asks to save. Save, restart the game, reopen from the list: all
+      there. Comments added to the definition in a text editor survive another save.
+- [ ] Export writes `mcheli/workshop/<id>-<version>.zip`. Put it in the `mcheli/packs` of another
+      game: the vehicle loads and flies. Opening it there makes `<id>-edit` and leaves the zip alone.
+- [ ] A saved pack on a dedicated server: every joining player downloads it and sees the vehicle.
+- [ ] `EnginePosition` and `FuelTankPosition`: a wreck burns at the engine, a crash goes up at the tank.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did
