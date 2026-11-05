@@ -12,9 +12,12 @@ import java.util.List;
  * Reader for Wavefront {@code .obj} files.
  *
  * <p>Follows {@code W_WavefrontObject}: {@code g} always starts a new group, {@code o} only does
- * so when its name begins with {@code $}. Texture V is flipped, positions are used unscaled, and
- * quads are split into two triangles. Normals from the file are used when present, otherwise the
- * face normal is computed.
+ * so when its name begins with {@code $}. Texture V is flipped and positions are used unscaled.
+ * Faces with more than three corners are split into a fan of triangles. Normals from the file are
+ * used when present, otherwise the face normal is computed.
+ *
+ * <p>A line that cannot be read fails the whole file with a {@link ModelFormatException} naming
+ * the line, because players see these messages when they import a model into the workshop.
  */
 public final class ObjLoader {
     private ObjLoader() {
@@ -39,36 +42,42 @@ public final class ObjLoader {
                     continue;
                 }
                 String[] t = line.split(" ");
-                switch (t[0]) {
-                    case "v" -> positions.add(floats(t, 3));
-                    case "vn" -> normals.add(floats(t, 3));
-                    case "vt" -> {
-                        float[] uv = floats(t, 2);
-                        uv[1] = 1.0F - uv[1];
-                        uvs.add(uv);
-                    }
-                    case "g", "o" -> {
-                        if (t.length < 2 || (t[0].equals("o") && !t[1].startsWith("$"))) {
-                            continue;
+                try {
+                    switch (t[0]) {
+                        case "v" -> positions.add(floats(t, 3));
+                        case "vn" -> normals.add(floats(t, 3));
+                        case "vt" -> {
+                            float[] uv = floats(t, 2);
+                            uv[1] = 1.0F - uv[1];
+                            uvs.add(uv);
                         }
-                        if (builder != null) {
-                            groups.add(builder.build(groupName));
-                        }
-                        groupName = t[1];
-                        builder = new TriangleBuilder();
-                    }
-                    case "f" -> {
-                        if (builder == null) {
+                        case "g", "o" -> {
+                            if (t.length < 2 || (t[0].equals("o") && !t[1].startsWith("$"))) {
+                                continue;
+                            }
+                            if (builder != null) {
+                                groups.add(builder.build(groupName));
+                            }
+                            groupName = t[1];
                             builder = new TriangleBuilder();
                         }
-                        if (t.length != 4 && t.length != 5) {
-                            throw new ModelFormatException("%s:%d only triangles and quads are supported".formatted(source, lineNumber));
+                        case "f" -> {
+                            if (builder == null) {
+                                builder = new TriangleBuilder();
+                            }
+                            if (t.length < 4) {
+                                throw new ModelFormatException("a face needs at least three corners");
+                            }
+                            addFace(builder, t, positions, normals, uvs);
                         }
-                        addFace(builder, t, positions, normals, uvs);
+                        default -> {
+                            // mtllib, usemtl, s and friends carry nothing the renderer needs.
+                        }
                     }
-                    default -> {
-                        // mtllib, usemtl, s and friends carry nothing the renderer needs.
-                    }
+                } catch (ModelFormatException e) {
+                    throw new ModelFormatException("%s, line %d: %s".formatted(source, lineNumber, e.getMessage()));
+                } catch (NumberFormatException e) {
+                    throw new ModelFormatException("%s, line %d: not a number in \"%s\"".formatted(source, lineNumber, line));
                 }
             }
         }
@@ -78,20 +87,20 @@ public final class ObjLoader {
         return new Mesh(source, groups);
     }
 
-    private static void addFace(TriangleBuilder builder, String[] t, List<float[]> positions, List<float[]> normals, List<float[]> uvs) {
+    private static void addFace(TriangleBuilder builder, String[] t, List<float[]> positions, List<float[]> normals, List<float[]> uvs)
+            throws ModelFormatException {
         int corners = t.length - 1;
         float[][] p = new float[corners][];
         float[][] n = new float[corners][];
         float[][] uv = new float[corners][];
         for (int i = 0; i < corners; i++) {
             String[] parts = t[i + 1].split("/", -1);
-            p[i] = positions.get(index(parts[0], positions.size()));
-            uv[i] = parts.length > 1 && !parts[1].isEmpty() ? uvs.get(index(parts[1], uvs.size())) : new float[2];
-            n[i] = parts.length > 2 && !parts[2].isEmpty() ? normals.get(index(parts[2], normals.size())) : null;
+            p[i] = element(positions, parts[0], "vertex");
+            uv[i] = parts.length > 1 && !parts[1].isEmpty() ? element(uvs, parts[1], "texture coordinate") : new float[2];
+            n[i] = parts.length > 2 && !parts[2].isEmpty() ? element(normals, parts[2], "normal") : null;
         }
-        emit(builder, p, n, uv, 0, 1, 2);
-        if (corners == 4) {
-            emit(builder, p, n, uv, 0, 2, 3);
+        for (int i = 1; i + 1 < corners; i++) {
+            emit(builder, p, n, uv, 0, i, i + 1);
         }
     }
 
@@ -104,9 +113,13 @@ public final class ObjLoader {
     }
 
     /** OBJ indices are one based and may be negative, counting back from the last element. */
-    private static int index(String token, int size) {
+    private static float[] element(List<float[]> list, String token, String what) throws ModelFormatException {
         int i = Integer.parseInt(token);
-        return i < 0 ? size + i : i - 1;
+        int index = i < 0 ? list.size() + i : i - 1;
+        if (index < 0 || index >= list.size()) {
+            throw new ModelFormatException("a face uses %s %d, but only %d exist at this point".formatted(what, i, list.size()));
+        }
+        return list.get(index);
     }
 
     private static float[] floats(String[] t, int count) {
