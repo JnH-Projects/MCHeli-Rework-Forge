@@ -51,6 +51,8 @@ public class AircraftRenderState extends EntityRenderState {
     public boolean localFirstPerson;
     /** Shade for the unlit glass, from the light at the vehicle. */
     public int glassColor = 0xFFFFFFFF;
+    /** Drawn inside a screen, as the workshop does, rather than in the world. */
+    public boolean inGui;
 
     /** Per {@code AddPartWeapon} line, the state of the weapon it belongs to; see {@link WeaponPartState}. */
     public WeaponPartState[] weaponParts = new WeaponPartState[0];
