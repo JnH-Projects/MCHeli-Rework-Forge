@@ -40,6 +40,8 @@ public final class RuntimeAssets {
 
     /** Searched in order, so the pack loaded last comes first. Replaced as a whole. */
     private static volatile List<Path> roots = List.of();
+    /** The pack open in the workshop, searched first whether the game has loaded it or not. */
+    private static volatile @Nullable Path workshopRoot;
     /** Every vehicle texture asked for, and whether we uploaded it ourselves. */
     private static final Map<Identifier, Boolean> TEXTURES = new ConcurrentHashMap<>();
 
@@ -52,6 +54,11 @@ public final class RuntimeAssets {
      */
     public static void setRoots(List<Path> folders) {
         roots = List.copyOf(folders);
+    }
+
+    /** Sets the {@code assets/mcheli} folder of the pack open in the workshop, or {@code null} for none. */
+    public static void setWorkshopRoot(@Nullable Path folder) {
+        workshopRoot = folder;
     }
 
     /** Opens an {@code mcheli} asset from the resource packs, or else from a runtime root. */
@@ -130,12 +137,24 @@ public final class RuntimeAssets {
     }
 
     private static @Nullable Path find(String path) {
+        Path workshop = workshopRoot;
+        if (workshop != null) {
+            Path file = inRoot(workshop, path);
+            if (file != null) {
+                return file;
+            }
+        }
         for (Path root : roots) {
-            Path file = root.resolve(path).normalize();
-            if (file.startsWith(root) && Files.isRegularFile(file)) {
+            Path file = inRoot(root, path);
+            if (file != null) {
                 return file;
             }
         }
         return null;
+    }
+
+    private static @Nullable Path inRoot(Path root, String path) {
+        Path file = root.resolve(path).normalize();
+        return file.startsWith(root) && Files.isRegularFile(file) ? file : null;
     }
 }

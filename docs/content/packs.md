@@ -8,6 +8,9 @@ player who joins gets the server's packs sent automatically.
 A pack is data only. The game refuses a pack that holds anything but the file types listed
 below, so installing or downloading one can never run code on your machine.
 
+The easiest way to make one is the [workshop](workshop.md), in game. This page is the format itself,
+for writing or changing a pack by hand.
+
 The [example pack](../../examples/rework-example-pack) in this repository has one helicopter, the
 Rework Scout, and is the quickest way to start: copy it, rename it and change it. It is public
 domain (CC0 1.0), so what you build from it is entirely yours.

@@ -2,10 +2,9 @@
 
 This guide covers the model side of a new vehicle: the part you build outside Minecraft. The
 vehicle itself (seats, rotors, wings, engine, weapons, flight values) is described by a definition
-file, see [aircraft.md](aircraft.md). The vehicle workshop planned for 1.1.0 (see
-[ROADMAP.md](../ROADMAP.md), phases 10 and 11) will let you do that second half in game by clicking on the
-model instead of typing coordinates. The model rules below are the same either way, so a model
-made today keeps working in the workshop.
+file, see [aircraft.md](aircraft.md). The [workshop](workshop.md) does that second half in game, by
+dragging parts on the model instead of typing coordinates. The model rules below are the same
+either way.
 
 ## The short version
 
@@ -89,7 +88,8 @@ definition or click in the workshop.
 * Back faces are culled, as in the original. A face whose normal points into the vehicle is
   invisible from outside. In Blender, show face orientation (Overlays > Face Orientation): every
   outside face should be blue. Recalculate outside (Shift + N) fixes most of them.
-* Triangles and quads are fine; larger polygons should be triangulated before export.
+* Triangles and quads are fine. Larger polygons are split into a fan of triangles, which only looks
+  right for flat, convex ones, so triangulate anything else before export.
 * Normals from the file are used for shading, so smooth or flat shading exported from your tool
   shows as you set it.
 
@@ -123,10 +123,5 @@ install by dropping it into `mcheli/packs` and servers send to everyone who join
 [packs.md](packs.md), and the example pack in `examples/rework-example-pack`, whose Rework Scout
 follows this guide.
 
-## What the workshop will do with the model
-
-Once the model is imported, the workshop shows it in 3D and asks you to connect each part to
-what it does: click the `$blade0` hub to place the rotor, the seat cushions to place seats, the
-engine and fuel tank to set where damage starts fires, the wing tips for lift, the gun barrels for
-weapons, and drag boxes over the hull for hit boxes. It then writes the definition for you. A
-model made with the names and pivots above needs no changes for that.
+The [workshop](workshop.md) makes the pack for you: drop the OBJ on the game window, then place each
+pivot on the model. It says which `$` objects a part you placed expects and the model lacks.

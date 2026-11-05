@@ -165,6 +165,9 @@ public abstract class AircraftEntity extends VehicleEntity {
     private @Nullable Vec3 stationReturn;
     /** Remote pilots leaving this tick, by entity id, with where they come back down. */
     private final Map<Integer, Vec3> remoteReturns = new HashMap<>();
+    /** Where a workshop test flight started, or {@code null} for an ordinary vehicle. Server only. */
+    private @Nullable Vec3 testFlightStart;
+    private boolean testFlightOver;
     /** How far the ropes hang below their hooks, as a negative number; both sides let them out. */
     private float ropeLength;
     private int repellingTicks;
@@ -707,8 +710,25 @@ public abstract class AircraftEntity extends VehicleEntity {
 
     // Tick
 
+    /**
+     * Makes this a workshop test flight: it takes no damage, is not saved with the world, and goes
+     * away once its pilot gets out, putting them back where they started.
+     */
+    public void startTestFlight(Vec3 start) {
+        testFlightStart = start;
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return testFlightStart == null && super.shouldBeSaved();
+    }
+
     @Override
     public void tick() {
+        if (testFlightOver) {
+            discard();
+            return;
+        }
         rollO = roll();
         if (getHurtTime() > 0) {
             setHurtTime(getHurtTime() - 1);
@@ -1390,6 +1410,10 @@ public abstract class AircraftEntity extends VehicleEntity {
             input.clear();
             if (station != null) {
                 endRemoteControl(passenger);
+            }
+            if (testFlightStart != null) {
+                remoteReturns.put(passenger.getId(), testFlightStart);
+                testFlightOver = true;
             }
         }
     }
@@ -2382,7 +2406,7 @@ public abstract class AircraftEntity extends VehicleEntity {
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
         float boxFactor = consumeHitBoxFactor();
-        if (isRemoved() || isInvulnerableToBase(source) || timeSinceHit > 0) {
+        if (testFlightStart != null || isRemoved() || isInvulnerableToBase(source) || timeSinceHit > 0) {
             return false;
         }
         if (source.is(DamageTypes.IN_FIRE) || source.is(DamageTypes.CACTUS)) {
@@ -2508,10 +2532,11 @@ public abstract class AircraftEntity extends VehicleEntity {
         exploded = true;
         AircraftDefinition def = definition();
         float size = Mth.clamp(def != null ? def.maxFuel / 400.0F : 2.0F, 1.0F, 15.0F);
-        Explosions.explode(level, getX(), getY(), getZ(),
+        Vec3 at = def != null && def.fuelTankPosition != null ? toWorld(def.fuelTankPosition) : position();
+        Explosions.explode(level, at.x, at.y, at.z,
                 new Explosions.Params(null, null, size, size >= 2.0F ? size * 0.5F : 1.0F, true, true, 5, false, null));
         if (!isInWater()) {
-            Explosions.crashFireball(level, getX(), getY(), getZ(), size);
+            Explosions.crashFireball(level, at.x, at.y, at.z, size);
         }
     }
 
@@ -2699,7 +2724,7 @@ public abstract class AircraftEntity extends VehicleEntity {
             return;
         }
         float left = Math.clamp((float) (WRECK_TICKS - wreckTicks) / WRECK_FADE_TICKS, 0.15F, 1.0F);
-        Vec3 centre = position().add(0.0, def.bodyHeight / 2.0, 0.0);
+        Vec3 centre = def.enginePosition != null ? toWorld(def.enginePosition) : position().add(0.0, def.bodyHeight / 2.0, 0.0);
         if (wreckTicks % 8 == 0) {
             // Each glow outlives the gap to the next, so the fire never goes dark in between.
             float size = Math.clamp(def.bodyWidth * 0.8F, 2.0F, 8.0F) * left;

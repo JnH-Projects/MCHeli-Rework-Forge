@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.client.screen;
 
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.workshop.WorkshopHomeScreen;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.WeaponGroup;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
@@ -12,6 +13,7 @@ import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModItems;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -91,7 +93,16 @@ public class DraftingTableScreen extends AbstractContainerScreen<DraftingTableMe
                 .bounds(leftPos + 210, topPos + 210, 60, 20).build());
         nextPage = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.drafting_table.next_page"), b -> turnPage(1))
                 .bounds(leftPos + 270, topPos + 210, 60, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.drafting_table.workshop"), b -> openWorkshop())
+                .tooltip(Tooltip.create(Component.translatable("gui.mcheli.drafting_table.workshop_hint")))
+                .bounds(leftPos + 334, topPos + 210, 56, 20).build());
         selectList(list);
+    }
+
+    /** The workshop is a screen of its own and needs no block, so the table's menu closes first. */
+    private void openWorkshop() {
+        minecraft.player.closeContainer();
+        minecraft.gui.setScreen(new WorkshopHomeScreen());
     }
 
     /** Every MCHeli recipe the recipe book holds, sorted into the five lists by what it makes. */

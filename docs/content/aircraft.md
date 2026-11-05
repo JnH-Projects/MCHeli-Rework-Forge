@@ -247,6 +247,8 @@ the old damage values to the flattened item names.
 | `InventorySize = 18` | Slots in the cargo chest, up to 54. Sizes between rows round up to a whole row of 9. |
 | `Regeneration = true` | Mobs from seat 2 onwards heal over time. |
 | `Stealth = 0.5` | 0.0 to 1.0, default 0.0. Higher values make missile locks take longer and shorten lock range. |
+| `EnginePosition = X, Y, Z` | Where a wreck burns. Not in the original; without it, the middle of the body. |
+| `FuelTankPosition = X, Y, Z` | Where a crash explodes. Not in the original; without it, the vehicle's origin. |
 
 `BoundingBox = center X, center Y, center Z, width, height, damage multiplier` adds a hit box that
 only the mod's guns and missiles hit; blocks and entities ignore it. Turn on test mode to see it.

@@ -23,6 +23,7 @@ import com.jnhprojects.mcheli.client.screen.TeamManagerScreen;
 import com.jnhprojects.mcheli.client.screen.UavStationScreen;
 import com.jnhprojects.mcheli.client.screen.VehicleScreen;
 import com.jnhprojects.mcheli.client.sound.EngineSoundPlayer;
+import com.jnhprojects.mcheli.client.workshop.WorkshopClient;
 import com.jnhprojects.mcheli.entity.ClientAccess;
 import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.registry.ModBlockEntities;
@@ -148,6 +149,7 @@ public final class ClientHooks {
         HudRenderer.tick();
         EngineSoundPlayer.tick();
         TargetMarkers.tick();
+        WorkshopClient.tick();
         while (KeyBindings.TEAM_MANAGER.consumeClick()) {
             openTeamManager();
         }
@@ -296,6 +298,7 @@ public final class ClientHooks {
 
     public static void loggedOut() {
         ClientPacks.INSTANCE.loggedOut();
+        WorkshopClient.loggedOut();
         Markers.clear();
     }
 }

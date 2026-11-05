@@ -9,10 +9,11 @@ MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecra
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0, now at phase 10 (`1.1.0-beta.6`). Every helicopter, plane,
+> **Status:** on the way to 1.1.0, now at phase 11 (`1.1.0-beta.7`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
-> equipment are in, down to UAV stations, the drafting table and the team manager. Betas ship the
+> equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
+> workshop builds new vehicles in game from a Blockbench or Blender model. Betas ship the
 > Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
 > on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
 > [roadmap](docs/ROADMAP.md).
@@ -32,20 +33,19 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
-Phase 10 in a development build (`1.1.0-beta.6`): smoke grenades, the GLTD target designator, the
-rangefinder, cargo containers and the tow chain. Every earlier phase is in the
+The vehicle workshop in a development build (`1.1.0-beta.7`): bring a model
+from Blockbench or Blender, place its parts on it, tune it and fly it. The helicopter here is the
+example pack's Rework Scout. Every earlier phase is in the
 [screenshot gallery](docs/SCREENSHOTS.md).
 
 | | |
 |---|---|
-| ![A green M18 smoke cloud rising from a hilltop by a lake](docs/images/phase-10/m18-green-smoke.png) | ![The view through the GLTD sight over a desert village, a red cross on the target and the readout "A-10 on call"](docs/images/phase-10/gltd-sight.png) |
-| An M18 smoke grenade marks a spot in green | Through the GLTD's sight, with the A-10 on call |
-| ![Two A-10s pulling away over a desert hill after strafing it, the readout counting down "A-10 rearming"](docs/images/phase-10/gltd-a-10-strike.png) | ![A player sitting behind the GLTD tripod, its red laser running out over the sand](docs/images/phase-10/gltd-tripod.png) |
-| The A-10 makes its gun runs over the marked spot | The GLTD from outside: the head follows the aim, with a faint laser |
-| ![The rangefinder scope on an AH-64 at 163 metres, the spot modes listed at the side](docs/images/phase-10/rangefinder-scope.png) | ![A cargo container coming down over a desert under two parachutes](docs/images/phase-10/container-parachute-drop.png) |
-| The rangefinder reads the range to an AH-64 | A container dropped from a rack comes down under a parachute |
-| ![A cargo container chained to the side of an M1A2 tank](docs/images/phase-10/chain-tow-m1a2.png) | ![A CH-47 flying over canyons with a container hanging below it on the tow chain](docs/images/phase-10/ch47-sling-load.png) |
-| An M1A2 with a container on the tow chain | A CH-47 carries a container as a sling load |
+| ![The workshop editor: a small helicopter on a grid, a hit box outlined around its cockpit, coloured handles on its parts, and the main rotor selected with arrows, its axis and its values in the side panel](docs/images/phase-11/workshop-editor.png) | ![The tuning page beside the helicopter, listing hit points, top speed, gravity, turn rates, fuel and armor](docs/images/phase-11/workshop-tuning.png) |
+| Place every part by dragging it on the model | Tune how it flies; values you changed stand out from the defaults |
+| ![The workshop's first screen: vehicles in the packs on the left, and a form for a new vehicle with a dropped OBJ file on the right](docs/images/phase-11/workshop-import.png) | ![The view from the helicopter's cockpit in flight over a desert coast, with the instruments on the HUD](docs/images/phase-11/workshop-test-flight.png) |
+| Drop an OBJ on the window to start a vehicle | Test flight straight from the editor |
+| ![The pack page with the vehicle's name, author, version and description, and a message that the pack was exported to a zip](docs/images/phase-11/workshop-pack.png) | ![The finished helicopter parked on a red desert hill, a CH-47 flying past behind it](docs/images/phase-11/workshop-finished-vehicle.png) |
+| Name the pack and export a zip to share | The result is an ordinary content pack |
 
 ## Credits
 
@@ -135,7 +135,8 @@ chain), troops, the team manager and the commands and server settings are in
 Content packs add vehicles and weapons: drop a pack (a zip or a folder) into
 `<game dir>/mcheli/packs`. On a server only the server needs it; players download the server's
 packs automatically when they join. [examples/rework-example-pack](examples/rework-example-pack)
-adds a small helicopter, the Rework Scout. To make your own, see
+adds a small helicopter, the Rework Scout. To make your own, use the
+[workshop](docs/content/workshop.md) in game, or write one by hand with
 [docs/content/packs.md](docs/content/packs.md).
 
 ## Documentation
@@ -147,7 +148,7 @@ adds a small helicopter, the Rework Scout. To make your own, see
 * [Architecture](docs/ARCHITECTURE.md): how the mod is put together
 * [Development](docs/DEVELOPMENT.md): building, running, testing and releasing
 * [In-game test plan](docs/TESTING.md)
-* Content authoring: [content packs](docs/content/packs.md), [modeling in Blockbench or Blender](docs/content/modeling.md), [vehicles](docs/content/aircraft.md), [weapons](docs/content/weapons.md), [HUD scripts](docs/content/hud.md)
+* Content authoring: [the workshop](docs/content/workshop.md), [content packs](docs/content/packs.md), [modeling in Blockbench or Blender](docs/content/modeling.md), [vehicles](docs/content/aircraft.md), [weapons](docs/content/weapons.md), [HUD scripts](docs/content/hud.md)
 * [Contributing](CONTRIBUTING.md): rules for pull requests and bug reports
 
 ## Building from source
