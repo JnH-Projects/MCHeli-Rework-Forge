@@ -3,7 +3,7 @@
 Every phase of MCHeli Rework in development builds, newest first. The [README](../README.md)
 shows the latest phase only.
 
-## Phase 11 (on the way to `1.1.0-beta.7`)
+## Phase 11 (`1.1.0-beta.7`)
 
 The vehicle workshop: importing a model, placing its parts, tuning, test flights and saving a pack.
 The helicopter is the example pack's Rework Scout.
