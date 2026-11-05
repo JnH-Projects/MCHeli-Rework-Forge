@@ -77,6 +77,10 @@ public abstract class AircraftDefinition extends Definition {
     public float repairOtherVehiclesRange;
     public int repairOtherVehiclesValue = 10;
     public int inventorySize;
+    /** {@code EnginePosition}, not in the original: where a wreck burns. Its middle when unset. */
+    public @Nullable Vector3 enginePosition;
+    /** {@code FuelTankPosition}, not in the original: where a crash goes up. Its origin when unset. */
+    public @Nullable Vector3 fuelTankPosition;
 
     // Body and physics
     public float bodyWidth = 2.0F;
@@ -368,6 +372,18 @@ public abstract class AircraftDefinition extends Definition {
             }
         });
         keys.put("InventorySize", v -> inventorySize = toInt(v, 0, 54));
+        keys.put("EnginePosition", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                enginePosition = toVec(s[0], s[1], s[2]);
+            }
+        });
+        keys.put("FuelTankPosition", v -> {
+            String[] s = split(v);
+            if (s.length >= 3) {
+                fuelTankPosition = toVec(s[0], s[1], s[2]);
+            }
+        });
 
         keys.put("Width", v -> bodyWidth = toFloat(v, 0.1F, 1000.0F));
         keys.put("Height", v -> bodyHeight = toFloat(v, 0.1F, 1000.0F));
