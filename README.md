@@ -9,11 +9,11 @@ MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecra
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0. The latest release is phase 10 (`1.1.0-beta.6`), and phase 11, the
-> vehicle workshop, is in development. Every helicopter, plane,
+> **Status:** on the way to 1.1.0, now at phase 11 (`1.1.0-beta.7`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
-> equipment are in, down to UAV stations, the drafting table and the team manager. Betas ship the
+> equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
+> workshop builds new vehicles in game from a Blockbench or Blender model. Betas ship the
 > Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
 > on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
 > [roadmap](docs/ROADMAP.md).
@@ -33,7 +33,7 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
-The vehicle workshop in a development build (phase 11, on the way to `1.1.0-beta.7`): bring a model
+The vehicle workshop in a development build (`1.1.0-beta.7`): bring a model
 from Blockbench or Blender, place its parts on it, tune it and fly it. The helicopter here is the
 example pack's Rework Scout. Every earlier phase is in the
 [screenshot gallery](docs/SCREENSHOTS.md).
