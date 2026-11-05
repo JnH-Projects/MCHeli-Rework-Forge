@@ -37,6 +37,7 @@ This document explains how MCHeli Rework is organized and why. It reflects the c
  │ model           Mesh, MqoLoader, ObjLoader                     │  pure Java
  │ hud             HudScript, Expression, HudVariable             │
  │ physics         AircraftRotation, GroundImpact                 │
+ │ workshop        WorkshopProject, DefinitionDocument, PartType  │
  │ effect          NightGlow                                      │
  │ config          ConfigSpec (the TOML config format)            │
  └────────────────────────────────────────────────────────────────┘
@@ -686,6 +687,52 @@ layer shows a plain text readout instead.
 `RenderLivingEvent.Pre`; the camera eye follows the same up axis.
 
 **MeshCache** parses models on first use and is cleared on resource reload (F3 + T).
+
+## Workshop
+
+The workshop edits a content pack, so nothing else in the mod has to know it exists: a saved vehicle
+loads, syncs and renders like any other.
+
+The pure half is `workshop` in `common`, tested without Minecraft:
+
+- **`DefinitionDocument`** is the definition as lines of text, with the `DefinitionReader` rules for
+  what counts as an entry. An edit changes one line, so comments and keys the editor has no panel
+  for survive. `DefinitionReader.read(String, T)` parses it on every edit (a file takes microseconds)
+  and that parsed definition is both what the screen draws and how problems are found, so the editor
+  and the game cannot disagree about what a line means.
+- **`PartType`** is a table of the lines the editor places: the layout of each one's values
+  (`PartField`), and the value counts its parser accepts. Those counts matter, since several parsers
+  read meaning into a line's length: `WorkshopPart.with` writes the shortest accepted length that
+  keeps every value set, never less than the line had. `PartTypeTest` feeds every entry through the
+  real parser, so the table cannot drift from it. `TuningKey` does the same for the tuning page,
+  taking each default from a blank definition.
+- **`WorkshopProject`** is one vehicle in one pack folder: create, open, save, export. Saving writes a
+  folder in `mcheli/packs` because a zip pack stays open while in use, which would make replacing one
+  fail on Windows. Opening a zip makes a folder copy with `-edit` in its id, which loads after the
+  original and so replaces its vehicles (see [load order](content/packs.md#load-order-and-replacing-vehicles)).
+- **`ModelImport`** checks an OBJ and turns what is wrong into messages for its author.
+- **`EditHistory`** is undo and redo by snapshot of the lines. Consecutive changes with one merge key
+  are one step, which is what makes a drag or a typed number undo in one go.
+- **`WorkshopCamera`** is the orthographic view: `project` for gizmos, `unproject` for dragging.
+
+`client.workshop` holds the screens. `WorkshopScreen` hands an `AircraftRenderState` holding the
+parsed definition to vanilla's `GuiGraphicsExtractor.entity`, which draws through the registered
+`AircraftRenderer` into a picture-in-picture texture. So the preview is the real renderer with glass
+and moving parts, on every loader, with no renderer of our own to register. The only difference is
+`inGui`: glass is normally culled on the CPU by assuming the camera sits at the origin, which does
+not hold in a GUI. `RuntimeAssets.setWorkshopRoot` puts the open pack ahead of the runtime roots, so
+its model and texture draw before the game has loaded the pack.
+
+Gizmos are 2D GUI drawing on the points `WorkshopCamera.project` gives, in the stratum above the
+picture. So they never hide behind the hull, which is where seats and pivots usually are. The camera's
+rotation and translation go to `entity` as they are, and a test checks `project` against them.
+
+A test flight (`TestFlightPacket`, `workshop.TestFlight`) saves, reloads the content on the server as
+`/mcheli reload` would, and seats the player in a vehicle made with `AircraftEntity.startTestFlight`.
+It takes no damage, is not saved with the world, returns its pilot through the same path as a remote
+pilot and discards itself on its next tick. Only the owner of an integrated server may ask: the pack
+is on that machine, and a dedicated server has no way to get it yet. `WorkshopClient` keeps the screen
+across the flight and reopens it when the player is out, or after five seconds if no vehicle came.
 
 ## Assets
 
