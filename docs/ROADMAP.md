@@ -279,13 +279,13 @@ Built and tested on Forge 26.3 only. What was not done in this phase moved to ph
 The first half of the [editor](#the-editor). Its output is a pack from phase 6, so anything
 built here syncs to other players with no extra work.
 
-- [ ] Workshop block (or the drafting table) opening a 3D editor screen around the model
-- [ ] OBJ import from Blockbench or Blender, with clear errors for unsupported files
-- [ ] Gizmos for seats, cameras, rotors, wings, flaps, nozzles, wheels, tracks, landing gear,
+- [x] The drafting table opening a 3D editor screen around the model
+- [x] OBJ import from Blockbench or Blender, with clear errors for unsupported files
+- [x] Gizmos for seats, cameras, rotors, wings, flaps, nozzles, wheels, tracks, landing gear,
       canopy and hatches, weapon mounts, hit boxes, engine and fuel tank
-- [ ] Flight and drive tuning with a test flight from the editor
-- [ ] Save, export and load packages; undo and redo
-- [ ] Workshop guide in `docs/content/workshop.md`
+- [x] Flight and drive tuning with a test flight from the editor
+- [x] Save, export and load packages; undo and redo
+- [x] Workshop guide in `docs/content/workshop.md`
 
 ## Phase 12: workshop, textures, sounds and sharing (`1.1.0-beta.8`)
 
@@ -327,7 +327,6 @@ No new features after beta.9; a `1.1.0-rc.N` follows only if beta.9 testing find
 
 ## Open decisions
 
-- **Workshop entry point.** A new workshop block, or a tab in the drafting table.
 - **Pack hosting.** Whether there is ever a shared place to publish packs, or only hand sharing
   and server sync.
 
@@ -365,7 +364,8 @@ player's `mcheli/packs`.
 
 ### The editor
 
-A workshop block (or the drafting table) opens a 3D editor screen around the model:
+The drafting table opens a 3D editor screen around the model. A button there needs no new block, art
+or recipe, and the editor is a screen of its own once it is open:
 
 - **Model:** import an OBJ made in Blockbench or Blender. Modelling a full airliner inside
   Minecraft is not realistic; a simple box builder for small vehicles can come later.
