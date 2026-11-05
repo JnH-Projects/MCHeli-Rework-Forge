@@ -34,10 +34,15 @@ public final class DefinitionReader {
     }
 
     public static <T extends Definition> Result<T> read(Path file, T definition) throws IOException {
+        return read(decode(Files.readAllBytes(file)), definition);
+    }
+
+    /** Reads text that is already in memory, such as the definition open in the workshop. */
+    public static <T extends Definition> Result<T> read(String text, T definition) throws IOException {
         List<String> problems = new ArrayList<>();
         Set<String> unhandled = new LinkedHashSet<>();
 
-        try (BufferedReader reader = new BufferedReader(new StringReader(decode(Files.readAllBytes(file))))) {
+        try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
             String line;
             int lineNumber = 0;
             while ((line = reader.readLine()) != null) {
@@ -78,7 +83,7 @@ public final class DefinitionReader {
      * Files are meant to be UTF-8, but a few of the shipped ones were saved as Shift-JIS by the
      * original author's editor. Fall back to Windows-31J rather than mangling those comments.
      */
-    static String decode(byte[] bytes) {
+    public static String decode(byte[] bytes) {
         try {
             return StandardCharsets.UTF_8.newDecoder()
                     .onMalformedInput(CodingErrorAction.REPORT)
