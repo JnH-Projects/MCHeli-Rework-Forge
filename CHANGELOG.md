@@ -13,9 +13,28 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
   and Fabric on 26.2, 26.1, 1.21.11, 1.21.5 and 1.20.6, and Forge and Fabric on 1.20.2 and 1.19.4.
   Each downloads its loader and only logs at startup; none of them is built by default or shipped
   in a beta. See docs/DEVELOPMENT.md.
+- The vehicle workshop, first half: build a vehicle in game from a Blockbench or Blender model. The
+  drafting table's Workshop button opens it; the guide is docs/content/workshop.md.
+  - Import an OBJ by dropping it on the window or pasting its path. Files that cannot be used are
+    refused with the reason, and suspicious ones (no `$body`, no texture coordinates, a size that
+    suggests the wrong scale) open with a warning.
+  - A 3D editor around the model, drawn by the game's own vehicle renderer. Gizmos place seats,
+    cameras, rotors, propellers, wings, flaps, nozzles, wheels, tracks, landing gear, canopies,
+    hatches, weapons, hit boxes, the engine and the fuel tank, with a snap to 1/16 of a block.
+  - A tuning page for speed, turn rates, gravity, fuel, hit points, armor and so on, listing only
+    what the kind has and showing the real defaults.
+  - Test flight from the editor in a world you host, on a vehicle that takes no damage and goes away
+    when you get out, back to the editor.
+  - Undo and redo. Save writes an ordinary pack folder to `mcheli/packs`, keeping comments and any
+    keys the editor has no panel for. Export writes a zip to share to `mcheli/workshop`. Any pack
+    vehicle with an OBJ model can be opened; one in a zip opens from an `-edit` copy.
+- `EnginePosition` and `FuelTankPosition` definition keys: where a wreck burns and where a crash
+  explodes.
 
 ### Changed
 
+- OBJ models may have faces with more than four corners, and a bad line now names its line number.
+- The network protocol changed (10), so players and servers need the same version.
 - The supported version list for final releases is now 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1,
   and 1.20.6 on Forge, NeoForge and Fabric, and 1.20.2 and 1.19.4 on Forge and Fabric (25 jars). 1.20.1
   is no longer planned, and older versions are no longer frozen after 1.1.0.
