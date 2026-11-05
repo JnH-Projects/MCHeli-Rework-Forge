@@ -40,6 +40,21 @@ public record PackManifest(String id, String name, String author, String version
                 value(p, "version", "1.0.0", 32), value(p, "description", "", 256));
     }
 
+    /** The file's text, for the workshop. {@link #read} gives back the same values. */
+    public String text() {
+        return "id = " + escape(id) + "\nname = " + escape(name) + "\nauthor = " + escape(author)
+                + "\nversion = " + escape(version) + "\ndescription = " + escape(description) + "\n";
+    }
+
+    private static String escape(String value) {
+        return value.replace("\\", "\\\\").replace("\n", " ").replace("\r", " ");
+    }
+
+    /** Whether a text can be a pack id. */
+    public static boolean isValidId(String id) {
+        return ID.matcher(id).matches() && !id.equals(ContentSource.ORIGINAL);
+    }
+
     private static String value(Properties p, String key, String fallback, int maxLength) {
         String value = p.getProperty(key, "").trim();
         if (value.isEmpty()) {
