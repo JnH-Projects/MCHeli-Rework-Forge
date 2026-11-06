@@ -100,6 +100,11 @@ public final class RuntimeAssets {
         }
     }
 
+    /** Uploads one texture again, read fresh from disk: the workshop just replaced its file. */
+    public static void refreshTexture(Identifier id) {
+        TEXTURES.put(id, upload(id));
+    }
+
     private static boolean upload(Identifier id) {
         try (InputStream in = open(id)) {
             if (in == null) {
