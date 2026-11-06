@@ -20,7 +20,7 @@ public final class KeyBindings {
     /** Cycles the pilot's camera positions, or toggles the gunner sight in seats that allow it. */
     public static final KeyMapping SWITCH_CAMERA = new KeyMapping("key.mcheli.switch_camera", InputConstants.KEY_H, CATEGORY);
     public static final KeyMapping LANDING_GEAR = new KeyMapping("key.mcheli.landing_gear", InputConstants.KEY_B, CATEGORY);
-    /** Folds hatches and wings, sweeps variable geometry wings. */
+    /** Zooms through a sight, as the original Z key did; otherwise folds hatches and wings, sweeps variable geometry wings. */
     public static final KeyMapping FOLD = new KeyMapping("key.mcheli.fold", InputConstants.KEY_Z, CATEGORY);
     /** The original used F, which vanilla now uses to swap hands. */
     public static final KeyMapping VTOL = new KeyMapping("key.mcheli.vtol", InputConstants.KEY_V, CATEGORY);
@@ -32,11 +32,17 @@ public final class KeyBindings {
     public static final KeyMapping WEAPON_MODE = new KeyMapping("key.mcheli.weapon_mode", InputConstants.KEY_X, CATEGORY);
     /** The original used V, which VTOL took over. */
     public static final KeyMapping FLARE = new KeyMapping("key.mcheli.flare", InputConstants.KEY_C, CATEGORY);
-    /** The original resupplied from the vehicle's inventory screen, which does not exist yet. */
-    public static final KeyMapping RESUPPLY = new KeyMapping("key.mcheli.resupply", InputConstants.KEY_N, CATEGORY);
+    /** Fuel and parachute slots, reloading and the cargo chest. The original used R, which switches seats here. */
+    public static final KeyMapping VEHICLE_SCREEN = new KeyMapping("key.mcheli.vehicle_screen", InputConstants.KEY_I, CATEGORY);
+    /** Night vision, thermal view and back in vehicles with {@code EnableNightVision}. The original used C, now the flare key. */
+    public static final KeyMapping CAMERA_MODE = new KeyMapping("key.mcheli.camera_mode", InputConstants.KEY_K, CATEGORY);
+    /** The pilot lets the troops down; anyone else aboard slides down a rope or jumps. The original used Y for the pilot's part. */
+    public static final KeyMapping DROP_CREW = new KeyMapping("key.mcheli.drop_crew", InputConstants.KEY_Y, CATEGORY);
+    /** Operators open the team manager, as the original's multiplayer manager key M did. */
+    public static final KeyMapping TEAM_MANAGER = new KeyMapping("key.mcheli.team_manager", InputConstants.KEY_M, CATEGORY);
 
     public static final List<KeyMapping> ALL = List.of(FREE_LOOK, SWITCH_CAMERA, LANDING_GEAR, FOLD, VTOL, SWITCH_SEAT, RACK_LOAD, RACK_UNLOAD,
-            SWITCH_WEAPON, WEAPON_MODE, FLARE, RESUPPLY);
+            SWITCH_WEAPON, WEAPON_MODE, FLARE, VEHICLE_SCREEN, CAMERA_MODE, DROP_CREW, TEAM_MANAGER);
 
     private KeyBindings() {
     }
