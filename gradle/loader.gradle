@@ -70,20 +70,27 @@ tasks.named('processResources', ProcessResources) {
     }
 }
 
+// What the repository holds under its resource folders is ours and ships. Worked out from the
+// folders, because a hand-written list misses every file added later and nothing shows it:
+// development runs read the source folders, so only a real jar lacked them (betas 4 to 8 shipped
+// without the equipment recipes, the thermal shader, the smoke particle or the drafting table model).
+def ownResources = [] as Set<String>
+if (!scaffold) {
+    [project(':common').file('src/main/resources'),
+     rootProject.file("minecraft-${minecraft_version}/src/main/resources")].each { root ->
+        fileTree(root).visit { if (!it.directory) ownResources << it.relativePath.pathString }
+    }
+}
+
 tasks.named('jar', Jar) {
     // EMB4's content is never redistributed: players import it from their own copy of the original
     // zip (LegacyContent). The repository no longer holds it, but the jar is packed from the
     // resource output, which can still have copies from older builds and from the IDE.
-    def shipped = ['assets/mcheli/items/helicopter.json', 'assets/mcheli/items/plane.json',
-                   'assets/mcheli/items/tank.json', 'assets/mcheli/items/vehicle.json',
-                   // Our own: the night glow sprite (generated, no EMB4 content) and its particle definition.
-                   'assets/mcheli/particles/glow.json', 'assets/mcheli/textures/particle/glow.png']
     exclude { FileTreeElement element ->
         String path = element.relativePath.pathString
-        !element.directory && path.startsWith('assets/mcheli/') && !path.startsWith('assets/mcheli/lang/') &&
-                !shipped.contains(path)
+        !element.directory && (path.startsWith('assets/mcheli/') || path.startsWith('data/mcheli/recipe/')) &&
+                !ownResources.contains(path)
     }
-    exclude 'data/mcheli/recipe/**'
     includeEmptyDirs = false
     // The licence travels with every copy of the jar.
     from(rootProject.file('LICENSE'))
