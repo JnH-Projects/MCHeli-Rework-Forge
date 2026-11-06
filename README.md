@@ -2,8 +2,8 @@
 
 <img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
 
-Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3**, **26.2**, **26.1** and
-**1.21.1**, on **Forge**, **NeoForge** and **Fabric**.
+Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3**, **26.2**, **26.1**,
+**1.21.11** and **1.21.1**, on **Forge**, **NeoForge** and **Fabric**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
 system is rewritten for the modern game, while the original vehicle definitions, models,
@@ -89,13 +89,14 @@ Reserved original, the code is source available rather than open source.
 | 26.3 | 66.1.0 or newer in 66.x | 26.3.0.99 or newer | Loader 0.20 and Fabric API | 25 |
 | 26.2 | 65.1.5 or newer in 65.x | 26.2.0.93 or newer | Loader 0.20 and Fabric API | 25 |
 | 26.1 | 62.0.9 or newer in 62.x | 26.1.2.126 or newer | Loader 0.20 and Fabric API | 25 |
+| 1.21.11 | 61.2.4 or newer in 61.x | 21.11.48 or newer | Loader 0.16 and Fabric API | 21 |
 | 1.21.1 | 52.1.0 or newer | 21.1.200 or newer | Loader 0.16 and Fabric API | 21 |
 
 The launcher bundles the right Java for each version.
 
 ## Installing
 
-1. Install Forge, NeoForge or Fabric for Minecraft 26.3, 26.2, 26.1 or 1.21.1. On Fabric, also install
+1. Install Forge, NeoForge or Fabric for Minecraft 26.3, 26.2, 26.1, 1.21.11 or 1.21.1. On Fabric, also install
    [Fabric API](https://modrinth.com/mod/fabric-api).
 2. Download the jar for your loader from the
    [releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases):
