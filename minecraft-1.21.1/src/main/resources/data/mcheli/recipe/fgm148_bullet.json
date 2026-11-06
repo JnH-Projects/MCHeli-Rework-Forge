@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {"tag": "c:gunpowders"},
+    "I": {"tag": "c:ingots/iron"},
+    "R": {"tag": "c:dusts/redstone"}
+  },
+  "pattern": [
+    " R ",
+    " I ",
+    " G "
+  ],
+  "result": {
+    "count": 2,
+    "id": "mcheli:fgm148_bullet"
+  }
+}
