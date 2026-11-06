@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  */
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    public static final int PROTOCOL_VERSION = 10;
+    public static final int PROTOCOL_VERSION = 11;
 
     /** Client to server. The handler gets the sending player. */
     public static final List<Serverbound<?>> SERVERBOUND = List.of(
@@ -36,7 +36,8 @@ public final class ModNetwork {
             new Serverbound<>(FireWeaponPacket.TYPE, FireWeaponPacket.STREAM_CODEC, FireWeaponPacket::handle),
             new Serverbound<>(BoardVehiclePacket.TYPE, BoardVehiclePacket.STREAM_CODEC, BoardVehiclePacket::handle),
             new Serverbound<>(LockWarningPacket.TYPE, LockWarningPacket.STREAM_CODEC, LockWarningPacket::handle),
-            new Serverbound<>(PackRequestPacket.TYPE, PackRequestPacket.STREAM_CODEC, PackRequestPacket::handle));
+            new Serverbound<>(PackRequestPacket.TYPE, PackRequestPacket.STREAM_CODEC, PackRequestPacket::handle),
+            new Serverbound<>(PackSubmitPacket.TYPE, PackSubmitPacket.STREAM_CODEC, PackSubmitPacket::handle));
 
     /** Server to client. Handlers touch client classes, so they only ever run on a client. */
     public static final List<Clientbound<?>> CLIENTBOUND = List.of(
@@ -44,6 +45,7 @@ public final class ModNetwork {
             new Clientbound<>(ExplosionEffectPacket.TYPE, ExplosionEffectPacket.STREAM_CODEC, ExplosionEffectPacket::handle),
             new Clientbound<>(PackListPacket.TYPE, PackListPacket.STREAM_CODEC, PackListPacket::handle),
             new Clientbound<>(PackDataPacket.TYPE, PackDataPacket.STREAM_CODEC, PackDataPacket::handle),
+            new Clientbound<>(PackSoundPacket.TYPE, PackSoundPacket.STREAM_CODEC, PackSoundPacket::handle),
             new Clientbound<>(MarkerPacket.TYPE, MarkerPacket.STREAM_CODEC, MarkerPacket::handle));
 
     private ModNetwork() {
