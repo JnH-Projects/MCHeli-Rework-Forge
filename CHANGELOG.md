@@ -7,6 +7,19 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [1.1.0-beta.8.1] - 2026-11-06
+
+A hotfix for the Forge 26.3 jar, with no other changes. Worlds from 1.1.0-beta.8 load as before, and
+the network protocol is unchanged. Betas are not uploaded to CurseForge.
+
+### Fixed
+
+- Released jars were missing files the game needs, because the list of files allowed into the jar was
+  written by hand and never kept up: the equipment recipes (since 1.1.0-beta.4), the thermal view's
+  post effect and shader (since beta.5), and the smoke particle and the drafting table's recipe, model
+  and block state (since beta.6). Development runs read the source folders, so they hid it. The list now
+  comes from the repository's resource folders.
+
 ## [1.1.0-beta.8] - 2026-11-06
 
 Phase 12 of the road to 1.1.0: the second half of the vehicle workshop. Betas are not uploaded to
@@ -705,6 +718,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.8.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8.1
 [1.1.0-beta.8]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8
 [1.1.0-beta.7]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.7
 [1.1.0-beta.6]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.6
