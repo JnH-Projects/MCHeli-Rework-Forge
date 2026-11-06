@@ -15,10 +15,11 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
   the vehicle screen, the drafting table, team manager, UAV stations and the workshop. On 1.21.1 the PVP
   button of the team manager switches the server's PVP setting until a restart, since that version has
   no game rule for it, and target markers ignore view bobbing.
+- Minecraft 26.2 on Forge, NeoForge and Fabric, with everything 26.3 has.
 
 ### Changed
 
-- Forge, NeoForge and Fabric on 26.3 and 1.21.1 are all built on every pull request again.
+- Forge, NeoForge and Fabric on 26.3, 26.2 and 1.21.1 are all built on every pull request.
 - Clients and servers on different loaders cannot play together, which the roadmap used to promise.
   Each loader refuses the other at its own handshake, before the mod runs. A pack zip still works on
   every loader when copied by hand.
