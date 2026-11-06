@@ -48,6 +48,14 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
+### 26.2 only
+
+- [ ] From the built jars on a launcher profile, not a dev run: the thermal view turns on and off on
+      Forge (its setter is opened by an access transformer, which a dev run applies differently),
+      NeoForge and Fabric.
+- [ ] Rider pose and the camera roll look right in a banked aircraft on all three loaders.
+- [ ] With Sodium and Iris for 26.2, tracers, flares and smoke look right (or note how they look).
+
 ### 1.21.1 only
 
 - [ ] Vehicle icons show in the creative tabs and the hand (the kind model picks them by
