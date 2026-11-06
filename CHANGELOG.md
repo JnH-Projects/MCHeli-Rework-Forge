@@ -23,6 +23,8 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 ### Changed
 
 - Forge, NeoForge and Fabric on 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 are all built on every pull request.
+- 1.1.0 ships on 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 on all three loaders (21 jars).
+  1.20.2 and 1.19.4 are on hold and not part of it.
 - Clients and servers on different loaders cannot play together, which the roadmap used to promise.
   Each loader refuses the other at its own handshake, before the mod runs. A pack zip still works on
   every loader when copied by hand.
