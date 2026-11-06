@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3, 26.2, 26.1 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2, 26.1, 1.21.11 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -118,6 +118,26 @@ NeoForge rolls the camera the other way round from Forge, so its mixin negates t
   them: Forge and NeoForge have opened the constructor, Fabric API has a builder.
 - **Camera hooks.** `GameRenderer.update` also takes whether game time advances, and Fabric's
   camera mixin shadows `Vector3f` constants rather than `Vector3fc`.
+
+### Minecraft 1.21.11
+
+`minecraft-1.21.11` is `minecraft-26.1` with these differences. It is obfuscated in production, so
+Forge sets the official mappings and Fabric uses the remapping Loom plugin.
+
+- **Cutout render types.** `entityCutout` culls here and does not on 26.x, and `entityCutoutNoCull`
+  is what 26.x calls `entityCutout`. The names exist on both sides, so a straight copy compiles and
+  turns parts inside out.
+- **Screens.** `render`, `renderBg` and `renderLabels` rather than the `extract` methods, on
+  `GuiGraphics` with `drawString` rather than `GuiGraphicsExtractor` with `text`. Container screens
+  set their size after `super`.
+- **Pipelines.** `withBlend` and `withDepthWrite` rather than colour target and depth stencil states.
+- **Interaction.** A click on the hull arrives through `interactAt`, as on 1.21.1.
+- **Camera.** `GameRenderer.updateCamera` calls `Camera.setup`, and NeoForge and Fabric hook after that
+  and at the head of `extractCamera`. Field of view is `GameRenderer.getFov`.
+- **Fabric API.** The older names: `KeyBindingHelper`, `ParticleFactoryRegistry`, `FabricItemGroup`,
+  `PayloadTypeRegistry.playS2C`, and on `CustomIngredient` `getMatchingItems` and `toDisplay`.
+- **Conventional tags.** Forge on 1.21.x has `forge:gunpowder` and `forge:feathers` but not the `c:`
+  names our recipes use, so its modules define `c:gunpowders` and `c:feathers` from those.
 
 ### Minecraft 1.21.1
 
