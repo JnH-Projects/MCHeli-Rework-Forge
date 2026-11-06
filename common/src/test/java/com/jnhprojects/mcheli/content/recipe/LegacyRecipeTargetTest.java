@@ -60,6 +60,14 @@ class LegacyRecipeTargetTest {
     }
 
     @Test
+    void equipmentIngredientsFollowTheTarget() {
+        assertTrue(LegacyRecipe.toJson(AH_6X, "mcheli:uav_station,coal", false, name -> false, ImportTarget.V1_21_1)
+                .contains("{\"item\": \"mcheli:uav_station\"}"));
+        assertTrue(LegacyRecipe.toJson(AH_6X, "mcheli:uav_station,coal", false, name -> false, ImportTarget.MODERN)
+                .contains("\"mcheli:uav_station\""));
+    }
+
+    @Test
     void minecraft1211ShapelessIngredientsAreObjectsToo() {
         String json = LegacyRecipe.toJson(AH_6X, "iron_block,coal", false, name -> false, ImportTarget.V1_21_1);
         assertTrue(json.contains("    {\"tag\": \"c:storage_blocks/iron\"},\n    {\"item\": \"minecraft:coal\"}\n"), json);
