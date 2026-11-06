@@ -1,12 +1,16 @@
 package com.jnhprojects.mcheli;
 
+import com.jnhprojects.mcheli.entity.AircraftEntity;
+import com.jnhprojects.mcheli.item.ThrowableItem;
 import com.jnhprojects.mcheli.network.PackSync;
+import com.jnhprojects.mcheli.registry.ModItems;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.util.List;
@@ -17,6 +21,11 @@ import java.util.List;
  */
 public final class CommonHooks {
     private CommonHooks() {
+    }
+
+    /** Once the registries are frozen, on the main thread: what vanilla keeps in its own tables. */
+    public static void commonSetup() {
+        DispenserBlock.registerBehavior(ModItems.THROWABLE.get(), new ThrowableItem.DispenseBehavior());
     }
 
     /**
@@ -52,12 +61,16 @@ public final class CommonHooks {
     }
 
     /**
-     * The vehicle recipes live in {@code data/mcheli/recipe} of the imported content pack. The
-     * original listed them on its drafting table; until that is ported, every MCHeli recipe goes
-     * into a player's recipe book when they join, so they can be found.
+     * The vehicle recipes live in {@code data/mcheli/recipe} of the imported content pack. Every
+     * MCHeli recipe goes into a player's recipe book when they join: the drafting table lists them
+     * from there, and they can be found in the crafting table's book too.
      */
     public static void playerLoggedIn(ServerPlayer player) {
         PackSync.onLogin(player);
+        // A remote pilot whose drone did not come back with them is shown and made mortal again.
+        if (!(player.getVehicle() instanceof AircraftEntity uav && uav.isRemotePilot(player))) {
+            AircraftEntity.clearRemotePilot(player);
+        }
         List<RecipeHolder<?>> ours = player.level().getServer().getRecipeManager().getRecipes().stream()
                 .filter(holder -> holder.id().getNamespace().equals(MCHeli.MOD_ID))
                 .toList();
