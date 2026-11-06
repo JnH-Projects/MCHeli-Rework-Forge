@@ -75,8 +75,9 @@ imported 1.0.3 content. Raise `version` whenever you share a new build; players 
   parts as `$` objects.
 * **Textures** are PNG files with the same UV layout as the model. Partly transparent pixels are
   drawn as glass.
-* **Sounds** are OGG files. A vehicle's engine plays the sound its `Sound` key names, so
-  `Sound = my-heli` plays `sounds/my-heli.ogg`.
+* **Sounds** are Ogg Vorbis files. A vehicle's engine plays the sound its `Sound` key names, so
+  `Sound = my-heli` plays `sounds/my-heli.ogg`. `RotorSound`, `WeaponSound` and a weapon's own `Sound`
+  name theirs the same way.
 
 A vehicle can use weapons from its own pack, from another pack or from the imported content.
 HUD scripts, crafting recipes and item icons are not part of packs yet: name an imported HUD in
@@ -127,6 +128,8 @@ Server settings, in `serverconfig/mcheli-server.toml` of the world, section `[pa
 | `allowList` | `[]` | Pack ids the server loads. Empty loads every pack in the folder. |
 | `maxPackSize` | `8` | Largest pack the server loads and sends, in MB. |
 | `maxTotalSize` | `64` | Most the server loads and sends in all, in MB. Packs are taken in id order until the next one would go over. |
+| `allowSubmissions` | `false` | Whether players may send the server packs they made. See [below](#vehicles-from-players). |
+| `requireApproval` | `true` | Whether a pack a player sent waits for an operator. |
 
 A pack left out by these settings is reported like any other problem. Changes apply when the
 world starts or after `/mcheli reload`, which also sends every player the new list.
@@ -139,6 +142,30 @@ Client setting, in `config/mcheli-client.toml`, section `[packs]`:
 
 Downloads run at about 5 MB a second per player alongside the game. A pack that arrives damaged or
 does not match the server's hash is thrown away and reported in the chat.
+
+### Vehicles from players
+
+With `allowSubmissions` on, a player can press **Send to server** in the [workshop](workshop.md). The
+pack goes to `<game dir>/mcheli/pending`, online operators are told, and nothing changes for anyone
+until an operator decides:
+
+| Command | Does |
+|---------|------|
+| `/mcheli pending` | What is waiting: id, version, the author it claims, the player who really sent it, its size and its definition files. It also says what going live would replace. |
+| `/mcheli approve <pack>` | Moves it to `mcheli/packs` and reloads, so every player gets it. A pack with the same id is replaced, unless that pack is a folder, which has to be removed by hand first. |
+| `/mcheli reject <pack>` | Throws it away. The player who sent it is told, if they are online. |
+
+A pack is data only and goes through the same checks as any other, but it can still replace any vehicle
+or weapon on the server by using its file name, so look at what `/mcheli pending` says before approving.
+The server's `allowList` and size limits still apply: a pack they leave out stays in `mcheli/packs`
+unused, and the operator is told why.
+
+A pack larger than `maxPackSize` is refused as it arrives. A player has one pack waiting at a time and
+can send again after half a minute, and 16 can wait in all.
+
+With `requireApproval` off, a pack goes live as soon as it arrives. That lets any player add or replace
+vehicles and weapons for everyone, so only turn it off among people you trust. A pack using the id of
+one already in use always waits for an operator.
 
 ## Sharing a pack
 
