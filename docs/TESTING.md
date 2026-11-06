@@ -48,6 +48,15 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
+### 1.20.6 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
+- [ ] In a banked aircraft, heading east and then north, the horizon tilts the same way on all three
+      loaders. Forge's camera event applies the roll before the other two rotations, unlike NeoForge's.
+- [ ] Sight zoom works on all three loaders.
+- [ ] A vehicle's recipe crafts on each loader, including one with gunpowder or feathers.
+- [ ] "Respawn all" in the team manager sends a player to their bed, and to world spawn without one.
+
 ### 1.21.5 only
 
 - [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
