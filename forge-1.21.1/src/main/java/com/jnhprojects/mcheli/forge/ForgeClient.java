@@ -1,5 +1,9 @@
 package com.jnhprojects.mcheli.forge;
 
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.Minecraft;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.client.CameraAngles;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
@@ -27,9 +31,14 @@ final class ForgeClient {
     }
 
     static void init(IEventBus modBus) {
-        ClientHooks.init();
+        ClientHooks.init(effect -> Minecraft.getInstance().gameRenderer.loadEffect(effect));
+        modBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> ClientHooks.registerMenuScreens(MenuScreens::register)));
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
         modBus.addListener((EntityRenderersEvent.RegisterRenderers event) -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
-        modBus.addListener((RegisterParticleProvidersEvent event) -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
+        modBus.addListener((RegisterParticleProvidersEvent event) -> {
+            event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
+        });
         modBus.addListener((RegisterKeyMappingsEvent event) -> ClientHooks.keyMappings().forEach(event::register));
         modBus.addListener((RegisterClientReloadListenersEvent event) ->
                 ClientHooks.reloadListeners().values().forEach(event::registerReloadListener));
@@ -43,6 +52,7 @@ final class ForgeClient {
             }
         });
         forgeBus.addListener((ViewportEvent.ComputeCameraAngles event) -> ClientHooks.computeCameraAngles(new Angles(event)));
+        forgeBus.addListener((ViewportEvent.ComputeFov event) -> event.setFOV(ClientHooks.fov((float) event.getFOV())));
         forgeBus.addListener((RenderHandEvent event) -> event.setCanceled(ClientHooks.hidesHand()));
         forgeBus.addListener(EventPriority.NORMAL, false, RenderLivingEvent.Pre.class,
                 event -> ClientHooks.beforeRenderLiving(event.getEntity(), event.getPoseStack(), event.getPartialTick()));
