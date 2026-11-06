@@ -15,8 +15,8 @@ textures and sounds load unchanged.
 > equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
 > workshop builds new vehicles in game from a Blockbench or Blender model, with their own textures
 > and sounds, and sends them to a server for its operators to approve. Betas ship the
-> Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
-> on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
+> Forge 26.3 jar only; 1.1.0 ships on Forge, NeoForge and Fabric for every version from
+> 1.20.6 to 26.3 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
 > [roadmap](docs/ROADMAP.md).
 
 ## Showcase video
