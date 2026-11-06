@@ -9,11 +9,12 @@ MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecra
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0, now at phase 11 (`1.1.0-beta.7`). Every helicopter, plane,
+> **Status:** on the way to 1.1.0, now at phase 12 (`1.1.0-beta.8`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
 > equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
-> workshop builds new vehicles in game from a Blockbench or Blender model. Betas ship the
+> workshop builds new vehicles in game from a Blockbench or Blender model, with their own textures
+> and sounds, and sends them to a server for its operators to approve. Betas ship the
 > Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
 > on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
 > [roadmap](docs/ROADMAP.md).
@@ -33,13 +34,14 @@ Phase 4 clips (click a picture to open the video):
 
 ## Screenshots
 
-The vehicle workshop in a development build (`1.1.0-beta.7`): bring a model
-from Blockbench or Blender, place its parts on it, tune it and fly it. The helicopter here is the
-example pack's Rework Scout. Every earlier phase is in the
-[screenshot gallery](docs/SCREENSHOTS.md).
+The vehicle workshop in a development build (`1.1.0-beta.8`): bring a model
+from Blockbench or Blender, place its parts on it, tune it and fly it, then give it textures and
+sounds of its own. Every earlier phase is in the [screenshot gallery](docs/SCREENSHOTS.md).
 
 | | |
 |---|---|
+| ![The Paint tab: the model's parts listed on the left, the helicopter in the middle with blue rotor blades, a red cockpit panel and a green hull, and the blade texture previewed on the right](docs/images/phase-12/workshop-paint.png) | ![The Sound tab: Engine, Rotor and a weapon listed on the left, and on the right the engine's sound file, Play and Clear buttons, its volume, and a pitch curve with five points](docs/images/phase-12/workshop-sound.png) |
+| A PNG per part, showing on the model straight away | An OGG for the engine, with its pitch following the throttle along a curve |
 | ![The workshop editor: a small helicopter on a grid, a hit box outlined around its cockpit, coloured handles on its parts, and the main rotor selected with arrows, its axis and its values in the side panel](docs/images/phase-11/workshop-editor.png) | ![The tuning page beside the helicopter, listing hit points, top speed, gravity, turn rates, fuel and armor](docs/images/phase-11/workshop-tuning.png) |
 | Place every part by dragging it on the model | Tune how it flies; values you changed stand out from the defaults |
 | ![The workshop's first screen: vehicles in the packs on the left, and a form for a new vehicle with a dropped OBJ file on the right](docs/images/phase-11/workshop-import.png) | ![The view from the helicopter's cockpit in flight over a desert coast, with the instruments on the HUD](docs/images/phase-11/workshop-test-flight.png) |
