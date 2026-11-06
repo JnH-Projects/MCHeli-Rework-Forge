@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.client.render;
 
 import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.model.MeshGroup;
+import com.jnhprojects.mcheli.model.PartTextures;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ final class GlassSplit {
 
     private final Map<ResourceLocation, Optional<Alpha>> textures = new HashMap<>();
     private final Map<List<MeshGroup>, Map<ResourceLocation, Split>> splits = new IdentityHashMap<>();
+    private final Map<List<MeshGroup>, Map<Map<String, String>, List<PartTextures.Bucket>>> buckets = new IdentityHashMap<>();
 
     private GlassSplit() {
     }
@@ -57,9 +59,20 @@ final class GlassSplit {
         return splits.computeIfAbsent(groups, g -> new HashMap<>()).computeIfAbsent(texture, t -> compute(groups, t));
     }
 
+    /**
+     * A part's objects by the texture each draws with, for a vehicle with {@code PartTexture} lines.
+     * The lists stay the same objects from frame to frame, so {@link #split} can remember them too.
+     * Called from the render thread only.
+     */
+    List<PartTextures.Bucket> buckets(List<MeshGroup> groups, Map<String, String> overrides) {
+        return buckets.computeIfAbsent(groups, g -> new HashMap<>())
+                .computeIfAbsent(Map.copyOf(overrides), o -> PartTextures.assign(groups, o));
+    }
+
     void clear() {
         textures.clear();
         splits.clear();
+        buckets.clear();
     }
 
     private Split compute(List<MeshGroup> groups, ResourceLocation texture) {
