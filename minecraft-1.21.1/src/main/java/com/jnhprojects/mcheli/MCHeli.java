@@ -2,10 +2,13 @@ package com.jnhprojects.mcheli;
 
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.platform.Platform;
+import com.jnhprojects.mcheli.registry.ModBlockEntities;
+import com.jnhprojects.mcheli.registry.ModBlocks;
 import com.jnhprojects.mcheli.registry.ModCreativeTabs;
 import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
+import com.jnhprojects.mcheli.registry.ModMenus;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +40,12 @@ public final class MCHeli {
         legacyContent = LegacyContent.prepare(platform.gameDir());
         packs = new ContentPacks(platform.gameDir(), legacyContent);
         content = packs.load(false);
+        ModBlocks.init();
+        ModBlockEntities.init();
         ModDataComponents.init();
         ModEntities.init();
         ModParticles.init();
+        ModMenus.init();
         ModItems.init(content);
         ModCreativeTabs.init();
     }
