@@ -197,6 +197,9 @@ seats. The pilot's Y key lets them out:
 | `/mcheli give <players> <vehicle> [count]` | operators | Hands out vehicles, for example `/mcheli give @s ah-64` |
 | `/mcheli packs` | everyone | The content packs in use, and any problems with them |
 | `/mcheli reload` | operators | Reads the vehicle and weapon files and the content packs again without a restart, and sends players the new packs |
+| `/mcheli pending` | operators | The packs players have sent the server, waiting for a decision ([details](content/packs.md#vehicles-from-players)) |
+| `/mcheli approve <pack>` | operators | Puts a waiting pack in use and sends it to every player |
+| `/mcheli reject <pack>` | operators | Throws a waiting pack away |
 
 Operators can run a match from the **team manager** (M): switch PvP, shuffle every player online
 into the teams, make a team with a colour and friendly fire on or off, send everyone to their
