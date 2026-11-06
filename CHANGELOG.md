@@ -7,6 +7,44 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [1.1.0-beta.8] - 2026-11-06
+
+Phase 12 of the road to 1.1.0: the second half of the vehicle workshop. Betas are not uploaded to
+CurseForge, and this one ships the Forge 26.3 jar only. Worlds from 1.1.0-beta.7 load as before.
+Players and servers need the same version, since the network protocol changed (11).
+
+### Added
+
+- Workshop Paint tab: import a PNG for the whole vehicle or for any part, by dropping it on the window
+  or pasting its path, and see it on the model straight away. Painting itself happens in your own image
+  editor. Files that are not real PNGs are refused with the reason.
+- `PartTexture` definition key: draws one object of a model with its own texture, whatever paint the
+  vehicle wears. An object named `$cockpit` now draws with the hull, so a cockpit can have its own.
+- Workshop Sound tab: import an OGG for the engine, the rotor or any of the vehicle's weapons, play it,
+  set its volume or pitch, and drag a pitch curve. OGG files the game cannot play, such as Opus, are
+  refused with the reason.
+- `SoundPitchCurve`, `RotorSound`, `RotorSoundVolume`, `RotorSoundPitchCurve` and `WeaponSound`
+  definition keys. A second loop plays alongside the engine, loops can follow the throttle along a
+  curve, and a vehicle can have its own sound for a weapon without changing the weapon's file.
+- Pack browser, from the Packs button in the workshop: every pack you have or the server sent, with its
+  author, version, size and contents, and the reason for any that cannot be used. Drop a zip on it to
+  install the pack.
+- Author credits: a pack vehicle's item names its pack and author, and so does `/mcheli packs`.
+- Sending a vehicle to a server: Send to server in the workshop offers your pack to the server's
+  operators, who decide with `/mcheli pending`, `/mcheli approve` and `/mcheli reject`. Approved packs
+  reach every player with no restart. This is off unless the server sets `packs.allowSubmissions`;
+  `packs.requireApproval` is on by default.
+
+### Fixed
+
+- A sound a content pack brought for a weapon or anything else played once by the server was silent. Only
+  engine loops could use pack sounds.
+
+### Changed
+
+- Network protocol 11.
+- The roadmap's texture brush is dropped: textures are imported per part as PNGs.
+
 ## [1.1.0-beta.7] - 2026-11-06
 
 Phase 11 of the road to 1.1.0: the first half of the vehicle workshop. Betas are not uploaded to
@@ -667,6 +705,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.8]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8
 [1.1.0-beta.7]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.7
 [1.1.0-beta.6]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.6
 [1.1.0-beta.5]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.5
