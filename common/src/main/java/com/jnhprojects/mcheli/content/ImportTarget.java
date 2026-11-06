@@ -15,5 +15,14 @@ public enum ImportTarget {
      * the vehicle's model by {@code custom_model_data} (see {@link LegacyImporter#ICONS_FILE}), and
      * recipe ingredients are {@code {"item": ...}} and {@code {"tag": ...}} objects.
      */
-    V1_21_1
+    V1_21_1,
+    /**
+     * Minecraft 1.20.6: the 1.21.1 layout, except that data folders still have their plural names.
+     */
+    V1_20_6;
+
+    /** The folder under {@code data/<namespace>} that holds recipes on this target. */
+    public String recipeFolder() {
+        return this == V1_20_6 ? "recipes" : "recipe";
+    }
 }
