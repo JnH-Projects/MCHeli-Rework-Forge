@@ -4,7 +4,7 @@
 
 | Tool | Version | Notes |
 |------|---------|-------|
-| JDK | 25 (21 for 1.20.6 to 1.21.11, 17 for 1.19.4 and 1.20.2) | Gradle provisions them through the Foojay resolver if none is installed. |
+| JDK | 25 (21 for 1.20.6 to 1.21.11, 17 for the placeholders on 1.19.4 and 1.20.2) | Gradle provisions them through the Foojay resolver if none is installed. |
 | Gradle | 9.8.2 | Use the wrapper (`./gradlew`). Loom 1.19 needs 9.8. |
 | ForgeGradle | 7.x | Forge modules. Sets up Minecraft through the Mavenizer on first build. |
 | ModDevGradle | 2.0.x | NeoForge modules. |
@@ -130,8 +130,8 @@ of them on the command line. After pulling the split, re-import the Gradle proje
 
 ### Placeholder modules
 
-Every [supported version](ROADMAP.md#supported-versions) has a loader module, but only 26.3, 26.2,
-26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 are ported. The other 4 (`forge-` and `fabric-` for 1.20.2 and 1.19.4) are placeholders: each pins
+Every [supported version](ROADMAP.md#supported-versions) is ported. Four more modules, `forge-` and
+`fabric-` for 1.20.2 and 1.19.4, are on hold and not part of 1.1.0. They are placeholders: each pins
 its loader, mappings and Java version, and holds only an entry point that logs a line at startup
 and the mod metadata. Their `gradle.properties` sets `scaffold=true`, which tells
 `gradle/loader.gradle` to leave out `common` and `minecraft-<version>`, so they build before that
@@ -159,7 +159,7 @@ and 26.1 do with `jspecify_version`. A first run in a new run folder stops at va
 screen instead of the title screen, which matters only to anything that automates a client.
 
 There is no `neoforge-1.20.2`: ModDevGradle needs a "moddev bundle" that NeoForge 20.2 does not
-publish, so NeoForge support starts at 1.20.6, the next supported version.
+publish, so NeoForge could not join those placeholders.
 
 `Mod/` holds the original `MC1.7.10_mcheli_1.0.3.zip`. It is git-ignored. Download it from the
 [MCHeli CurseForge page](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files)
