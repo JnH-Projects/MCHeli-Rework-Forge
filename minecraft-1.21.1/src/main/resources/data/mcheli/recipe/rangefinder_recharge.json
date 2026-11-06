@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {"item": "mcheli:rangefinder"},
+    {"tag": "c:dusts/redstone"}
+  ],
+  "result": {
+    "id": "mcheli:rangefinder"
+  }
+}
