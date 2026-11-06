@@ -23,10 +23,13 @@ public final class ServerConfig {
     private static final ConfigSpec.BooleanValue EXPLOSIONS_START_FIRES;
     private static final ConfigSpec.DoubleValue VEHICLE_DAMAGE_FACTOR;
     private static final ConfigSpec.BooleanValue INFINITE_AMMO;
+    private static final ConfigSpec.BooleanValue INFINITE_FUEL;
     private static final ConfigSpec.StringListValue DISABLED_VEHICLES;
     private static final ConfigSpec.StringListValue PACK_ALLOW_LIST;
     private static final ConfigSpec.IntValue MAX_PACK_SIZE;
     private static final ConfigSpec.IntValue MAX_TOTAL_SIZE;
+    private static final ConfigSpec.BooleanValue ALLOW_SUBMISSIONS;
+    private static final ConfigSpec.BooleanValue REQUIRE_APPROVAL;
 
     static {
         ConfigSpec.Builder builder = ConfigSpec.builder();
@@ -49,6 +52,9 @@ public final class ServerConfig {
                 .comment("Vehicles that cannot be placed, by definition name (the file name, such as \"ah-64\").",
                         "Vehicles already in the world stay.")
                 .defineList("disabled", List.of());
+        INFINITE_FUEL = builder
+                .comment("Whether vehicles never run out of fuel. Original: InfinityFuel")
+                .define("infiniteFuel", false);
         builder.pop();
 
         builder.push("weapons");
@@ -70,6 +76,15 @@ public final class ServerConfig {
                 .comment("Most the server loads and sends in all, in megabytes. Packs are taken in id order until",
                         "the next one would go over.")
                 .defineInRange("maxTotalSize", 64, 1, 4096);
+        ALLOW_SUBMISSIONS = builder
+                .comment("Whether players may send this server packs they made in the workshop. They wait in mcheli/pending",
+                        "until an operator runs /mcheli approve. Off, players can only get packs from the server's owner.")
+                .define("allowSubmissions", false);
+        REQUIRE_APPROVAL = builder
+                .comment("Whether a submitted pack waits for an operator. Off, any player can add vehicles and weapons for",
+                        "everyone, and even replace existing ones, so only turn it off among people you trust. A pack taking",
+                        "the id of a pack already in use always waits.")
+                .define("requireApproval", true);
         builder.pop();
 
         SPEC = builder.build();
@@ -110,6 +125,10 @@ public final class ServerConfig {
         return SPEC.isLoaded() ? INFINITE_AMMO.get() : INFINITE_AMMO.getDefault();
     }
 
+    public static boolean infiniteFuel() {
+        return SPEC.isLoaded() ? INFINITE_FUEL.get() : INFINITE_FUEL.getDefault();
+    }
+
     /** Whether the allow list lets the server load this pack. An empty list allows every pack. */
     public static boolean isPackAllowed(String id) {
         if (!SPEC.isLoaded() || PACK_ALLOW_LIST.get().isEmpty()) {
@@ -129,6 +148,14 @@ public final class ServerConfig {
 
     public static long maxTotalPackBytes() {
         return (long) (SPEC.isLoaded() ? MAX_TOTAL_SIZE.get() : MAX_TOTAL_SIZE.getDefault()) << 20;
+    }
+
+    public static boolean allowSubmissions() {
+        return SPEC.isLoaded() ? ALLOW_SUBMISSIONS.get() : ALLOW_SUBMISSIONS.getDefault();
+    }
+
+    public static boolean requireApproval() {
+        return SPEC.isLoaded() ? REQUIRE_APPROVAL.get() : REQUIRE_APPROVAL.getDefault();
     }
 
     public static boolean isDisabled(String vehicle) {
