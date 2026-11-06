@@ -7,6 +7,22 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+### Added
+
+- NeoForge and Fabric on Minecraft 26.3 catch up with Forge: everything from phases 8 to 12 now runs
+  there, from the drafting table and vehicle screen to smoke and sight zoom.
+
+### Changed
+
+- Forge, NeoForge and Fabric on 26.3 are all built on every pull request again.
+- Clients and servers on different loaders cannot play together, which the roadmap used to promise.
+  Each loader refuses the other at its own handshake, before the mod runs. A pack zip still works on
+  every loader when copied by hand.
+
+### Fixed
+
+- Fabric clients crashed at startup on 26.3 and 1.21.1, because `RollableCamera` sat in the mixin package.
+
 ## [1.1.0-beta.8.1] - 2026-11-06
 
 A hotfix for the Forge 26.3 jar, with no other changes. Worlds from 1.1.0-beta.8 load as before, and
