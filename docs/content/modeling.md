@@ -49,6 +49,7 @@ Numbers count from 0 in the order the parts appear in the definition: the first 
 | Part | Object name | Pivot / notes |
 |------|-------------|---------------|
 | Fixed hull, cockpit, seats | `$body` | |
+| Cockpit with a texture of its own | `$cockpit` | Optional. Does not move; needs a `$body` as well. |
 | Helicopter rotor blades | `$blade0`, `$blade1` | One blade only; the game copies it round the hub. Model it pointing along the first blade position. |
 | Plane propeller hub | `$rotor0` | Spins about the axis given in `AddPartRotor`. |
 | Plane propeller blades | `$blade0` for every blade of `$rotor0` (`AddBlade`) | |
@@ -78,8 +79,11 @@ definition or click in the workshop.
   `AddTexture` and players cycle through them in game.
 * Glass: give the canopy area a partly transparent alpha in the PNG. Pixels with alpha are drawn
   as glass, blended with what is behind them; fully opaque pixels are drawn solid.
-* A cockpit texture is just part of the same PNG: UV map the instrument panel faces onto their own
+* A cockpit texture can be part of the same PNG: UV map the instrument panel faces onto their own
   area of the texture and paint the gauges there.
+* A part can also have a PNG of its own, which keeps its detail when you repaint the rest
+  (`PartTexture`, or the workshop's Paint tab). For the cockpit, model it as a separate object named
+  `$cockpit`: it does not move and draws along with `$body`.
 * Panels that should look different from each side need two faces back to back, each facing out
   of its own side.
 
