@@ -226,8 +226,9 @@ almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.
 - [x] NeoForge and Fabric on 26.3, with the same features and checklists as Forge
 - [x] 1.21.1 (Java 21) on Forge, NeoForge and Fabric: older rendering (no render states), older
       networking, item models from the item JSON instead of `item_model`
-- [ ] Content packs and their sync work across loaders on the same Minecraft version (a Fabric
-      client on a NeoForge server)
+- Dropped: a Fabric client on a NeoForge server, or the reverse. Tried in phase 13, each loader
+  refuses the other at its own handshake before the mod runs. A pack zip copied by hand still works
+  on every loader, since the format knows nothing about them.
 - [x] Legacy importer checked on 1.21.1 (pack format numbers and the asset layout differ)
 - [x] Jar names carry the loader and the Minecraft version, such as
       `mcheli-fabric-1.21.1-1.1.0-beta.3.jar`; the release workflow publishes every jar
@@ -304,8 +305,11 @@ added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest
 
 - [x] A Gradle module for every version and loader pair, the missing ones as placeholders that
       download their loader and only load and log
-- [ ] Every module in `platforms`; phases 8 to 12 ported to NeoForge and Fabric on 26.3 and to all
-      three loaders on 1.21.1
+- [x] Phases 8 to 12 ported to NeoForge and Fabric on 26.3
+- [x] Every resource the repository holds ships in the jar (betas 4 to 8 lacked recipes, the thermal
+      shader, the smoke particle and the drafting table model)
+- [ ] Phases 8 to 12 ported to all three loaders on 1.21.1
+- [ ] Every module in `platforms`
 - [ ] `minecraft-26.2`, `minecraft-26.1`, `minecraft-1.21.11`, `minecraft-1.21.5`,
       `minecraft-1.20.6`, `minecraft-1.20.2` and `minecraft-1.19.4`, each replacing its
       placeholder modules with real glue
