@@ -4,12 +4,16 @@ import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.client.render.AircraftRenderState;
 import com.jnhprojects.mcheli.client.render.MeshCache;
+import com.jnhprojects.mcheli.client.sound.OneShotSound;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.aircraft.PitchCurve;
+import com.jnhprojects.mcheli.content.aircraft.WeaponSound;
 import com.jnhprojects.mcheli.content.pack.PackManifest;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.registry.ModEntities;
+import com.jnhprojects.mcheli.workshop.AssetImport;
 import com.jnhprojects.mcheli.workshop.EditHistory;
 import com.jnhprojects.mcheli.workshop.PartField;
 import com.jnhprojects.mcheli.workshop.PartType;
@@ -27,12 +31,17 @@ import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.joml.Matrix3x2fStack;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -40,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
@@ -86,12 +96,17 @@ public class WorkshopScreen extends Screen {
     private static final int GRID_STEP = 2;
     private static final double ZOOM_STEP = 1.15;
 
+    private static final int PREVIEW_SIZE = 64;
+    private static final int PLOT_HEIGHT = 56;
+    private static final float PITCH_SNAP = 20.0F;
+    private static final String DEFAULT_CURVE = "0:0.7, 0.25:0.85, 0.5:1, 0.75:1.15, 1:1.3";
+
     private enum Tab {
-        PARTS, TUNING, PACK
+        PARTS, PAINT, SOUND, TUNING, PACK
     }
 
     private enum Drag {
-        NONE, ORBIT, PAN, PLANE, AXIS_X, AXIS_Y, AXIS_Z
+        NONE, ORBIT, PAN, PLANE, AXIS_X, AXIS_Y, AXIS_Z, CURVE
     }
 
     private record Label(Component text, int x, int y, int color) {
@@ -135,6 +150,25 @@ public class WorkshopScreen extends Screen {
     private @Nullable Button undoButton;
     private @Nullable Button redoButton;
     private @Nullable AircraftRenderState renderState;
+
+    /** The part the Paint tab is on, {@code null} for the vehicle as a whole. */
+    private @Nullable String paintPart;
+    private WorkshopProject.SoundSlot soundSlot = new WorkshopProject.SoundSlot(WorkshopProject.SoundKind.ENGINE, null);
+    /** Survives the rebuild an import or a scroll causes. */
+    private String assetPath = "";
+    private @Nullable Identifier previewTexture;
+    private int previewX;
+    private int previewY;
+    private int previewWidth;
+    private int previewHeight;
+    private int previewTextureWidth;
+    private int previewTextureHeight;
+    /** Where the curve is drawn, or a height of 0 when none shows. */
+    private int plotX;
+    private int plotY;
+    private int plotWidth;
+    private int plotHeight;
+    private int curvePoint;
 
     public WorkshopScreen(WorkshopProject project) {
         super(Component.translatable("gui.mcheli.workshop.title"));
@@ -202,6 +236,8 @@ public class WorkshopScreen extends Screen {
         labels.clear();
         wrapped.clear();
         boxes.clear();
+        previewTexture = null;
+        plotHeight = 0;
         if (!framed) {
             camera.frame(project.model().min(), project.model().max(), viewRight() - viewLeft(), viewBottom() - viewTop());
             framed = true;
@@ -211,6 +247,14 @@ public class WorkshopScreen extends Screen {
             case PARTS -> {
                 partsList();
                 partPanel();
+            }
+            case PAINT -> {
+                paintList();
+                paintPanel();
+            }
+            case SOUND -> {
+                soundList();
+                soundPanel();
             }
             case TUNING -> tuningPanel();
             case PACK -> packPanel();
@@ -224,6 +268,7 @@ public class WorkshopScreen extends Screen {
             buttons.add(Button.builder(Component.translatable("gui.mcheli.workshop.tab." + each.name().toLowerCase(Locale.ROOT)), b -> {
                 tab = each;
                 panelScroll = 0;
+                listScroll = 0;
                 rebuildWidgets();
             }));
         }
@@ -649,6 +694,376 @@ public class WorkshopScreen extends Screen {
         packRow(rows, "gui.mcheli.workshop.pack.description", m.description(), text -> manifest(new PackManifest(m.id(), project.manifest().name(), project.manifest().author(), project.manifest().version(), text)));
         rows.label(Component.translatable("gui.mcheli.workshop.pack.id", m.id()), DIM);
         rows.label(Component.translatable("gui.mcheli.workshop.pack.vehicle", project.vehicle()), DIM);
+        // Whoever hosts the game has the pack already. A guest or a dedicated server's player does not.
+        if (!minecraft.hasSingleplayerServer() && rows.shows(FIELD_ROW)) {
+            addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.submit"), b -> submit())
+                    .tooltip(Tooltip.create(Component.translatable("gui.mcheli.workshop.submit_hint")))
+                    .bounds(rows.x, rows.y, rows.w, FIELD_ROW - 2).build());
+            rows.next();
+        }
+    }
+
+    private void submit() {
+        try {
+            Path zip = project.export(Platform.get().gameDir().resolve(MCHeli.MOD_ID).resolve("workshop"));
+            manifestChanged = false;
+            history.endMerge();
+            WorkshopClient.submit(Files.readAllBytes(zip));
+            // The editor covers the chat, where the server's answer will come.
+            say(Component.translatable("gui.mcheli.workshop.submit_sent"), DIM);
+        } catch (WorkshopException e) {
+            say(Component.literal(e.getMessage()), INVALID);
+        } catch (IOException e) {
+            say(Component.literal(e.toString()), INVALID);
+        }
+    }
+
+    // The Paint tab
+
+    private void paintList() {
+        List<String> parts = project.texturableParts();
+        int rows = listRows();
+        listScroll = Math.clamp(listScroll, 0, Math.max(parts.size() + 1 - rows, 0));
+        for (int i = listScroll; i <= parts.size() && i < listScroll + rows; i++) {
+            String part = i == 0 ? null : parts.get(i - 1);
+            Component name = part == null ? Component.translatable("gui.mcheli.workshop.paint.whole") : Component.literal(part);
+            Button row = addRenderableWidget(Button.builder(name, b -> {
+                paintPart = part;
+                panelScroll = 0;
+                rebuildWidgets();
+            }).bounds(2, TOP + 2 + (i - listScroll) * LIST_ROW, LEFT - 4, LIST_ROW).build());
+            row.active = !Objects.equals(part, paintPart);
+        }
+    }
+
+    private void paintPanel() {
+        if (paintPart != null && !project.texturableParts().contains(paintPart)) {
+            paintPart = null;
+        }
+        Rows rows = new Rows();
+        String own = paintPart != null ? project.partTexture(paintPart) : project.mainTexture();
+        rows.label(paintPart != null ? Component.literal(paintPart) : Component.translatable("gui.mcheli.workshop.paint.whole"), TEXT);
+        rows.label(trimmed(own != null ? Component.translatable("gui.mcheli.workshop.paint.current", own + ".png")
+                : Component.translatable("gui.mcheli.workshop.paint.vehicle_paint"), rows.w), DIM);
+        preview(rows, own != null ? own : project.mainTexture());
+        assetRow(rows, "gui.mcheli.workshop.paint.file", path -> importTexture(path));
+        if (paintPart != null && own != null && rows.shows(FIELD_ROW)) {
+            addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.clear"), b -> {
+                history.record(project.document().snapshot(), null);
+                project.clearPartTexture(paintPart);
+                changed();
+                rebuildWidgets();
+            }).bounds(rows.x, rows.y, rows.w, FIELD_ROW - 2).build());
+            rows.next();
+        }
+        hint(rows, "gui.mcheli.workshop.paint.drop");
+    }
+
+    /** Reserves room for the texture itself, fitted into a square, and remembers it for drawing. */
+    private void preview(Rows rows, String texture) {
+        Path file = project.assets().resolve("textures").resolve(project.kind().folder()).resolve(texture + ".png");
+        if (rows.shows(PREVIEW_SIZE) && Files.isRegularFile(file)) {
+            try {
+                AssetImport.Texture image = AssetImport.texture(file);
+                float scale = (float) PREVIEW_SIZE / Math.max(image.width(), image.height());
+                previewTexture = RuntimeAssets.texture(textureId(texture));
+                previewX = rows.x;
+                previewY = rows.y;
+                previewWidth = Math.max(Math.round(image.width() * scale), 1);
+                previewHeight = Math.max(Math.round(image.height() * scale), 1);
+                previewTextureWidth = image.width();
+                previewTextureHeight = image.height();
+            } catch (WorkshopException e) {
+                labels.add(new Label(trimmed(Component.literal(e.getMessage()), rows.w), rows.x, rows.y, INVALID));
+            }
+        }
+        rows.y += PREVIEW_SIZE + 2;
+        panelEnd = rows.y;
+    }
+
+    private Identifier textureId(String name) {
+        return Identifier.fromNamespaceAndPath(MCHeli.MOD_ID, "textures/" + project.kind().folder() + "/" + name + ".png");
+    }
+
+    /** A box for a file's path with an Import button, for when dropping a file is not an option. */
+    private void assetRow(Rows rows, String name, Consumer<Path> onImport) {
+        rows.label(Component.translatable(name), DIM);
+        if (rows.shows(FIELD_ROW)) {
+            int buttonWidth = 40;
+            textBox(rows.x, rows.y, rows.w - buttonWidth - 2, assetPath, text -> assetPath = text);
+            addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.import"), b -> {
+                try {
+                    onImport.accept(Path.of(assetPath.trim().replace("\"", "")));
+                } catch (InvalidPathException e) {
+                    say(Component.translatable("gui.mcheli.workshop.new.bad_path", assetPath), INVALID);
+                }
+            }).bounds(rows.x + rows.w - buttonWidth, rows.y, buttonWidth, FIELD_ROW - 2).build());
+        }
+        rows.next();
+    }
+
+    private void hint(Rows rows, String key) {
+        for (FormattedCharSequence line : font.split(Component.translatable(key), rows.w)) {
+            if (rows.shows(LABEL_ROW)) {
+                wrapped.add(new WrappedLine(line, rows.x, rows.y));
+            }
+            rows.y += LABEL_ROW;
+            panelEnd = rows.y;
+        }
+    }
+
+    private void importTexture(Path png) {
+        List<String> before = project.document().snapshot();
+        try {
+            WorkshopProject.ImportedTexture imported = project.importTexture(paintPart, png);
+            if (!project.document().snapshot().equals(before)) {
+                history.record(before, null);
+            }
+            RuntimeAssets.refreshTexture(textureId(imported.name()));
+            // Glass is worked out from the texture, so the model's split has to be redone.
+            MeshCache.INSTANCE.clear();
+            assetPath = "";
+            changed();
+            rebuildWidgets();
+            List<String> warnings = imported.checked().warnings();
+            say(warnings.isEmpty() ? Component.translatable("gui.mcheli.workshop.paint.imported", imported.name() + ".png")
+                    : Component.literal(warnings.getFirst()), warnings.isEmpty() ? DIM : WARNING);
+        } catch (WorkshopException e) {
+            say(Component.literal(e.getMessage()), INVALID);
+        }
+    }
+
+    // The Sound tab
+
+    private Component slotName(WorkshopProject.SoundSlot slot) {
+        return switch (slot.kind()) {
+            case ENGINE -> Component.translatable("gui.mcheli.workshop.sound.engine");
+            case ROTOR -> Component.translatable("gui.mcheli.workshop.sound.rotor");
+            case WEAPON -> Component.literal(slot.weapon());
+        };
+    }
+
+    private void soundList() {
+        List<WorkshopProject.SoundSlot> slots = project.soundSlots();
+        if (!slots.contains(soundSlot)) {
+            soundSlot = slots.getFirst();
+        }
+        int rows = listRows();
+        listScroll = Math.clamp(listScroll, 0, Math.max(slots.size() - rows, 0));
+        for (int i = listScroll; i < slots.size() && i < listScroll + rows; i++) {
+            WorkshopProject.SoundSlot slot = slots.get(i);
+            Button row = addRenderableWidget(Button.builder(slotName(slot), b -> {
+                soundSlot = slot;
+                panelScroll = 0;
+                rebuildWidgets();
+            }).bounds(2, TOP + 2 + (i - listScroll) * LIST_ROW, LEFT - 4, LIST_ROW).build());
+            row.active = !slot.equals(soundSlot);
+        }
+    }
+
+    /** The sound the game would play for a slot, or empty for none. */
+    private String effectiveSound(WorkshopProject.SoundSlot slot) {
+        String own = project.sound(slot);
+        if (own != null) {
+            return own;
+        }
+        return switch (slot.kind()) {
+            case ENGINE -> project.definition().soundOrDefault();
+            case ROTOR -> "";
+            case WEAPON -> {
+                WeaponDefinition weapon = MCHeli.content().weapon(slot.weapon());
+                yield weapon != null ? weapon.sound : "";
+            }
+        };
+    }
+
+    private void soundPanel() {
+        Rows rows = new Rows();
+        String own = project.sound(soundSlot);
+        rows.label(slotName(soundSlot), TEXT);
+        rows.label(trimmed(own != null ? Component.translatable("gui.mcheli.workshop.sound.current", own + ".ogg") : Component.translatable(switch (soundSlot.kind()) {
+            case ENGINE -> "gui.mcheli.workshop.sound.default";
+            case ROTOR -> "gui.mcheli.workshop.sound.none";
+            case WEAPON -> "gui.mcheli.workshop.sound.weapon_default";
+        }), rows.w), DIM);
+        assetRow(rows, "gui.mcheli.workshop.sound.file", path -> importSound(path));
+        if (rows.shows(FIELD_ROW)) {
+            int half = rows.w / 2 - 1;
+            Button play = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.sound.play"), b -> playSlot())
+                    .bounds(rows.x, rows.y, half, FIELD_ROW - 2).build());
+            play.active = !effectiveSound(soundSlot).isEmpty();
+            Button clear = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.clear"), b -> {
+                history.record(project.document().snapshot(), null);
+                project.setSound(soundSlot, null);
+                changed();
+                rebuildWidgets();
+            }).bounds(rows.x + rows.w - half, rows.y, half, FIELD_ROW - 2).build());
+            clear.active = own != null;
+        }
+        rows.next();
+        switch (soundSlot.kind()) {
+            case ENGINE -> loopControls(rows, "SoundVolume", project.definition().soundVolume, "SoundPitchCurve");
+            case ROTOR -> loopControls(rows, "RotorSoundVolume", project.definition().rotorSoundVolume, "RotorSoundPitchCurve");
+            case WEAPON -> weaponPitchRow(rows);
+        }
+        hint(rows, "gui.mcheli.workshop.sound.drop");
+    }
+
+    private void loopControls(Rows rows, String volumeKey, float volume, String curveKey) {
+        if (rows.shows(FIELD_ROW)) {
+            labels.add(new Label(Component.translatable("gui.mcheli.workshop.sound.volume"), rows.x, rows.y + 5, DIM));
+            numberBox(rows.x + rows.w - 58, rows.y, 58, WorkshopPart.number(volume), false, text -> {
+                history.record(project.document().snapshot(), volumeKey);
+                project.document().set(volumeKey, text.trim());
+                changed();
+            });
+        }
+        rows.next();
+        PitchCurve curve = curve(curveKey);
+        if (curve != null) {
+            rows.label(Component.translatable("gui.mcheli.workshop.sound.curve"), DIM);
+            if (rows.shows(PLOT_HEIGHT)) {
+                plotX = rows.x + 2;
+                plotY = rows.y + 2;
+                plotWidth = rows.w - 4;
+                plotHeight = PLOT_HEIGHT - 4;
+            }
+            rows.y += PLOT_HEIGHT;
+            panelEnd = rows.y;
+        }
+        if (rows.shows(FIELD_ROW)) {
+            addRenderableWidget(Button.builder(Component.translatable(curve == null ? "gui.mcheli.workshop.sound.curve_add" : "gui.mcheli.workshop.sound.curve_remove"), b -> {
+                history.record(project.document().snapshot(), null);
+                project.document().set(curveKey, curve == null ? DEFAULT_CURVE : null);
+                changed();
+                rebuildWidgets();
+            }).bounds(rows.x, rows.y, rows.w, FIELD_ROW - 2).build());
+        }
+        rows.next();
+    }
+
+    private void weaponPitchRow(Rows rows) {
+        WeaponSound own = project.definition().weaponSounds.get(soundSlot.weapon());
+        if (own != null && rows.shows(FIELD_ROW)) {
+            labels.add(new Label(Component.translatable("gui.mcheli.workshop.sound.pitch"), rows.x, rows.y + 5, DIM));
+            String shown = own.pitch() != null ? WorkshopPart.number(own.pitch()) : "1";
+            numberBox(rows.x + rows.w - 58, rows.y, 58, shown, false, text -> {
+                history.record(project.document().snapshot(), "WeaponSound " + soundSlot.weapon());
+                project.document().setKeyed("WeaponSound", soundSlot.weapon(), soundSlot.weapon() + ", " + own.sound() + ", " + text.trim());
+                changed();
+            });
+        }
+        rows.next();
+    }
+
+    private String curveKey() {
+        return soundSlot.kind() == WorkshopProject.SoundKind.ROTOR ? "RotorSoundPitchCurve" : "SoundPitchCurve";
+    }
+
+    private @Nullable PitchCurve curve(String key) {
+        String text = project.document().value(key);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return PitchCurve.parse(text);
+        } catch (IllegalArgumentException e) {
+            // Mistyped by hand. The line is reported below the view, and there is nothing to draw.
+            return null;
+        }
+    }
+
+    private void importSound(Path ogg) {
+        List<String> before = project.document().snapshot();
+        try {
+            WorkshopProject.ImportedSound imported = project.importSound(soundSlot, ogg);
+            if (!project.document().snapshot().equals(before)) {
+                history.record(before, null);
+            }
+            assetPath = "";
+            changed();
+            rebuildWidgets();
+            say(imported.warnings().isEmpty() ? Component.translatable("gui.mcheli.workshop.sound.imported", imported.name() + ".ogg")
+                    : Component.literal(imported.warnings().getFirst()), imported.warnings().isEmpty() ? DIM : WARNING);
+        } catch (WorkshopException e) {
+            say(Component.literal(e.getMessage()), INVALID);
+        }
+    }
+
+    /** Plays the slot's sound once, at full throttle if it has a curve, where the player stands. */
+    private void playSlot() {
+        String sound = effectiveSound(soundSlot);
+        if (sound.isEmpty() || minecraft.player == null) {
+            return;
+        }
+        float pitch = 1.0F;
+        if (soundSlot.kind() != WorkshopProject.SoundKind.WEAPON) {
+            PitchCurve curve = curve(curveKey());
+            pitch = curve != null ? curve.at(1.0F) : 1.0F;
+        }
+        minecraft.getSoundManager().play(new OneShotSound(sound, minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ(), 1.0F, pitch));
+    }
+
+    /** A file on the window goes wherever the tab that is open can take it. */
+    @Override
+    public void onFilesDrop(List<Path> files) {
+        if (files.isEmpty()) {
+            return;
+        }
+        switch (tab) {
+            case PAINT -> importTexture(files.getFirst());
+            case SOUND -> importSound(files.getFirst());
+            default -> say(Component.translatable("gui.mcheli.workshop.drop_where"), WARNING);
+        }
+    }
+
+    private double plotPointX(PitchCurve curve, int point) {
+        return plotX + curve.throttle(point) * plotWidth;
+    }
+
+    private double plotPointY(float pitch) {
+        return plotY + plotHeight * (1.0F - (pitch - PitchCurve.MIN_PITCH) / (PitchCurve.MAX_PITCH - PitchCurve.MIN_PITCH));
+    }
+
+    private int curvePointAt(double x, double y) {
+        PitchCurve curve = tab == Tab.SOUND && plotHeight > 0 ? curve(curveKey()) : null;
+        if (curve == null) {
+            return -1;
+        }
+        for (int i = 0; i < curve.size(); i++) {
+            if (Math.hypot(x - plotPointX(curve, i), y - plotPointY(curve.pitch(i))) < PICK_DISTANCE) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void dragCurve(double y) {
+        PitchCurve curve = curve(curveKey());
+        if (curve == null || curvePoint >= curve.size()) {
+            return;
+        }
+        float f = 1.0F - (float) (y - plotY) / plotHeight;
+        float pitch = PitchCurve.MIN_PITCH + f * (PitchCurve.MAX_PITCH - PitchCurve.MIN_PITCH);
+        history.record(project.document().snapshot(), "drag" + nextDrag);
+        project.document().set(curveKey(), curve.withPitch(curvePoint, Math.round(pitch * PITCH_SNAP) / PITCH_SNAP).text());
+        changed();
+    }
+
+    private void plot(GuiGraphicsExtractor graphics) {
+        PitchCurve curve = plotHeight > 0 ? curve(curveKey()) : null;
+        if (curve == null) {
+            return;
+        }
+        graphics.fill(plotX, plotY, plotX + plotWidth, plotY + plotHeight, VIEW);
+        // Normal pitch, for scale.
+        graphics.fill(plotX, (int) plotPointY(1.0F), plotX + plotWidth, (int) plotPointY(1.0F) + 1, GRID);
+        for (int i = 1; i < curve.size(); i++) {
+            segment(graphics, plotPointX(curve, i - 1), plotPointY(curve.pitch(i - 1)), plotPointX(curve, i), plotPointY(curve.pitch(i)), Y_COLOR);
+        }
+        for (int i = 0; i < curve.size(); i++) {
+            square(graphics, plotPointX(curve, i), plotPointY(curve.pitch(i)), HANDLE_RADIUS, drag == Drag.CURVE && curvePoint == i ? SELECTED : Y_COLOR);
+        }
     }
 
     private void manifest(PackManifest manifest) {
@@ -806,6 +1221,15 @@ public class WorkshopScreen extends Screen {
         if (super.mouseClicked(event, doubleClick)) {
             return true;
         }
+        int point = curvePointAt(event.x(), event.y());
+        if (point >= 0) {
+            setFocused(null);
+            drag = Drag.CURVE;
+            curvePoint = point;
+            nextDrag++;
+            history.endMerge();
+            return true;
+        }
         if (!overView(event.x(), event.y())) {
             return false;
         }
@@ -902,6 +1326,7 @@ public class WorkshopScreen extends Screen {
             }
             case ORBIT -> camera.orbit(dx, dy);
             case PAN -> camera.pan(dx, dy);
+            case CURVE -> dragCurve(event.y());
             case PLANE, AXIS_X, AXIS_Y, AXIS_Z -> {
                 dragX += dx;
                 dragY += dy;
@@ -1047,6 +1472,11 @@ public class WorkshopScreen extends Screen {
         for (WrappedLine line : wrapped) {
             graphics.text(font, line.text(), line.x(), line.y(), DIM);
         }
+        if (previewTexture != null) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, previewTexture, previewX, previewY, 0.0F, 0.0F, previewWidth, previewHeight,
+                    previewTextureWidth, previewTextureHeight, previewTextureWidth, previewTextureHeight);
+        }
+        plot(graphics);
         statusLine(graphics);
     }
 
@@ -1055,7 +1485,11 @@ public class WorkshopScreen extends Screen {
         int y = viewBottom() + 3;
         Component first;
         int color;
-        if (message != null) {
+        int sending = WorkshopClient.submitProgress();
+        if (sending >= 0) {
+            first = Component.translatable("gui.mcheli.workshop.submit_sending", sending);
+            color = DIM;
+        } else if (message != null) {
             first = message;
             color = messageColor;
         } else if (!project.problems().isEmpty()) {
