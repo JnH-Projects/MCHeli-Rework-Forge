@@ -48,6 +48,14 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
+### 1.21.11 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, which proves Fabric's remapped
+      jar and its mixins, and thermal turns on and off.
+- [ ] Vehicle parts are not inside out, from outside and from a seat.
+- [ ] Sight zoom works on all three loaders, and rider pose and camera roll look right in a banked aircraft.
+- [ ] A recipe with gunpowder or feathers crafts on Forge, here and on 1.21.1.
+
 ### 26.1 only
 
 - [ ] From the built jars on a launcher profile: thermal on and off on all three loaders, and the
