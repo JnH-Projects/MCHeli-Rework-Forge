@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -40,6 +41,7 @@ public final class McheliNeoForge {
                     helper -> helper.register(VehicleIngredient.ID, NeoForgeVehicleIngredient.TYPE));
         });
         modBus.addListener(RegisterPayloadHandlersEvent.class, McheliNeoForge::registerPackets);
+        modBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(CommonHooks::commonSetup));
         modBus.addListener(AddPackFindersEvent.class, event -> event.addRepositorySource(CommonHooks.packSource()));
 
         NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> CommonHooks.serverAboutToStart(event.getServer()));
