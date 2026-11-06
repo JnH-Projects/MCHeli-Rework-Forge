@@ -88,7 +88,7 @@ tasks.named('jar', Jar) {
     // resource output, which can still have copies from older builds and from the IDE.
     exclude { FileTreeElement element ->
         String path = element.relativePath.pathString
-        !element.directory && (path.startsWith('assets/mcheli/') || path.startsWith('data/mcheli/recipe/')) &&
+        !element.directory && (path.startsWith('assets/mcheli/') || path.startsWith('data/mcheli/recipe/') || path.startsWith('data/mcheli/recipes/')) &&
                 !ownResources.contains(path)
     }
     includeEmptyDirs = false
