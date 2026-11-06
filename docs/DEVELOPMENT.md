@@ -15,6 +15,9 @@
 | Forge | 65.1.5 for Minecraft 26.2 | |
 | NeoForge | 26.2.0.93 for Minecraft 26.2 | |
 | Fabric | Loader 0.20.1, Fabric API 0.161.0+26.2 | |
+| Forge | 62.0.9 for Minecraft 26.1 | |
+| NeoForge | 26.1.2.126 for Minecraft 26.1 | |
+| Fabric | Loader 0.20.1, Fabric API 0.145.1+26.1 | |
 | Forge | 52.1.20 for Minecraft 1.21.1 | Built with ForgeGradle 7 and the official mappings. |
 | NeoForge | 21.1.265 for Minecraft 1.21.1 | |
 | Fabric | Fabric API 0.116.17+1.21.1 | Loom remaps the jar, which is obfuscated on 1.21.1. |
@@ -44,7 +47,7 @@ Shared properties live in the root `gradle.properties`: `mod_version`, the mod m
 of loader modules (`platforms`) and the library versions `common` compiles against. Each loader
 module has its own `gradle.properties` with its loader, Minecraft and Java versions. During the
 betas up to beta.8, `platforms` listed only `forge-26.3`. Roadmap phase 13 adds modules back as each
-one catches up, currently the three each on 26.3, 26.2 and 1.21.1; the others stay in the repository
+one catches up, currently the three each on 26.3, 26.2, 26.1 and 1.21.1; the others stay in the repository
 until they are ported.
 `mods.toml`, `neoforge.mods.toml`, `fabric.mod.json` and `pack.mcmeta` are filled in from them
 at build time. What every loader module shares (source folders, jar contents, manifest, file
@@ -65,6 +68,8 @@ neoforge-26.3/                 NeoForge glue, plus a camera mixin
 fabric-26.3/                   Fabric glue, plus mixins for what Fabric API has no event for
 minecraft-26.2/                the same shared code on Minecraft 26.2
 forge-26.2/, neoforge-26.2/, fabric-26.2/   the loader glue for 26.2
+minecraft-26.1/                the same shared code on Minecraft 26.1
+forge-26.1/, neoforge-26.1/, fabric-26.1/   the loader glue for 26.1
 minecraft-1.21.1/              the same shared code, backported to Minecraft 1.21.1
 forge-1.21.1/, neoforge-1.21.1/, fabric-1.21.1/   the loader glue for 1.21.1
 <loader>-<version>/            placeholders for the other supported versions (see below)
@@ -100,7 +105,7 @@ so each loader and version ships as one jar and runs as one module in developmen
 A feature that is pure logic goes in `common` with a unit test; the part that touches Minecraft
 goes in `minecraft-<version>`; only what needs a loader API goes in the loader modules. The run
 folder `./run` is shared by every 26.3 module, and every other version has its own, such as
-`./run-26.2` and `./run-1.21.1`; worlds made by one loader open on the others, but never open a world
+`./run-26.1` and `./run-1.21.1`; worlds made by one loader open on the others, but never open a world
 on an older Minecraft version than the one that last saved it.
 
 IDEs import the project as one Gradle project per module. A file under `minecraft-26.3` belongs
@@ -110,8 +115,8 @@ of them on the command line. After pulling the split, re-import the Gradle proje
 
 ### Placeholder modules
 
-Every [supported version](ROADMAP.md#supported-versions) has a loader module, but only 26.3, 26.2
-and 1.21.1 are ported. The other 16 (`forge-`, `neoforge-` and `fabric-` for 26.1, 1.21.11,
+Every [supported version](ROADMAP.md#supported-versions) has a loader module, but only 26.3, 26.2,
+26.1 and 1.21.1 are ported. The other 13 (`forge-`, `neoforge-` and `fabric-` for 1.21.11,
 1.21.5 and 1.20.6, plus `forge-` and `fabric-` for 1.20.2 and 1.19.4) are placeholders: each pins
 its loader, mappings and Java version, and holds only an entry point that logs a line at startup
 and the mod metadata. Their `gradle.properties` sets `scaffold=true`, which tells
@@ -134,7 +139,8 @@ A clean compile proves little about a port. Mixin targets, the Forge access tran
 data files only fail at runtime, so start a client and a dedicated server on every loader of that
 version, and check a built jar. A loader can also pin a library more strictly than the version the
 root `gradle.properties` asks for; override it in that module's `gradle.properties`, as NeoForge 26.2
-does with `jspecify_version`.
+and 26.1 do with `jspecify_version`. A first run in a new run folder stops at vanilla's accessibility
+screen instead of the title screen, which matters only to anything that automates a client.
 
 There is no `neoforge-1.20.2`: ModDevGradle needs a "moddev bundle" that NeoForge 20.2 does not
 publish, so NeoForge support starts at 1.20.6, the next supported version.
