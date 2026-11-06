@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.weapon;
 
 import com.jnhprojects.mcheli.content.aircraft.WeaponMount;
+import com.jnhprojects.mcheli.content.aircraft.WeaponSound;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponType;
 import net.minecraft.util.Mth;
@@ -56,6 +57,8 @@ public final class WeaponSet {
     public int soundWait;
     /** Whether the shot being fired may play its sound, see {@code SoundDelay}. */
     public boolean soundAllowed = true;
+    /** The vehicle's own sound for this weapon, from {@code WeaponSound}. */
+    public @Nullable WeaponSound ownSound;
 
     /** Aim relative to the hull, following the crew member who operates the weapon. */
     public float rotationYaw;

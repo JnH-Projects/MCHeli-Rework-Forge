@@ -93,14 +93,19 @@ public final class ServerFiring implements WeaponSet.Trigger {
     }
 
     private static void sound(WeaponSet set, Entity at) {
-        sound(set, at, set.definition().sound);
+        sound(set, at, soundName(set));
+    }
+
+    private static String soundName(WeaponSet set) {
+        return set.ownSound != null ? set.ownSound.sound() : set.definition().sound;
     }
 
     private static void sound(WeaponSet set, Entity at, String name) {
         if (set.soundAllowed) {
             WeaponDefinition w = set.definition();
             float rnd = w.soundPitchRandom;
-            ModSounds.playAt(at, name, w.soundVolume, w.soundPitch * (1.0F - rnd) + RANDOM.nextFloat() * rnd);
+            float pitch = set.ownSound != null && set.ownSound.pitch() != null ? set.ownSound.pitch() : w.soundPitch;
+            ModSounds.playAt(at, name, w.soundVolume, pitch * (1.0F - rnd) + RANDOM.nextFloat() * rnd);
         }
     }
 
@@ -337,7 +342,7 @@ public final class ServerFiring implements WeaponSet.Trigger {
         if ((w.target & WeaponDefinition.TARGET_BLOCK) != 0) {
             // {@code MCH_Multiplay.markPoint}: the block under the crew's view, 300 blocks out, goes to the team.
             boolean marked = aimer instanceof ServerPlayer player && Spotting.markPoint(player, new Vec3(shot.x, shot.y, shot.z), 300.0);
-            sound(set, aimer, marked ? w.sound : "ng");
+            sound(set, aimer, marked ? soundName(set) : "ng");
             return true;
         }
         List<Integer> spotted = new ArrayList<>();
@@ -352,7 +357,7 @@ public final class ServerFiring implements WeaponSet.Trigger {
         if (aimer instanceof ServerPlayer player) {
             Spotting.tellTeam(player, spotted, Math.max(w.markTime, 20));
         }
-        sound(set, shot.shooter, !spotted.isEmpty() ? w.sound : "ng");
+        sound(set, shot.shooter, !spotted.isEmpty() ? soundName(set) : "ng");
         return true;
     }
 

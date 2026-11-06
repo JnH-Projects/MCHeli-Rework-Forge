@@ -1,15 +1,21 @@
 package com.jnhprojects.mcheli;
 
 import com.jnhprojects.mcheli.content.ContentRegistry;
+import com.jnhprojects.mcheli.content.Definition;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentPack;
+import com.jnhprojects.mcheli.content.pack.PackException;
+import com.jnhprojects.mcheli.content.pack.PendingPacks;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.network.PackSubmissions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -18,8 +24,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Prediction;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -29,15 +38,19 @@ import java.util.stream.Collectors;
  *   /mcheli                              content source and counts
  *   /mcheli list [helicopter|plane|...]  loaded vehicles
  *   /mcheli packs                        content packs in use, and their problems
-|plane|...]  loaded vehicles
  *   /mcheli give &lt;players&gt; &lt;vehicle&gt; [count]   (operators)
  *   /mcheli reload                       re-read the definitions and packs (operators)
+ *   /mcheli pending                      packs players have sent, waiting (operators)
+ *   /mcheli approve &lt;pack&gt;               put a waiting pack in use (operators)
+ *   /mcheli reject &lt;pack&gt;                throw a waiting pack away (operators)
  * </pre>
  */
 public final class McheliCommand {
     private static final List<String> KINDS = List.of("helicopter", "plane", "tank", "vehicle");
     private static final DynamicCommandExceptionType UNKNOWN_VEHICLE =
             new DynamicCommandExceptionType(name -> Component.translatable("commands.mcheli.unknown_vehicle", name));
+    private static final DynamicCommandExceptionType UNKNOWN_PENDING =
+            new DynamicCommandExceptionType(name -> Component.translatable("commands.mcheli.pending.unknown", name));
 
     private McheliCommand() {
     }
@@ -63,7 +76,118 @@ public final class McheliCommand {
                                                 .executes(ctx -> give(ctx, IntegerArgumentType.getInteger(ctx, "count")))))))
                 .then(Commands.literal("reload")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
-                        .executes(McheliCommand::reload)));
+                        .executes(McheliCommand::reload))
+                .then(Commands.literal("pending")
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .executes(McheliCommand::pending))
+                .then(Commands.literal("approve")
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(Commands.argument("pack", StringArgumentType.word())
+                                .suggests(McheliCommand::suggestPending)
+                                .executes(McheliCommand::approve)))
+                .then(Commands.literal("reject")
+                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(Commands.argument("pack", StringArgumentType.word())
+                                .suggests(McheliCommand::suggestPending)
+                                .executes(McheliCommand::reject))));
+    }
+
+    private static CompletableFuture<Suggestions> suggestPending(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+        try {
+            return SharedSuggestionProvider.suggest(MCHeli.packs().pending().list().stream().map(PendingPacks.Submission::id), builder);
+        } catch (IOException e) {
+            return builder.buildFuture();
+        }
+    }
+
+    private static int pending(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        List<PendingPacks.Submission> waiting;
+        try {
+            waiting = MCHeli.packs().pending().list();
+        } catch (IOException e) {
+            source.sendFailure(Component.translatable("commands.mcheli.pending.failed", e.toString()));
+            return 0;
+        }
+        if (waiting.isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.pending.none"), false);
+        }
+        for (PendingPacks.Submission submission : waiting) {
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.pending.entry", submission.id(), submission.manifest().version(),
+                    submission.manifest().author(), submission.submitter(), "%.1f".formatted(submission.size() / 1048576.0),
+                    String.join(", ", submission.definitions())), false);
+            List<String> replaced = replaced(submission);
+            if (!replaced.isEmpty()) {
+                source.sendSuccess(() -> Component.translatable("commands.mcheli.pending.replaces", String.join(", ", replaced)), false);
+            }
+        }
+        return waiting.size();
+    }
+
+    /**
+     * What going live would take the place of: a pack with the same id, and vehicles or weapons of
+     * another pack with the same file name. That is allowed, so it is the operator's call to make,
+     * but it should not come as a surprise.
+     */
+    private static List<String> replaced(PendingPacks.Submission submission) {
+        List<String> names = new ArrayList<>();
+        for (ContentPack pack : MCHeli.packs().active()) {
+            if (pack.id().equals(submission.id())) {
+                names.add("pack " + pack.id());
+            }
+        }
+        ContentRegistry content = MCHeli.content();
+        for (String path : submission.definitions()) {
+            String name = path.substring(path.lastIndexOf('/') + 1, path.length() - ".txt".length());
+            Definition existing = path.startsWith("weapons/") ? content.weapon(name) : content.any(name);
+            if (existing != null && !existing.pack().equals(submission.id())) {
+                names.add(name + " (" + existing.pack() + ")");
+            }
+        }
+        return names;
+    }
+
+    private static PendingPacks.Submission waiting(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        String id = StringArgumentType.getString(ctx, "pack");
+        PendingPacks.Submission submission;
+        try {
+            submission = MCHeli.packs().pending().find(id);
+        } catch (IOException e) {
+            submission = null;
+        }
+        if (submission == null) {
+            throw UNKNOWN_PENDING.create(id);
+        }
+        return submission;
+    }
+
+    private static int approve(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        PendingPacks.Submission submission = waiting(ctx);
+        try {
+            if (PackSubmissions.install(source.getServer(), submission)) {
+                source.sendSuccess(() -> Component.translatable("commands.mcheli.approve.success", submission.id(), submission.submitter()), true);
+                return 1;
+            }
+            source.sendFailure(Component.translatable("commands.mcheli.approve.left_out", submission.id()));
+            MCHeli.packs().reportProblems(source::sendFailure);
+        } catch (IOException | PackException e) {
+            source.sendFailure(Component.translatable("commands.mcheli.pending.failed", e.getMessage()));
+        }
+        return 0;
+    }
+
+    private static int reject(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        PendingPacks.Submission submission = waiting(ctx);
+        try {
+            PackSubmissions.reject(source.getServer(), submission);
+            source.sendSuccess(() -> Component.translatable("commands.mcheli.reject.success", submission.id(), submission.submitter()), true);
+            return 1;
+        } catch (IOException e) {
+            source.sendFailure(Component.translatable("commands.mcheli.pending.failed", e.toString()));
+            return 0;
+        }
     }
 
     private static int status(CommandContext<CommandSourceStack> ctx) {
@@ -93,6 +217,9 @@ public final class McheliCommand {
             long weapons = content.weapons().stream().filter(def -> def.pack().equals(pack.id())).count();
             source.sendSuccess(() -> Component.translatable("commands.mcheli.packs.entry", pack.id(), pack.manifest().version(),
                     pack.manifest().name(), vehicles, weapons, ContentPack.shortHash(pack.hash())), false);
+            if (!pack.manifest().author().isEmpty()) {
+                source.sendSuccess(() -> Component.translatable("commands.mcheli.packs.author", pack.manifest().author()), false);
+            }
         }
         MCHeli.packs().reportProblems(source::sendFailure);
         return packs.size();

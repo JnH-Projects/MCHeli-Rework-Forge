@@ -3,6 +3,18 @@
 Every phase of MCHeli Rework in development builds, newest first. The [README](../README.md)
 shows the latest phase only.
 
+## Phase 12 (`1.1.0-beta.8`)
+
+The second half of the workshop: textures per part, sounds with pitch curves and the pack browser. The
+checkered colours are test textures, to show which part wears which.
+
+| | |
+|---|---|
+| ![The Paint tab: the model's parts listed on the left, the helicopter in the middle with blue rotor blades, a red cockpit panel and a green hull, and the blade texture previewed on the right](images/phase-12/workshop-paint.png) | ![The Sound tab: Engine, Rotor and a weapon listed on the left, and on the right the engine's sound file, Play and Clear buttons, its volume, and a pitch curve with five points](images/phase-12/workshop-sound.png) |
+| A PNG per part, showing on the model straight away | An OGG for the engine, with its pitch following the throttle along a curve |
+| ![The pack browser: two packs listed on the left, and on the right the selected pack's name, author, id, size, source and vehicles](images/phase-12/workshop-packs.png) | |
+| Who made each pack, and what is in it | |
+
 ## Phase 11 (`1.1.0-beta.7`)
 
 The vehicle workshop: importing a model, placing its parts, tuning, test flights and saving a pack.

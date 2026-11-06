@@ -144,6 +144,7 @@ public final class ContentRegistry {
                 if (result.isValid()) {
                     T def = result.definition();
                     def.setPack(source.pack());
+                    def.setCredit(source.manifest());
                     if (def instanceof AircraftDefinition vehicle) {
                         fillHull(source, vehicle);
                     }

@@ -1,5 +1,7 @@
 package com.jnhprojects.mcheli.client.render;
 
+import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
@@ -22,6 +24,7 @@ import com.jnhprojects.mcheli.content.aircraft.part.WheelPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WingPart;
 import com.jnhprojects.mcheli.model.Mesh;
 import com.jnhprojects.mcheli.model.MeshGroup;
+import com.jnhprojects.mcheli.model.PartTextures;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -83,19 +86,19 @@ final class PartRenderer {
                 nozzles(plane);
                 wings(plane);
                 propellers(plane);
-                submit(mesh.body());
+                hull();
             }
             case HelicopterDefinition heli -> {
-                submit(mesh.body());
+                hull();
                 rotors(heli);
             }
             case VehicleDefinition vehicle -> {
-                submit(mesh.body());
+                hull();
                 for (VehiclePart part : vehicle.parts) {
                     vehiclePart(vehicle, part);
                 }
             }
-            default -> submit(mesh.body());
+            default -> hull();
         }
         weapons();
         rotatingParts();
@@ -109,6 +112,18 @@ final class PartRenderer {
         landingGear();
         weaponBays();
         movingParts(def.canopies, state.canopy);
+    }
+
+    /**
+     * The body and, as a {@code $} object of its own so it can have its own {@code PartTexture},
+     * the cockpit. A model without {@code $body} draws as one piece, cockpit included, and no original
+     * model has a {@code $cockpit}.
+     */
+    private void hull() {
+        submit(mesh.body());
+        if (mesh.contains("$body")) {
+            submit(mesh.part("$cockpit"));
+        }
     }
 
     // Kind specific parts
@@ -483,6 +498,22 @@ final class PartRenderer {
         if (groups.isEmpty()) {
             return;
         }
+        if (def.partTextures.isEmpty()) {
+            submit(groups, texture, opaqueType, glassType);
+            return;
+        }
+        for (PartTextures.Bucket bucket : GlassSplit.INSTANCE.buckets(groups, def.partTextures)) {
+            if (bucket.texture() == null) {
+                submit(bucket.groups(), texture, opaqueType, glassType);
+            } else {
+                Identifier own = RuntimeAssets.texture(Identifier.fromNamespaceAndPath(MCHeli.MOD_ID,
+                        "textures/" + def.folder() + "/" + bucket.texture() + ".png"));
+                submit(bucket.groups(), own, RenderTypes.entityCutoutCull(own), RenderTypes.entityTranslucentEmissive(own));
+            }
+        }
+    }
+
+    private void submit(List<MeshGroup> groups, Identifier texture, RenderType opaqueType, RenderType glassType) {
         GlassSplit.Split split = GlassSplit.INSTANCE.split(groups, texture);
         if (!split.opaque().isEmpty()) {
             collector.submitCustomGeometry(pose, opaqueType, (p, buffer) -> MeshRenderer.emit(split.opaque(), p, buffer, light, overlay));

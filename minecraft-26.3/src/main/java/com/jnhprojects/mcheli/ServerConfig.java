@@ -28,6 +28,8 @@ public final class ServerConfig {
     private static final ConfigSpec.StringListValue PACK_ALLOW_LIST;
     private static final ConfigSpec.IntValue MAX_PACK_SIZE;
     private static final ConfigSpec.IntValue MAX_TOTAL_SIZE;
+    private static final ConfigSpec.BooleanValue ALLOW_SUBMISSIONS;
+    private static final ConfigSpec.BooleanValue REQUIRE_APPROVAL;
 
     static {
         ConfigSpec.Builder builder = ConfigSpec.builder();
@@ -74,6 +76,15 @@ public final class ServerConfig {
                 .comment("Most the server loads and sends in all, in megabytes. Packs are taken in id order until",
                         "the next one would go over.")
                 .defineInRange("maxTotalSize", 64, 1, 4096);
+        ALLOW_SUBMISSIONS = builder
+                .comment("Whether players may send this server packs they made in the workshop. They wait in mcheli/pending",
+                        "until an operator runs /mcheli approve. Off, players can only get packs from the server's owner.")
+                .define("allowSubmissions", false);
+        REQUIRE_APPROVAL = builder
+                .comment("Whether a submitted pack waits for an operator. Off, any player can add vehicles and weapons for",
+                        "everyone, and even replace existing ones, so only turn it off among people you trust. A pack taking",
+                        "the id of a pack already in use always waits.")
+                .define("requireApproval", true);
         builder.pop();
 
         SPEC = builder.build();
@@ -137,6 +148,14 @@ public final class ServerConfig {
 
     public static long maxTotalPackBytes() {
         return (long) (SPEC.isLoaded() ? MAX_TOTAL_SIZE.get() : MAX_TOTAL_SIZE.getDefault()) << 20;
+    }
+
+    public static boolean allowSubmissions() {
+        return SPEC.isLoaded() ? ALLOW_SUBMISSIONS.get() : ALLOW_SUBMISSIONS.getDefault();
+    }
+
+    public static boolean requireApproval() {
+        return SPEC.isLoaded() ? REQUIRE_APPROVAL.get() : REQUIRE_APPROVAL.getDefault();
     }
 
     public static boolean isDisabled(String vehicle) {

@@ -7,10 +7,6 @@ pack does: other players can install it, and a server sends it to everyone who j
 
 ![The workshop editor: a small helicopter on a grid, a hit box outlined around its cockpit, coloured handles on its parts, and the main rotor selected with arrows, its axis and its values in the side panel](../images/phase-11/workshop-editor.png)
 
-Textures, sounds and the pack browser come in a later beta (see the
-[roadmap](../ROADMAP.md#phase-12-workshop-textures-sounds-and-sharing-110-beta8)). Until then a
-vehicle uses the PNG that came with its model and the default sound of its kind.
-
 ## Opening it
 
 Craft and place a drafting table, open it and press **Workshop**. The table's items go back to your
@@ -99,6 +95,52 @@ are listed. A dim name means the value is the default for the kind; emptying a b
 the default. A box turns red when the number is outside what the game accepts, and the value stays
 as it was until it is valid.
 
+## Paint
+
+![The Paint tab: the model's parts listed on the left, the helicopter in the middle with blue rotor blades, a red cockpit panel and a green hull, and the blade texture previewed on the right](../images/phase-12/workshop-paint.png)
+
+Paint in any image editor, using the model's UV layout, and bring the result in as a PNG. The **Paint**
+tab lists **Whole vehicle** and then every object in the model. Pick one, then drop a PNG on the window
+or paste its path and press **Import**. The model changes straight away.
+
+- **Whole vehicle** replaces the vehicle's own texture.
+- A part gets a texture of its own, kept as `<vehicle>_<part>.png`, and a `PartTexture` line in the
+  definition. It wears that texture with every paint scheme. **Clear** puts it back in the vehicle's
+  paint. A plain object behind a `$` part follows that part unless it has its own.
+- For a **cockpit with its own texture**, model it as an object called `$cockpit`. It stays still and
+  draws with the hull. See the [modeling guide](modeling.md#textures).
+
+Partly transparent pixels draw as glass, as in any texture. Extra paint schemes are still added by
+hand with `AddTexture`.
+
+A PNG goes into the pack as soon as you import it. Undo brings back the definition line that uses it,
+but not an earlier picture, and closing without saving leaves the file in the pack. Keep your own copy
+of anything you may want back. To get rid of a texture you no longer use, delete its file from the pack
+folder, since it still counts towards the pack's size.
+
+## Sound
+
+![The Sound tab: Engine, Rotor and a weapon listed on the left, and on the right the engine's sound file, Play and Clear buttons, its volume, and a pitch curve with five points](../images/phase-12/workshop-sound.png)
+
+The **Sound** tab lists the engine, the rotor on helicopters and planes, and each weapon the vehicle
+has. Pick one, then drop an OGG on the window or paste its path. It has to be Ogg Vorbis, the only
+kind the game can play; an OGG holding Opus or anything else is refused. **Play** plays it once and
+**Clear** goes back to what the vehicle would play without it.
+
+| In the list | Definition key | Notes |
+|-------------|----------------|-------|
+| Engine | `Sound`, `SoundVolume`, `SoundPitchCurve` | Without a sound of its own, the vehicle plays the default of its kind. |
+| Rotor | `RotorSound`, `RotorSoundVolume`, `RotorSoundPitchCurve` | A second loop alongside the engine. |
+| A weapon | `WeaponSound` | This vehicle only; the weapon's file and other vehicles using it stay as they are. It can have its own pitch. |
+
+**Add a pitch curve** on the engine or rotor lets you decide how the loop's pitch follows the throttle.
+The left of the graph is throttle at nothing, the right is full throttle, and the faint line across is
+normal pitch. Drag a point up or down. Without a curve, the pitch follows the throttle the way that kind
+of vehicle always has. The game plays pitch between 0.5 and 2, and that is what the graph covers.
+
+Keep loops short and seamless, and export them in mono: only mono sounds fade with distance. A test
+flight is the way to hear a curve, since **Play** only plays the sound at full throttle.
+
 ## Test flight
 
 **Test flight** saves the vehicle, loads it and puts you in its pilot seat where you stand. Get out
@@ -107,7 +149,8 @@ where you started and the vehicle disappears. A test vehicle takes no damage and
 the world.
 
 This works in single player and in a LAN world you host. On a dedicated server the button is off,
-because the server does not have your pack. Save or export it and have the server's owner install it.
+because the server does not have your pack. [Send it to the server](#sending-a-vehicle-to-a-server)
+instead, or have the server's owner install it.
 
 ## Saving and sharing
 
@@ -120,3 +163,25 @@ Raise the version when you share a new build.
 **Export** saves and writes `mcheli/workshop/<pack id>-<version>.zip`, checked the way the game checks
 any pack. That zip is what you give to other players or a server. Only share what you have the
 right to.
+
+## The pack browser
+
+![The pack browser: two packs listed on the left, and on the right the selected pack's name, author, id, size, source and vehicles](../images/phase-12/workshop-packs.png)
+
+**Packs** on the workshop's first screen lists the packs in `mcheli/packs` and, on a server, the ones it
+sent you: who made each one, its version, size and what is in it. A pack that cannot be used is listed
+with the reason. Drop a zip someone gave you on the window to install it; it loads at the next start or
+`/mcheli reload`. A pack you already have is never replaced this way. **Open folder** opens
+`mcheli/packs`, which is where to remove a pack.
+
+The author also shows on the vehicle's item and in `/mcheli packs`. It is whatever the pack's manifest
+says, so it is a credit and not a proof.
+
+## Sending a vehicle to a server
+
+On a server, the **Pack** tab has **Send to server**, which saves the pack and sends it. The answer
+comes in chat. If the server takes packs from players, yours waits until an operator approves it, and
+then every player gets it. You have one pack waiting at a time, so sending again replaces the last one.
+Raise the version when you send a new build of a pack that is already live.
+
+This is off unless the server's owner turns it on. See [Servers](packs.md#vehicles-from-players).

@@ -4,10 +4,12 @@ import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.ServerConfig;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
+import com.jnhprojects.mcheli.content.pack.PackManifest;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.registry.ModDataComponents;
 import com.jnhprojects.mcheli.registry.ModEntities;
 import com.jnhprojects.mcheli.registry.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -18,6 +20,8 @@ import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -25,6 +29,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 /**
  * Places a vehicle, the same way a boat is placed.
@@ -80,6 +86,21 @@ public class AircraftItem extends Item {
         AircraftDefinition def = MCHeli.content().any(name);
         // Vehicles added at runtime may bring no lang entry; their DisplayName stands in.
         return Component.translatableWithFallback("item.mcheli." + name, def != null ? def.displayName : name);
+    }
+
+    /** Who made a vehicle from a content pack. The import's vehicles have their credits in the docs. */
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> out, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, out, flag);
+        String name = definitionName(stack);
+        AircraftDefinition def = name != null ? MCHeli.content().any(name) : null;
+        PackManifest credit = def != null ? def.credit() : null;
+        if (credit != null) {
+            out.accept((credit.author().isEmpty()
+                    ? Component.translatable("item.mcheli.vehicle.from_pack", credit.name())
+                    : Component.translatable("item.mcheli.vehicle.from_pack_by", credit.name(), credit.author()))
+                    .withStyle(ChatFormatting.GRAY));
+        }
     }
 
     @Override

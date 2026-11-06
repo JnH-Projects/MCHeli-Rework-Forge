@@ -12,15 +12,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Starts engine loops for vehicles near the player and restarts them after they fall silent.
- * The sounds themselves track their vehicle until it stops or disappears.
+ * Starts engine and rotor loops for vehicles near the player and restarts them after they fall
+ * silent. The sounds themselves track their vehicle until it stops or disappears.
  */
 public final class EngineSoundPlayer {
     /** Ticks to wait before restarting a loop, as the original did, so a stuttering engine does not spam. */
     private static final int RESTART_DELAY = 20;
 
-    private static final Map<Integer, EngineSound> PLAYING = new HashMap<>();
-    private static final Map<Integer, Integer> COOLDOWN = new HashMap<>();
+    /** By {@link #key}, since a vehicle can have two loops. */
+    private static final Map<Long, EngineSound> PLAYING = new HashMap<>();
+    private static final Map<Long, Integer> COOLDOWN = new HashMap<>();
 
     private EngineSoundPlayer() {
     }
@@ -44,22 +45,31 @@ public final class EngineSoundPlayer {
             if (!(entity instanceof AircraftEntity vehicle) || !(entity instanceof EngineSoundSource source)) {
                 continue;
             }
-            int id = vehicle.getId();
             AircraftDefinition def = vehicle.definition();
-            if (def == null || PLAYING.containsKey(id) || COOLDOWN.containsKey(id)) {
+            if (def == null) {
                 continue;
             }
-            String sound = def.soundOrDefault();
             double range = def.soundRange * 1.2;
-            if (sound.isEmpty() || vehicle.distanceToSqr(player) > range * range) {
+            if (vehicle.distanceToSqr(player) > range * range) {
                 continue;
             }
-            if (def.soundVolume * source.engineVolume() > 0.01F) {
-                EngineSound loop = new EngineSound(vehicle, source, sound);
-                mc.getSoundManager().play(loop);
-                PLAYING.put(id, loop);
-                COOLDOWN.put(id, RESTART_DELAY);
-            }
+            start(mc, vehicle, source, def.soundOrDefault(), def.soundVolume, false);
+            start(mc, vehicle, source, def.rotorSound, def.rotorSoundVolume, true);
         }
+    }
+
+    private static void start(Minecraft mc, AircraftEntity vehicle, EngineSoundSource source, String sound, float volume, boolean rotor) {
+        long key = key(vehicle, rotor);
+        if (sound.isEmpty() || PLAYING.containsKey(key) || COOLDOWN.containsKey(key) || volume * source.engineVolume() <= 0.01F) {
+            return;
+        }
+        EngineSound loop = new EngineSound(vehicle, source, sound, rotor);
+        mc.getSoundManager().play(loop);
+        PLAYING.put(key, loop);
+        COOLDOWN.put(key, RESTART_DELAY);
+    }
+
+    private static long key(AircraftEntity vehicle, boolean rotor) {
+        return (long) vehicle.getId() << 1 | (rotor ? 1L : 0L);
     }
 }

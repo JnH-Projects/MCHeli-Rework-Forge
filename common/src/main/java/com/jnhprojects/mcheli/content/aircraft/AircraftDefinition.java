@@ -13,6 +13,7 @@ import com.jnhprojects.mcheli.content.aircraft.part.TrackRoller;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponBayPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WheelPart;
+import com.jnhprojects.mcheli.model.PartTextures;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public abstract class AircraftDefinition extends Definition {
     public final Map<String, String> localizedNames = new LinkedHashMap<>();
     public String category = "zzz";
     public final List<String> textures = new ArrayList<>();
+    /** Texture names by part, which a part draws with whatever paint the vehicle wears. */
+    public final Map<String, String> partTextures = new LinkedHashMap<>();
     public boolean smoothShading = true;
     public boolean hideEntity;
     public float particlesScale = 1.0F;
@@ -164,6 +167,14 @@ public abstract class AircraftDefinition extends Definition {
     public float soundRange;
     public float soundVolume = 1.0F;
     public float soundPitch = 1.0F;
+    /** How the engine's pitch follows the throttle, or {@code null} for what the kind does. */
+    public @Nullable PitchCurve soundPitchCurve;
+    /** A second loop alongside the engine, or empty for none. */
+    public String rotorSound = "";
+    public float rotorSoundVolume = 1.0F;
+    public @Nullable PitchCurve rotorSoundPitchCurve;
+    /** This vehicle's own sounds for weapons, by weapon name. */
+    public final Map<String, WeaponSound> weaponSounds = new LinkedHashMap<>();
 
     // Cargo racks
     public final List<RackDefinition> racks = new ArrayList<>();
@@ -330,6 +341,13 @@ public abstract class AircraftDefinition extends Definition {
         });
         keys.put("Category", v -> category = v.toUpperCase(Locale.ROOT).replaceAll("[,;:]", ".").replaceAll("[ \t]", ""));
         keys.put("AddTexture", v -> textures.add(lower(v)));
+        keys.put("PartTexture", v -> {
+            String[] s = split(v);
+            if (s.length != 2) {
+                throw new IllegalArgumentException("PartTexture needs a part and a texture");
+            }
+            partTextures.put(PartTextures.partName(s[0]), lower(s[1]));
+        });
         keys.put("SmoothShading", v -> smoothShading = toBool(v));
         keys.put("HideEntity", v -> hideEntity = toBool(v));
         keys.put("ParticlesScale", v -> particlesScale = toFloat(v, 0.0F, 50.0F));
@@ -525,6 +543,18 @@ public abstract class AircraftDefinition extends Definition {
         keys.put("SoundRange", v -> soundRange = toFloat(v, 1.0F, 1000.0F));
         keys.put("SoundVolume", v -> soundVolume = toFloat(v, 0.0F, 10.0F));
         keys.put("SoundPitch", v -> soundPitch = toFloat(v, 0.0F, 10.0F));
+        keys.put("SoundPitchCurve", v -> soundPitchCurve = PitchCurve.parse(v));
+        keys.put("RotorSound", v -> rotorSound = lower(v));
+        keys.put("RotorSoundVolume", v -> rotorSoundVolume = toFloat(v, 0.0F, 10.0F));
+        keys.put("RotorSoundPitchCurve", v -> rotorSoundPitchCurve = PitchCurve.parse(v));
+        keys.put("WeaponSound", v -> {
+            String[] s = split(v);
+            if (s.length < 2) {
+                throw new IllegalArgumentException("WeaponSound needs a weapon and a sound");
+            }
+            Float pitch = s.length >= 3 ? toFloat(s[2], PitchCurve.MIN_PITCH, PitchCurve.MAX_PITCH) : null;
+            weaponSounds.put(lower(s[0]), new WeaponSound(lower(s[1]), pitch));
+        });
 
         keys.put("AddRecipe", v -> {
             shapedRecipe = true;

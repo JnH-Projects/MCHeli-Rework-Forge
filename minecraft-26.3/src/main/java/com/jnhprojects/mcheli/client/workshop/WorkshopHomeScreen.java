@@ -94,8 +94,10 @@ public class WorkshopHomeScreen extends Screen {
         modelBox.setResponder(text -> modelText = text);
         addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.new.create"), b -> create())
                 .bounds(x, y + 126, FORM_WIDTH, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.workshop.home.packs"), b -> minecraft.gui.setScreen(new WorkshopPacksScreen()))
+                .bounds(width / 2 - 104, height - 26, 100, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> onClose())
-                .bounds(width / 2 - 50, height - 26, 100, 20).build());
+                .bounds(width / 2 + 4, height - 26, 100, 20).build());
     }
 
     private EditBox box(int x, int y, Component name, String value, int maxLength) {

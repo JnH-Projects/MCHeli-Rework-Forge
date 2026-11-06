@@ -15,8 +15,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Flying a vehicle straight from the workshop. The pack was just saved on the machine this server
  * runs on, so loading it again is enough. That only holds for the owner of a single player or LAN
- * game: a dedicated server has no way to get the pack until players can submit one, so the screen
- * does not offer it there and the server refuses it too.
+ * game: a dedicated server does not get a pack until an operator approves it, and then it is no
+ * longer a test, so the screen does not offer it there and the server refuses it too.
  */
 public final class TestFlight {
     /** How far up to look for room when the vehicle does not fit where the player stands. */

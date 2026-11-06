@@ -680,6 +680,59 @@ Forge 26.3 only, in single player unless it says otherwise. The guide is
 - [ ] A saved pack on a dedicated server: every joining player downloads it and sees the vehicle.
 - [ ] `EnginePosition` and `FuelTankPosition`: a wreck burns at the engine, a crash goes up at the tank.
 
+## Phase 12 checklist (`1.1.0-beta.8`)
+
+Forge 26.3 only. These were driven through the real client and a real dedicated server with a test
+class, so what is left is what that cannot check: listening, a real mouse and real players. The guide
+is [docs/content/workshop.md](content/workshop.md).
+
+### Paint
+
+- [ ] On the Paint tab, drop a PNG on Whole vehicle and on a part: the model changes at once, and the
+      preview on the right shows the picture.
+- [ ] A cockpit modelled as `$cockpit` draws with the hull and takes its own texture; so do `$blade0`
+      and a plain object inside `$body`. Glass in a part's texture still draws as glass.
+- [ ] Clear puts the part back in the paint; Undo and Redo bring the line back. Cycling paint schemes in
+      game leaves a part with its own texture as it is.
+- [ ] A `.jpg`, and a text file renamed to `.png`, are refused with a clear message.
+- [ ] A vehicle with part textures, seen by another player on a server, looks the same.
+
+### Sound
+
+- [ ] Listen: an engine OGG plays and its pitch follows the throttle along the curve you dragged. The
+      rotor loop plays alongside it at its own volume. Clear goes back to the default.
+- [ ] Listen: a vehicle with `WeaponSound` fires with that sound, heard by another player nearby. Other
+      vehicles with the same weapon are not affected, and neither is a weapon sound from the import.
+- [ ] Listen: a loop does not click or stutter while the throttle changes.
+- [ ] An `.mp3`, and an OGG holding Opus, are refused with a clear message.
+
+### Browser and credits
+
+- [ ] Packs on the workshop's first screen lists your packs with author, version, size and vehicles,
+      and a broken zip with the reason. On a server, its packs show as from this server.
+- [ ] Open folder opens `mcheli/packs`. Dropping a zip installs it; dropping one you have is refused and
+      changes nothing.
+- [ ] A pack vehicle's item shows its pack and author; an imported vehicle's shows nothing extra.
+      `/mcheli packs` shows the author.
+
+### Sending to a server
+
+Two real players on a dedicated server, one of them an operator.
+
+- [ ] With `allowSubmissions` off, Send to server is refused in chat. Nothing appears in `mcheli/pending`.
+- [ ] Turn it on and `/mcheli reload`. A player sends: they are told it waits, the operator is told, and
+      the vehicle does not exist for anyone yet. An operator joining later is told too.
+- [ ] `/mcheli pending` lists it with the real sender, and what it would replace. A non-operator cannot
+      run any of the three commands.
+- [ ] `/mcheli approve`: both players download it and can use the vehicle; it is still there after a
+      server restart. Send a new version and approve it: both get the update without a restart.
+- [ ] `/mcheli reject`: the sender is told and the file is gone.
+- [ ] A pack over `maxPackSize` is refused. A second send within half a minute is refused. A pack the
+      `allowList` leaves out tells the operator so on approval.
+- [ ] Another player sending a pack with an id that is already waiting is refused. A pack over a folder
+      pack cannot be approved, and the folder is untouched.
+- [ ] With `requireApproval` off, a new pack goes live at once and a pack with an id in use still waits.
+
 ## Reporting problems
 
 Attach `logs/latest.log` (and the crash report, if any) with the helicopter name, what you did

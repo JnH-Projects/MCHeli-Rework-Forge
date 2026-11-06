@@ -235,7 +235,7 @@ public final class ContentPack implements Closeable {
     }
 
     public ContentSource contentSource() {
-        return new ContentSource(id(), assets());
+        return new ContentSource(id(), assets(), manifest);
     }
 
     /** Paths of the pack's files relative to its top, in order. */
