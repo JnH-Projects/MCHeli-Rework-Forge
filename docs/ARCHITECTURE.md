@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3, 26.2, 26.1, 1.21.11, 1.21.5 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -196,6 +196,23 @@ the betas it is not kept in step; each final release brings it, and every other
 - **Shaders.** There is no `IrisCompat`: Iris's pipeline assignment only exists for 26.x.
 - **Teams.** There is no PVP game rule or `TeamColor`. The team manager switches the server's PVP
   setting, which lasts until a restart, and picks from the `ChatFormatting` colours.
+
+### Minecraft 1.20.6
+
+`minecraft-1.20.6` is `minecraft-1.21.1` with these differences:
+
+- **Data folders.** They still have plural names (`recipes`, `loot_tables`, `tags/items`), so
+  `ImportTarget.V1_20_6` writes recipes to `data/mcheli/recipes`, and the jar guard in
+  `gradle/loader.gradle` keeps EMB4's out of both spellings.
+- **Vertices.** The older builder: `vertex`, `color`, `uv`, `overlayCoords`, `uv2`, `normal`, and an
+  `endVertex` to finish each one.
+- **Particle render types.** `begin` is handed a builder and `end` a tesselator.
+- **Camera.** The view matrix comes from the camera's angles rather than its quaternion. NeoForge's
+  `ComputeCameraAngles` carries the roll, so it uses the event as Forge does and has no camera mixin.
+  Fabric hooks after `resetProjectionMatrix` and wraps `Matrix4f.rotationXYZ` to stack the roll on top.
+- **Conventional tags.** Forge has none of the `c:` tags, so `forge-1.20.6` defines all our recipes use,
+  from the vanilla items and any matching `forge:` tag. Fabric lacks five, defined in `fabric-1.20.6`.
+- **Respawn.** `TeamManager` finds the respawn point itself, since there is no `DimensionTransition`.
 
 `client` is only referenced from the loader modules behind a physical client check, so a
 dedicated server never loads a client class.
