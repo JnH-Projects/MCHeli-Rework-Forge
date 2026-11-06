@@ -138,7 +138,7 @@ Rules that hold for every beta:
 | 9 | `1.1.0-beta.5` | Vehicle screen, cargo, supply vehicles, thermal view (Forge 26.3 only) | Released |
 | 10 | `1.1.0-beta.6` | The rest of the equipment (Forge 26.3 only) | Released |
 | 11 | `1.1.0-beta.7` | Workshop: model, parts and tuning (Forge 26.3 only) | Released |
-| 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Planned |
+| 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Released |
 | 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.19.4 to 26.3 | Planned |
 | | `1.1.0` | Release on CurseForge | Planned |
 
@@ -289,11 +289,11 @@ built here syncs to other players with no extra work.
 
 ## Phase 12: workshop, textures, sounds and sharing (`1.1.0-beta.8`)
 
-- [ ] Texture painting on the model and PNG import per part (cockpit textures included), with
-      live preview
-- [ ] OGG sounds for engine, rotor and weapons, with pitch curves
-- [ ] Package browser, author credits shown in game
-- [ ] Operator approval before a player's new vehicle goes live on a server
+- [x] PNG import per part (cockpit textures included), with live preview. Painting happens in the
+      player's own image editor; a brush on the 3D model was dropped from the plan
+- [x] OGG sounds for engine, rotor and weapons, with pitch curves for the engine and rotor loops
+- [x] Package browser, author credits shown in game
+- [x] Operator approval before a player's new vehicle goes live on a server
 
 ## Phase 13: every loader on every supported version (`1.1.0-beta.9`)
 
@@ -375,7 +375,6 @@ or recipe, and the editor is a screen of its own once it is open:
   start). Each part maps to definition keys such as `AddSeat`, `AddRotor`, `AddWing`, `AddWeapon`.
 - **Flight and drive tuning:** speed, lift, mass, turn rates, fuel and hit points, with a test
   flight from the editor.
-- **Textures:** paint on the model with a brush, or import PNGs per part (a custom cockpit
-  texture included), with live preview.
-- **Sounds:** pick OGG files for engine, rotor and weapons, with pitch curves.
+- **Textures:** import PNGs per part (a custom cockpit texture included), with live preview.
+- **Sounds:** pick OGG files for engine, rotor and weapons, with pitch curves for the loops.
 - **Save and export** to a package; **load** any package to keep editing.
