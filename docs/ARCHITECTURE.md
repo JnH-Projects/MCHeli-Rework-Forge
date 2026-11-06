@@ -106,6 +106,19 @@ the betas it is not kept in step; each final release brings it, and every other
 - **Camera.** Forge 1.21.1 fires its camera event after the camera is placed, so Forge uses the
   event. NeoForge and Fabric hook `GameRenderer.renderLevel` just before the camera rotation turns
   into the view matrix, the spot Forge fires from.
+- **Drafting table.** There is no recipe display system. The client holds every recipe, so the
+  screen reads its `RecipeManager` and `DraftingTablePacket` sends the recipe's id.
+- **Thermal view.** Post effects are the older `shaders/post` chains, and vanilla loads programs
+  from the `minecraft` namespace only, so ours is `assets/minecraft/shaders/program/mcheli_thermal`.
+  `GameRenderer.loadEffect` is private, so each loader hands `ClientHooks.init` a way to call it.
+- **Particles.** Smoke is a custom `ParticleRenderType` too. Vanilla only draws the types on its
+  own list, so `ParticleEngineMixin` adds ours on Fabric; Forge and NeoForge draw every type in use.
+- **Workshop preview.** With no GUI entity renderer, `WorkshopScreen` draws through
+  `AircraftRenderer.draw` the way vanilla draws a mob in the inventory, then clears the depth
+  buffer so the gizmos stay on top.
+- **Shaders.** There is no `IrisCompat`: Iris's pipeline assignment only exists for 26.x.
+- **Teams.** There is no PVP game rule or `TeamColor`. The team manager switches the server's PVP
+  setting, which lasts until a restart, and picks from the `ChatFormatting` colours.
 
 `client` is only referenced from the loader modules behind a physical client check, so a
 dedicated server never loads a client class.
