@@ -56,6 +56,10 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       its icon.
 - [ ] Glow halos, tracers and the glow particle are additive and do not hide smoke behind them.
 - [ ] A vehicle hit by a weapon wobbles (hurt time) and takes damage only once per hit.
+- [ ] Smoke grenades show their own icons, in the hand and in the drafting table's result slot.
+- [ ] The workshop's model turns, zooms and pans with its gizmos staying on the right parts.
+- [ ] The team manager's PVP button works, and PVP goes back to `server.properties` after a restart.
+- [ ] With Sodium and Iris for 1.21.1, tracers, flares and smoke look right (or note how they look).
 
 ## Phase 1 checklist
 
