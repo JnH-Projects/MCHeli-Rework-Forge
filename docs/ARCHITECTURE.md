@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -81,6 +81,27 @@ fires its event, so the shared code sees the same thing on every loader:
 | Streamed sounds | `SoundInstance.getStream` | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
 
 NeoForge rolls the camera the other way round from Forge, so its mixin negates the roll.
+
+### Minecraft 26.2
+
+`minecraft-26.2` is `minecraft-26.3` with these differences:
+
+- **Rendering API.** Pipelines live in `com.mojang.blaze3d` rather than `com.mojang.renderpearl`,
+  there are no order independent transparency pipelines to name, and `PoseStack` turns through
+  `mulPose`. `Glow` spells out vanilla's eyes pipeline, which has no snippet to build on yet, and
+  `ProjectileRenderer` makes its own translucent culled render type, since vanilla only offers one
+  drawn into the item target.
+- **Interpolation.** `Entity` does not own or run a handler. Each of our entities holds an
+  `InterpolationHandler`, returns it from `getInterpolation` and calls `interpolate` after
+  `super.tick()`, the way vanilla's boat does.
+- **Thermal view.** There is one post effect slot on `GameRenderer` rather than a list on the player,
+  and its setter is private, so each loader hands `ClientHooks.init` a way to call it: an access
+  transformer on Forge, a mixin invoker on NeoForge and Fabric. The shader has no explicit attribute
+  locations, matching vanilla's on this version.
+- **Input on Forge.** `InteractionKeyMappingTriggered` is one event with `isUseItem` and `isPickBlock`,
+  not an event per key.
+- **Rider pose.** `CameraRenderState` does not carry the camera entity's partial tick, so Forge and
+  Fabric ask `ClientHooks.cameraPartialTicks`. NeoForge's event has it.
 
 ### Minecraft 1.21.1
 
