@@ -9,7 +9,7 @@ MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecra
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0, now at phase 12 (`1.1.0-beta.8`). Every helicopter, plane,
+> **Status:** on the way to 1.1.0, now at phase 12 (`1.1.0-beta.8.1`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
 > equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
