@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.content;
 
+import com.jnhprojects.mcheli.content.throwable.ThrowableDefinition;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.recipe.LegacyRecipe;
 
@@ -47,9 +48,9 @@ public final class LegacyImporter {
      * Bump whenever the output changes, so existing installs import again. 2: recipes craft the
      * generic vehicle items of 1.1.0. 3: vehicle ingredients name their type for every loader, and
      * the output depends on the {@link ImportTarget}. 4: recipes may use the equipment
-     * items, so the E-767 is crafted with a UAV station.
+     * items, so the E-767 is crafted with a UAV station. 5: on 1.21.1, smoke grenades get icon numbers too.
      */
-    public static final int FORMAT = 4;
+    public static final int FORMAT = 5;
 
     /**
      * Written at the pack root for {@link ImportTarget#V1_21_1}: each original vehicle's
@@ -288,6 +289,9 @@ public final class LegacyImporter {
         Map<String, List<String>> byKind = new TreeMap<>();
         for (AircraftDefinition def : content.all()) {
             byKind.computeIfAbsent(def.kind(), k -> new ArrayList<>()).add(def.name());
+        }
+        for (ThrowableDefinition def : content.throwables()) {
+            byKind.computeIfAbsent("throwable", k -> new ArrayList<>()).add(def.name());
         }
         Map<String, Integer> icons = new TreeMap<>();
         for (Map.Entry<String, List<String>> e : byKind.entrySet()) {
