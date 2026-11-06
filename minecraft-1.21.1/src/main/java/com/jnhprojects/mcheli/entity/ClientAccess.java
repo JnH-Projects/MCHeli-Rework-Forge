@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.entity;
 
 import com.jnhprojects.mcheli.network.PackDataPacket;
 import com.jnhprojects.mcheli.network.PackListPacket;
+import com.jnhprojects.mcheli.network.PackSoundPacket;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
@@ -21,6 +22,10 @@ public final class ClientAccess {
 
         @Override
         public void onPackData(PackDataPacket packet) {
+        }
+
+        @Override
+        public void onPackSound(PackSoundPacket packet) {
         }
     };
 
@@ -46,5 +51,7 @@ public final class ClientAccess {
         void onPackList(PackListPacket packet);
 
         void onPackData(PackDataPacket packet);
+
+        void onPackSound(PackSoundPacket packet);
     }
 }
