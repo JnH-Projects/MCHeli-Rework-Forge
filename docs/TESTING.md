@@ -48,6 +48,15 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
+### 1.21.5 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
+- [ ] A vehicle that turns on the spot stays where the server has it, seen from a second client.
+- [ ] Inventory, cargo and a UAV station's item survive a world reload.
+- [ ] F3+B outlines the hull boxes next to vanilla's box, and they follow a moving vehicle.
+- [ ] The vehicle screen, drafting table and workshop textures sit where they should.
+- [ ] The team manager's PVP button works, and PVP goes back to `server.properties` after a restart.
+
 ### 1.21.11 only
 
 - [ ] From the built jars on a launcher profile: all three loaders start, which proves Fabric's remapped
