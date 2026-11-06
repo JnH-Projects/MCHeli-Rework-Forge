@@ -43,10 +43,12 @@ public final class PackSync {
         if (seesProblems(player)) {
             MCHeli.packs().reportProblems(player::sendSystemMessage);
         }
+        PackSubmissions.onLogin(player);
     }
 
     public static void onLogout(ServerPlayer player) {
         TRANSFERS.remove(player.getUUID());
+        PackSubmissions.onLogout(player);
     }
 
     /** The packs the server uses now, as the client should load them. */
