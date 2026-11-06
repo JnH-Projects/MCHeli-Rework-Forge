@@ -2,8 +2,8 @@
 
 <img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
 
-Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** and **1.21.1**, on **Forge**,
-**NeoForge** and **Fabric**.
+Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3**, **26.2** and **1.21.1**, on
+**Forge**, **NeoForge** and **Fabric**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
 system is rewritten for the modern game, while the original vehicle definitions, models,
@@ -84,16 +84,16 @@ Reserved original, the code is source available rather than open source.
 
 ## Requirements
 
-| | Minecraft 26.3 | Minecraft 1.21.1 |
-|---|---|---|
-| Forge | 66.1.0 or newer in the 66.x line | 52.1.0 or newer |
-| NeoForge | 26.3.0.99 or newer | 21.1.200 or newer |
-| Fabric | Loader 0.20 and Fabric API | Loader 0.16 and Fabric API |
-| Java | 25 (bundled with the launcher) | 21 (bundled with the launcher) |
+| | Minecraft 26.3 | Minecraft 26.2 | Minecraft 1.21.1 |
+|---|---|---|---|
+| Forge | 66.1.0 or newer in the 66.x line | 65.1.5 or newer in the 65.x line | 52.1.0 or newer |
+| NeoForge | 26.3.0.99 or newer | 26.2.0.93 or newer | 21.1.200 or newer |
+| Fabric | Loader 0.20 and Fabric API | Loader 0.20 and Fabric API | Loader 0.16 and Fabric API |
+| Java | 25 (bundled with the launcher) | 25 (bundled with the launcher) | 21 (bundled with the launcher) |
 
 ## Installing
 
-1. Install Forge, NeoForge or Fabric for Minecraft 26.3 or 1.21.1. On Fabric, also install
+1. Install Forge, NeoForge or Fabric for Minecraft 26.3, 26.2 or 1.21.1. On Fabric, also install
    [Fabric API](https://modrinth.com/mod/fabric-api).
 2. Download the jar for your loader from the
    [releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases):
@@ -118,7 +118,8 @@ zip goes.
 Use a separate game directory for each loader and version. Mods built for other loaders or older
 versions in a shared `mods` folder will stop the game from starting. Worlds and the `mcheli`
 folder can move between loaders on the same Minecraft version: the imported content, content packs
-and configs are the same files on all three. Do not open a 26.3 world in 1.21.1.
+and configs are the same files on all three. Do not open a world in an older Minecraft version than
+the one that last saved it.
 
 ## Playing
 
