@@ -44,7 +44,8 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 
 - [ ] A world made on Forge 26.3 with vehicles in it opens on NeoForge and Fabric 26.3 with the
       vehicles and items intact, and back.
-- [ ] A Fabric client joins a NeoForge server (both with the mod) and downloads its packs.
+- [ ] A client on the same loader as the dedicated server joins and downloads its packs. A client on
+      another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
 ### 1.21.1 only
