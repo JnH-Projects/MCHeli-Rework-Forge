@@ -1,11 +1,17 @@
 package com.jnhprojects.mcheli.weapon;
 
 import com.jnhprojects.mcheli.content.aircraft.WeaponMount;
+import com.jnhprojects.mcheli.content.aircraft.WeaponSound;
 import com.jnhprojects.mcheli.content.weapon.WeaponDefinition;
 import com.jnhprojects.mcheli.content.weapon.WeaponType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -51,6 +57,8 @@ public final class WeaponSet {
     public int soundWait;
     /** Whether the shot being fired may play its sound, see {@code SoundDelay}. */
     public boolean soundAllowed = true;
+    /** The vehicle's own sound for this weapon, from {@code WeaponSound}. */
+    public @Nullable WeaponSound ownSound;
 
     /** Aim relative to the hull, following the crew member who operates the weapon. */
     public float rotationYaw;
@@ -274,6 +282,57 @@ public final class WeaponSet {
         if (reload && magazineSize() > 0 && def.reloadTime > 0) {
             countReloadWait = clientSide ? def.reloadTime : Math.max(def.reloadTime - 20, 1);
         }
+    }
+
+    /**
+     * {@code getLandInDistance}: how far out, measured flat, a shell fired now would come down,
+     * stepping its arc a tick at a time as the projectile does; -1 if it would not come down in
+     * range. Mortars show it on the HUD.
+     */
+    public double landingDistance(Entity shooter) {
+        if (def.gravity >= 0.0F || mounts.isEmpty()) {
+            return -1.0;
+        }
+        WeaponMount mount = mounts.get(currentMount);
+        float yaw = Mth.wrapDegrees(shooter.getYRot() + rotationYaw + mount.yaw());
+        float pitch = Mth.wrapDegrees(shooter.getXRot() + rotationPitch + mount.pitch());
+        Vec3 dir = Vec3.directionFromRotation(pitch, yaw);
+        double acc = Math.min(def.acceleration, 4.0F);
+        double my = dir.y * def.acceleration;
+        if (my <= 0.0 || acc <= 0.0) {
+            return -1.0;
+        }
+        double mx = dir.x * def.acceleration;
+        double mz = dir.z * def.acceleration;
+        double gravity = def.gravity * (def.acceleration / acc);
+        double steps = my / def.gravity;
+        if (steps < -12.0) {
+            double f = steps / -12.0;
+            mx *= f;
+            my *= f;
+            mz *= f;
+            gravity *= f * f * 0.95;
+        }
+        Level level = shooter.level();
+        double x = shooter.getX();
+        double y = shooter.getY() + 3.0;
+        double z = shooter.getZ();
+        for (int i = 0; i < 50; i++) {
+            Vec3 from = new Vec3(x, y, z);
+            Vec3 to = new Vec3(x + mx, y + my, z + mz);
+            BlockHitResult hit = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter));
+            if (hit.getType() == HitResult.Type.BLOCK) {
+                return Math.hypot(hit.getBlockPos().getX() - shooter.getX(), hit.getBlockPos().getZ() - shooter.getZ());
+            }
+            my += gravity;
+            x += mx;
+            y += my;
+            z += mz;
+            if (y < shooter.getY()) {
+                return Math.hypot(x - shooter.getX(), z - shooter.getZ());
+            }
+        }
+        return -1.0;
     }
 
     // Firing
