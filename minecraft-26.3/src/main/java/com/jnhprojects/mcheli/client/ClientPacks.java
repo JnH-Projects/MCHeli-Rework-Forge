@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.client;
 
 import com.jnhprojects.mcheli.ClientConfig;
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.sound.OneShotSound;
 import com.jnhprojects.mcheli.content.ContentRegistry;
 import com.jnhprojects.mcheli.content.pack.ContentPack;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
@@ -11,6 +12,7 @@ import com.jnhprojects.mcheli.network.ModNetwork;
 import com.jnhprojects.mcheli.network.PackDataPacket;
 import com.jnhprojects.mcheli.network.PackListPacket;
 import com.jnhprojects.mcheli.network.PackRequestPacket;
+import com.jnhprojects.mcheli.network.PackSoundPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import com.jnhprojects.mcheli.platform.Platform;
@@ -47,8 +49,8 @@ import java.util.stream.Stream;
  * <p>The cache is capped by {@code packs.cacheSize} in the client config: after a download, the
  * packs used longest ago go first. The current server's packs are always kept.
  */
-final class ClientPacks implements ClientAccess.PackReceiver {
-    static final ClientPacks INSTANCE = new ClientPacks();
+public final class ClientPacks implements ClientAccess.PackReceiver {
+    public static final ClientPacks INSTANCE = new ClientPacks();
 
     private static final Pattern CACHED = Pattern.compile("[0-9a-f]{64}\\.zip");
 
@@ -121,6 +123,17 @@ final class ClientPacks implements ClientAccess.PackReceiver {
         if (downloads.isEmpty()) {
             apply();
         }
+    }
+
+    @Override
+    public void onPackSound(PackSoundPacket packet) {
+        Minecraft.getInstance().getSoundManager().play(
+                new OneShotSound(packet.sound(), packet.x(), packet.y(), packet.z(), packet.volume(), packet.pitch()));
+    }
+
+    /** The packs the server sent or named, for the package browser. Empty when hosting the game. */
+    public List<ContentPack> serverPacks() {
+        return mounted;
     }
 
     /** Leaving a server: its packs are no longer needed. */
