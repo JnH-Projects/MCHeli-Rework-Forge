@@ -34,6 +34,7 @@ public final class McheliFabric implements ModInitializer {
         }
         CustomIngredientSerializer.register(FabricVehicleIngredient.SERIALIZER);
         registerPackets();
+        CommonHooks.commonSetup();
 
         ServerLifecycleEvents.SERVER_STARTING.register(CommonHooks::serverAboutToStart);
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> CommonHooks.serverStopped());
