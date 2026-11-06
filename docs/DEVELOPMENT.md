@@ -21,6 +21,9 @@
 | Forge | 61.2.4 for Minecraft 1.21.11 | Built with ForgeGradle 7 and the official mappings. |
 | NeoForge | 21.11.48 for Minecraft 1.21.11 | |
 | Fabric | Fabric API 0.141.6+1.21.11 | Loom remaps the jar, which is obfuscated on 1.21.11. |
+| Forge | 55.1.18 for Minecraft 1.21.5 | Built with ForgeGradle 7 and the official mappings. |
+| NeoForge | 21.5.101 for Minecraft 1.21.5 | |
+| Fabric | Fabric API 0.128.2+1.21.5 | Loom remaps the jar, which is obfuscated on 1.21.5. |
 | Forge | 52.1.20 for Minecraft 1.21.1 | Built with ForgeGradle 7 and the official mappings. |
 | NeoForge | 21.1.265 for Minecraft 1.21.1 | |
 | Fabric | Fabric API 0.116.17+1.21.1 | Loom remaps the jar, which is obfuscated on 1.21.1. |
@@ -50,7 +53,7 @@ Shared properties live in the root `gradle.properties`: `mod_version`, the mod m
 of loader modules (`platforms`) and the library versions `common` compiles against. Each loader
 module has its own `gradle.properties` with its loader, Minecraft and Java versions. During the
 betas up to beta.8, `platforms` listed only `forge-26.3`. Roadmap phase 13 adds modules back as each
-one catches up, currently the three each on 26.3, 26.2, 26.1, 1.21.11 and 1.21.1; the others stay in the repository
+one catches up, currently the three each on 26.3, 26.2, 26.1, 1.21.11, 1.21.5 and 1.21.1; the others stay in the repository
 until they are ported.
 `mods.toml`, `neoforge.mods.toml`, `fabric.mod.json` and `pack.mcmeta` are filled in from them
 at build time. What every loader module shares (source folders, jar contents, manifest, file
@@ -75,6 +78,8 @@ minecraft-26.1/                the same shared code on Minecraft 26.1
 forge-26.1/, neoforge-26.1/, fabric-26.1/   the loader glue for 26.1
 minecraft-1.21.11/             the same shared code on Minecraft 1.21.11
 forge-1.21.11/, neoforge-1.21.11/, fabric-1.21.11/   the loader glue for 1.21.11
+minecraft-1.21.5/              the same shared code on Minecraft 1.21.5
+forge-1.21.5/, neoforge-1.21.5/, fabric-1.21.5/   the loader glue for 1.21.5
 minecraft-1.21.1/              the same shared code, backported to Minecraft 1.21.1
 forge-1.21.1/, neoforge-1.21.1/, fabric-1.21.1/   the loader glue for 1.21.1
 <loader>-<version>/            placeholders for the other supported versions (see below)
@@ -121,8 +126,8 @@ of them on the command line. After pulling the split, re-import the Gradle proje
 ### Placeholder modules
 
 Every [supported version](ROADMAP.md#supported-versions) has a loader module, but only 26.3, 26.2,
-26.1, 1.21.11 and 1.21.1 are ported. The other 10 (`forge-`, `neoforge-` and `fabric-` for
-1.21.5 and 1.20.6, plus `forge-` and `fabric-` for 1.20.2 and 1.19.4) are placeholders: each pins
+26.1, 1.21.11, 1.21.5 and 1.21.1 are ported. The other 7 (`forge-`, `neoforge-` and `fabric-` for
+1.20.6, plus `forge-` and `fabric-` for 1.20.2 and 1.19.4) are placeholders: each pins
 its loader, mappings and Java version, and holds only an entry point that logs a line at startup
 and the mod metadata. Their `gradle.properties` sets `scaffold=true`, which tells
 `gradle/loader.gradle` to leave out `common` and `minecraft-<version>`, so they build before that
