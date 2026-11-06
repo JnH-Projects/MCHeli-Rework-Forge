@@ -1,8 +1,8 @@
 package com.jnhprojects.mcheli.network;
 
+import com.jnhprojects.mcheli.ModSounds;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
-import com.jnhprojects.mcheli.weapon.Resupply;
 import com.jnhprojects.mcheli.weapon.VehicleWeapons;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -44,10 +44,20 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
         WEAPON_MODE,
         /** Release flares. Pilot and first crew seat. */
         FLARE,
-        /** Pay the selected weapon's {@code Item} cost from the inventory for one resupply. */
-        RESUPPLY,
+        /** Open the vehicle screen: fuel and parachute slots, reloading, the way to the cargo chest. */
+        VEHICLE_SCREEN,
         /** Hand the controls to the autopilot and man the weapons, or take them back. Pilot only. */
-        GUNNER_MODE
+        GUNNER_MODE,
+        /** Turn night vision on for the sender, in vehicles with {@code EnableNightVision}. */
+        NIGHT_VISION_ON,
+        /** Turn the sender's night vision off again. */
+        NIGHT_VISION_OFF,
+        /** Let the troops down: ropes from a hover, a parachute drop, or out on the ground. Pilot only. */
+        DROP_CREW,
+        /** Slide down a rope or jump with a parachute. Crew other than the pilot. */
+        JUMP_OUT,
+        /** Turn the search light on or off. Pilot and first crew seat. */
+        SEARCH_LIGHT
     }
 
     public static void encode(CrewActionPacket msg, FriendlyByteBuf buf) {
@@ -131,7 +141,19 @@ public record CrewActionPacket(int entityId, Action action) implements CustomPac
                     weapons.flares.use();
                 }
             }
-            case RESUPPLY -> Resupply.fromInventory(sender, vehicle);
+            case VEHICLE_SCREEN -> vehicle.openScreen(sender);
+            case NIGHT_VISION_ON, NIGHT_VISION_OFF -> vehicle.setNightVision(sender, msg.action == Action.NIGHT_VISION_ON);
+            case DROP_CREW -> {
+                if (pilot && !vehicle.dropCrew()) {
+                    ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
+                }
+            }
+            case SEARCH_LIGHT -> vehicle.toggleSearchLight(sender);
+            case JUMP_OUT -> {
+                if (!pilot && !vehicle.jumpOut(sender)) {
+                    ModSounds.playTo(sender, "ng", 1.0F, 1.0F);
+                }
+            }
         }
     }
 
