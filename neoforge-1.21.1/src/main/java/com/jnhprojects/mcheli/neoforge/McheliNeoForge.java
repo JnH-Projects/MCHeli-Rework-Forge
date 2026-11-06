@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.neoforge;
 
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import com.jnhprojects.mcheli.CommonHooks;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.item.VehicleIngredient;
@@ -40,6 +41,7 @@ public final class McheliNeoForge {
                     helper -> helper.register(VehicleIngredient.ID, NeoForgeVehicleIngredient.TYPE));
         });
         modBus.addListener(RegisterPayloadHandlersEvent.class, McheliNeoForge::registerPackets);
+        modBus.addListener(FMLCommonSetupEvent.class, event -> event.enqueueWork(CommonHooks::commonSetup));
         modBus.addListener(AddPackFindersEvent.class, event -> event.addRepositorySource(CommonHooks.packSource()));
 
         NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, event -> CommonHooks.serverAboutToStart(event.getServer()));
