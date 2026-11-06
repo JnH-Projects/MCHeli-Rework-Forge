@@ -309,9 +309,10 @@ added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest
 - [x] Every resource the repository holds ships in the jar (betas 4 to 8 lacked recipes, the thermal
       shader, the smoke particle and the drafting table model)
 - [x] Phases 8 to 12 ported to all three loaders on 1.21.1
-- [ ] Every module in `platforms` (26.3, 26.2 and 1.21.1 are in)
+- [ ] Every module in `platforms` (26.3, 26.2, 26.1 and 1.21.1 are in)
 - [x] `minecraft-26.2` with its Forge, NeoForge and Fabric glue
-- [ ] `minecraft-26.1`, `minecraft-1.21.11`, `minecraft-1.21.5`,
+- [x] `minecraft-26.1` with its Forge, NeoForge and Fabric glue
+- [ ] `minecraft-1.21.11`, `minecraft-1.21.5`,
       `minecraft-1.20.6`, `minecraft-1.20.2` and `minecraft-1.19.4`, each replacing its
       placeholder modules with real glue
 - [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
