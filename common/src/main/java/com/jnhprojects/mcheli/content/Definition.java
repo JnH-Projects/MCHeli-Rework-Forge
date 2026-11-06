@@ -1,5 +1,8 @@
 package com.jnhprojects.mcheli.content;
 
+import com.jnhprojects.mcheli.content.pack.PackManifest;
+import org.jspecify.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -15,6 +18,7 @@ public abstract class Definition {
     private final String name;
     private final Map<String, Consumer<String>> handlers = new HashMap<>();
     private String pack = "";
+    private @Nullable PackManifest credit;
 
     protected Definition(String name) {
         this.name = name;
@@ -36,6 +40,15 @@ public abstract class Definition {
 
     void setPack(String pack) {
         this.pack = pack;
+    }
+
+    /** What the pack this came from says about itself, for credits; {@code null} for the import. */
+    public @Nullable PackManifest credit() {
+        return credit;
+    }
+
+    void setCredit(@Nullable PackManifest credit) {
+        this.credit = credit;
     }
 
     protected abstract void registerKeys(KeyTable keys);
