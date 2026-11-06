@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.client.sound;
 
 import com.jnhprojects.mcheli.ModSounds;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.aircraft.PitchCurve;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.EngineSoundSource;
 import net.minecraft.client.Minecraft;
@@ -10,25 +11,29 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 
 /**
- * The looping engine sound of one vehicle. Ported from {@code MCH_SoundUpdater}.
+ * A looping sound of one vehicle: its engine, or the rotor loop some vehicles have alongside it.
+ * Ported from {@code MCH_SoundUpdater}.
  *
- * <p>Volume and pitch follow the vehicle's throttle every tick. For listeners outside the vehicle
- * the sound is placed between them and the vehicle, so that the 16 block range of a normal sound
- * stretches to the definition's {@code SoundRange}, and the pitch bends slightly as the vehicle
- * approaches or leaves, which is what the original did.
+ * <p>Volume and pitch follow the vehicle's throttle every tick, the pitch along the definition's
+ * curve if it has one and otherwise the way the kind of vehicle always has. For listeners outside
+ * the vehicle the sound is placed between them and the vehicle, so that the 16 block range of a
+ * normal sound stretches to the definition's {@code SoundRange}, and the pitch bends slightly as the
+ * vehicle approaches or leaves, which is what the original did.
  */
 final class EngineSound extends RuntimeSoundInstance {
     private static final float MAX_DOPPLER = 0.2F;
 
     private final AircraftEntity vehicle;
     private final EngineSoundSource source;
+    private final boolean rotor;
     private float doppler;
     private double lastDistance = -1.0;
 
-    EngineSound(AircraftEntity vehicle, EngineSoundSource source, String sound) {
+    EngineSound(AircraftEntity vehicle, EngineSoundSource source, String sound, boolean rotor) {
         super(ModSounds.get(sound), SoundSource.NEUTRAL, RandomSource.create());
         this.vehicle = vehicle;
         this.source = source;
+        this.rotor = rotor;
         this.looping = true;
         this.delay = 0;
         update();
@@ -53,8 +58,9 @@ final class EngineSound extends RuntimeSoundInstance {
             volume = 0.0F;
             return;
         }
-        volume = def.soundVolume * source.engineVolume();
-        float pitch = def.soundPitch * source.enginePitch();
+        volume = (rotor ? def.rotorSoundVolume : def.soundVolume) * source.engineVolume();
+        PitchCurve curve = rotor ? def.rotorSoundPitchCurve : def.soundPitchCurve;
+        float pitch = def.soundPitch * (curve != null ? curve.at(vehicle.visibleThrottle()) : source.enginePitch());
         boolean aboard = player.getRootVehicle() == vehicle.getRootVehicle();
         if (aboard) {
             x = vehicle.getX();
