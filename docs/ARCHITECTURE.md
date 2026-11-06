@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3, 26.2, 26.1, 1.21.11 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2, 26.1, 1.21.11, 1.21.5 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -138,6 +138,26 @@ Forge sets the official mappings and Fabric uses the remapping Loom plugin.
   `PayloadTypeRegistry.playS2C`, and on `CustomIngredient` `getMatchingItems` and `toDisplay`.
 - **Conventional tags.** Forge on 1.21.x has `forge:gunpowder` and `forge:feathers` but not the `c:`
   names our recipes use, so its modules define `c:gunpowders` and `c:feathers` from those.
+
+### Minecraft 1.21.5
+
+`minecraft-1.21.5` takes entities, items, recipes and networking from `minecraft-1.21.11`, and its
+screens' input handling and the workshop from `minecraft-1.21.1`. What differs:
+
+- **Rendering.** There are render states but no submit step. `render` draws straight into a
+  `MultiBufferSource`, and `Geometry.submit` keeps those calls reading the same as elsewhere.
+- **Save data.** `CompoundTag` has `store`, `read` and `getIntOr`, so it stands in for `ValueOutput`
+  and `ValueInput`. Anything holding items needs the registries passed along.
+- **Interpolation.** A packet with only a rotation interpolates to where the entity is now, dropping
+  the target, so `VehicleInterpolation` keeps the target in that case.
+- **Thermal view.** Post effects use plain uniforms: `InSize` rather than a `SamplerInfo` block, and
+  a `uniforms` list in the JSON.
+- **`blit`.** It takes a render type function, then position, texels and size in that order, so a
+  call from 1.21.1 with its size first still compiles and draws the wrong region.
+- **Glow.** Our render types come from a nested subclass, the only place the shards they need can be
+  seen, and vanilla's `itemEntityTranslucentCull` draws translucent rounds.
+- **Hull outline.** The render step has no entity, so the extract step copies the boxes into the state.
+- **Teams.** There is no PVP game rule, so the team manager switches the server's setting, as on 1.21.1.
 
 ### Minecraft 1.21.1
 
