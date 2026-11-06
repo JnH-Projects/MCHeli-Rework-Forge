@@ -308,8 +308,8 @@ added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest
 - [x] Phases 8 to 12 ported to NeoForge and Fabric on 26.3
 - [x] Every resource the repository holds ships in the jar (betas 4 to 8 lacked recipes, the thermal
       shader, the smoke particle and the drafting table model)
-- [ ] Phases 8 to 12 ported to all three loaders on 1.21.1
-- [ ] Every module in `platforms`
+- [x] Phases 8 to 12 ported to all three loaders on 1.21.1
+- [ ] Every module in `platforms` (26.3 and 1.21.1 are in)
 - [ ] `minecraft-26.2`, `minecraft-26.1`, `minecraft-1.21.11`, `minecraft-1.21.5`,
       `minecraft-1.20.6`, `minecraft-1.20.2` and `minecraft-1.19.4`, each replacing its
       placeholder modules with real glue
