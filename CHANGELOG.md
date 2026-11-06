@@ -15,12 +15,12 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
   the vehicle screen, the drafting table, team manager, UAV stations and the workshop. On 1.21.1 the PVP
   button of the team manager switches the server's PVP setting until a restart, since that version has
   no game rule for it, and target markers ignore view bobbing.
-- Minecraft 26.2 and 26.1 on Forge, NeoForge and Fabric, with everything 26.3 has. On 26.1 teams pick
-  from the sixteen chat colours, since that version has no separate team colours.
+- Minecraft 26.2, 26.1 and 1.21.11 on Forge, NeoForge and Fabric, with everything 26.3 has. On 26.1 and
+  1.21.11 teams pick from the sixteen chat colours, since those versions have no separate team colours.
 
 ### Changed
 
-- Forge, NeoForge and Fabric on 26.3, 26.2, 26.1 and 1.21.1 are all built on every pull request.
+- Forge, NeoForge and Fabric on 26.3, 26.2, 26.1, 1.21.11 and 1.21.1 are all built on every pull request.
 - Clients and servers on different loaders cannot play together, which the roadmap used to promise.
   Each loader refuses the other at its own handshake, before the mod runs. A pack zip still works on
   every loader when copied by hand.
@@ -30,6 +30,8 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 - Fabric clients crashed at startup on 26.3 and 1.21.1, because `RollableCamera` sat in the mixin package.
 - Glow particles were invisible on Fabric 1.21.1: vanilla only draws the particle types on its own list.
 - On 1.21.1 the E-767 recipe failed to load, since its UAV station ingredient used the newer format.
+- On Forge 1.21.1, recipes that use gunpowder or feathers could not be crafted, since Forge names those
+  tags differently from the conventional ones our recipes use. The Forge modules on 1.21.x now define them.
 
 ## [1.1.0-beta.8.1] - 2026-11-06
 
