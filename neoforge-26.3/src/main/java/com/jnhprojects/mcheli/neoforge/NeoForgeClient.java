@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.neoforge;
 
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
@@ -11,9 +12,11 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -30,14 +33,20 @@ final class NeoForgeClient {
         ClientHooks.init();
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
-        modBus.addListener(RegisterParticleProvidersEvent.class,
-                event -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
+        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
+                event -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
+        modBus.addListener(RegisterMenuScreensEvent.class, event -> ClientHooks.registerMenuScreens(event::register));
+        modBus.addListener(RegisterParticleProvidersEvent.class, event -> {
+            event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
+        });
         modBus.addListener(RegisterKeyMappingsEvent.class, event -> ClientHooks.keyMappings().forEach(event::register));
         modBus.addListener(AddClientReloadListenersEvent.class, event -> ClientHooks.reloadListeners().forEach(event::addListener));
         modBus.addListener(RegisterGuiLayersEvent.class,
                 event -> event.registerAbove(VanillaGuiLayers.SLEEP_OVERLAY, ClientHooks.HUD_LAYER, ClientHooks::drawHud));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ClientHooks.clientTickEnd());
+        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, event -> event.setFOV(ClientHooks.fov(event.getFOV())));
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, event -> event.setCanceled(ClientHooks.hidesHand()));
         NeoForge.EVENT_BUS.addListener(RenderLivingEvent.Pre.class,
                 event -> ClientHooks.beforeRenderLiving(event.getRenderState(), event.getPoseStack(), event.getPartialTick()));
