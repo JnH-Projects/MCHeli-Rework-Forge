@@ -1,20 +1,27 @@
 package com.jnhprojects.mcheli.client.render;
 
+import net.minecraft.client.renderer.RenderType;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
+import com.jnhprojects.mcheli.content.aircraft.RepellingHook;
+import com.jnhprojects.mcheli.content.aircraft.RotorDefinition;
+import com.jnhprojects.mcheli.content.aircraft.SearchLight;
 import com.jnhprojects.mcheli.content.aircraft.part.WeaponPart;
-import com.jnhprojects.mcheli.weapon.VehicleWeapons;
-import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.jnhprojects.mcheli.entity.AircraftEntity;
 import com.jnhprojects.mcheli.entity.AnimationState;
 import com.jnhprojects.mcheli.entity.HelicopterEntity;
 import com.jnhprojects.mcheli.entity.PartState;
 import com.jnhprojects.mcheli.entity.PlaneEntity;
 import com.jnhprojects.mcheli.model.Mesh;
+import com.jnhprojects.mcheli.weapon.VehicleWeapons;
+import com.jnhprojects.mcheli.weapon.WeaponSet;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -23,14 +30,23 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Draws any MCHeli vehicle from its MQO/OBJ model, following {@code MCH_RenderAircraft}: the hull,
  * the kind's own moving parts (rotors, wings, gun mounts) and then the parts every kind can have.
  */
 public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T> {
+    private static final float[] HULL_COLOR = {0.0F, 0.88F, 1.0F};
+    private static final float[] GENERATED_COLOR = {1.0F, 0.75F, 0.0F};
+    /** Ropes take the colour of brown wool. */
+    private static final ResourceLocation ROPE = ResourceLocation.withDefaultNamespace("textures/block/brown_wool.png");
+    private static final float ROPE_WIDTH = 0.03F;
+
     /** Reused every frame; rendering is single threaded. */
     private final AircraftRenderState state = new AircraftRenderState();
 
@@ -45,13 +61,12 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
         AircraftDefinition def = entity.definition();
         state.definition = def;
         state.texture = entity.texture();
-        state.yaw = entity.getYRot(partialTicks);
-        state.pitch = entity.getXRot(partialTicks);
+        state.yaw = entity.getViewYRot(partialTicks);
+        state.pitch = entity.getViewXRot(partialTicks);
         state.roll = entity.roll(partialTicks);
         if (def == null) {
             return;
         }
-
         state.rotorAngle = switch (entity) {
             case HelicopterEntity heli -> heli.rotorAngle(partialTicks);
             case PlaneEntity plane -> plane.rotorAngle(partialTicks);
@@ -60,6 +75,16 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
         state.canopy = angle(entity.canopy(), partialTicks);
         state.landingGear = angle(entity.landingGear(), partialTicks);
         state.hatch = angle(entity.hatch(), partialTicks);
+        if (entity instanceof HelicopterEntity heli && def instanceof HelicopterDefinition heliDef) {
+            bladeAngles(heli, heliDef, state, partialTicks);
+        }
+        state.ropeLength = entity.isRepelling() ? entity.ropeLength() : 0.0F;
+        state.searchLight = entity.isSearchLightOn();
+        if (state.searchLight) {
+            Entity aimer = entity.searchLightAimer();
+            state.searchLightYaw = aimer != null ? aimer.getViewYRot(partialTicks) : state.yaw;
+            state.searchLightPitch = aimer != null ? aimer.getViewXRot(partialTicks) : state.pitch;
+        }
         if (entity instanceof PlaneEntity plane) {
             state.nozzle = angle(plane.nozzle(), partialTicks);
             state.wing = angle(plane.wing(), partialTicks);
@@ -199,6 +224,15 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
     @Override
     public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int light) {
         extractRenderState(entity, state, partialTicks, light);
+        if (state.definition != null && entityRenderDispatcher.shouldRenderHitBoxes()) {
+            showHull(entity, state.definition, poseStack, buffers);
+        }
+        draw(state, poseStack, buffers);
+        super.render(entity, entityYaw, partialTicks, poseStack, buffers, light);
+    }
+
+    /** The vehicle and what hangs off it, from a state alone; the workshop draws a model with no entity this way. */
+    public static void draw(AircraftRenderState state, PoseStack poseStack, MultiBufferSource buffers) {
         AircraftDefinition def = state.definition;
         Mesh mesh = def != null ? MeshCache.INSTANCE.get(def.folder(), def.name()) : null;
         if (mesh != null) {
@@ -210,9 +244,98 @@ public class AircraftRenderer<T extends AircraftEntity> extends EntityRenderer<T
             poseStack.mulPose(Axis.ZP.rotationDegrees(state.roll));
             new PartRenderer(def, mesh, state, poseStack, buffers, texture(def.folder(), state.texture), state.lightCoords,
                     OverlayTexture.NO_OVERLAY, state.glassColor).submitAll();
+            if (state.ropeLength < 0.0F) {
+                ropes(def, state, poseStack, buffers);
+            }
+            if (state.searchLight) {
+                searchLights(def, state, poseStack, buffers);
+            }
             poseStack.popPose();
         }
-        super.render(entity, entityYaw, partialTicks, poseStack, buffers, light);
+    }
+
+    /**
+     * With F3+B on, outlines the hull boxes next to vanilla's main box: what projectiles hit and
+     * what other vehicles collide with. The definition's own boxes are cyan, the ones generated
+     * from the model amber.
+     */
+    private static void showHull(AircraftEntity entity, AircraftDefinition def, PoseStack pose, MultiBufferSource buffers) {
+        List<AABB> hull = entity.hullBoxes();
+        if (hull.size() < 2) {
+            return;
+        }
+        VertexConsumer lines = buffers.getBuffer(RenderType.lines());
+        int listed = def.boundingBoxes.size();
+        // The first is the main box, which vanilla draws itself; then the listed boxes, then the generated ones.
+        for (int i = 1; i < hull.size(); i++) {
+            float[] c = i <= listed ? HULL_COLOR : GENERATED_COLOR;
+            LevelRenderer.renderLineBox(pose, lines, hull.get(i).move(-entity.getX(), -entity.getY(), -entity.getZ()), c[0], c[1], c[2], 1.0F);
+        }
+    }
+
+    /**
+     * {@code renderLight}: each lamp's cone. A turning light follows the crew's aim; a fixed one
+     * points along the vehicle, and a steering one also turns with the front wheels.
+     */
+    private static void searchLights(AircraftDefinition def, AircraftRenderState state, PoseStack pose, MultiBufferSource buffers) {
+        for (SearchLight light : def.searchLights) {
+            pose.pushPose();
+            pose.translate(light.position().x(), light.position().y(), light.position().z());
+            if (!light.fixed()) {
+                pose.mulPose(Axis.YN.rotationDegrees(state.searchLightYaw - state.yaw + light.yaw()));
+                pose.mulPose(Axis.XP.rotationDegrees(state.searchLightPitch + 90.0F - state.pitch + light.pitch()));
+            } else {
+                float steer = light.steering() ? -state.steer * light.steeringRotation() : 0.0F;
+                pose.mulPose(Axis.YN.rotationDegrees(light.yaw() + steer));
+                pose.mulPose(Axis.XP.rotationDegrees(90.0F + light.pitch()));
+            }
+            Glow.cone(pose, buffers, light.height(), light.width() / 2.0F, light.colorStart(), light.colorEnd());
+            pose.popPose();
+        }
+    }
+
+    private static void bladeAngles(HelicopterEntity heli, HelicopterDefinition def, AircraftRenderState state, float partialTicks) {
+        if (state.bladeAngles.length != def.rotors.size()) {
+            state.bladeAngles = new float[def.rotors.size()][];
+        }
+        for (int r = 0; r < def.rotors.size(); r++) {
+            RotorDefinition rotor = def.rotors.get(r);
+            int blades = Math.max(rotor.blades(), 1);
+            int step = rotor.bladeStep() > 0 ? rotor.bladeStep() : 1;
+            if (state.bladeAngles[r] == null || state.bladeAngles[r].length != blades) {
+                state.bladeAngles[r] = new float[blades];
+            }
+            for (int b = 0; b < blades; b++) {
+                state.bladeAngles[r][b] = heli.bladeAngle(r, b, step, partialTicks);
+            }
+        }
+    }
+
+    /** {@code renderRope}: a dark line straight down from each hook, in the vehicle's own frame. */
+    private static void ropes(AircraftDefinition def, AircraftRenderState state, PoseStack pose, MultiBufferSource buffers) {
+        int light = state.lightCoords;
+        float length = state.ropeLength;
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutout(ROPE));
+        PoseStack.Pose p = pose.last();
+        for (RepellingHook hook : def.repellingHooks) {
+            float x = (float) hook.position().x();
+            float y = (float) hook.position().y();
+            float z = (float) hook.position().z();
+            // Two thin crossed strips, so the rope shows from every side.
+            ropeStrip(p, buffer, x - ROPE_WIDTH, z, x + ROPE_WIDTH, z, y, length, light);
+            ropeStrip(p, buffer, x, z - ROPE_WIDTH, x, z + ROPE_WIDTH, y, length, light);
+        }
+    }
+
+    private static void ropeStrip(PoseStack.Pose p, VertexConsumer buffer, float x0, float z0, float x1, float z1, float y, float length, int light) {
+        ropeVertex(p, buffer, x0, y, z0, 0.0F, 0.0F, light);
+        ropeVertex(p, buffer, x1, y, z1, 1.0F, 0.0F, light);
+        ropeVertex(p, buffer, x1, y + length, z1, 1.0F, 1.0F, light);
+        ropeVertex(p, buffer, x0, y + length, z0, 0.0F, 1.0F, light);
+    }
+
+    private static void ropeVertex(PoseStack.Pose p, VertexConsumer buffer, float x, float y, float z, float u, float v, int light) {
+        buffer.addVertex(p, x, y, z).setColor(0xFFFFFFFF).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(p, 0.0F, 1.0F, 0.0F);
     }
 
     /** Vehicles bind their own textures per part; this is only for vanilla's bookkeeping. */
