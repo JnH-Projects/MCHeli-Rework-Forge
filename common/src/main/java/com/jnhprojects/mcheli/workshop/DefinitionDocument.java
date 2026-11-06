@@ -113,6 +113,53 @@ public final class DefinitionDocument {
         }
     }
 
+    /**
+     * The value of a key that repeats, one line per thing it is about, such as
+     * {@code PartTexture = blade0, my-blade}: the line whose first value is {@code first}.
+     */
+    public @Nullable String keyed(String key, String first) {
+        Entry entry = lastKeyed(key, first);
+        return entry != null ? entry.value() : null;
+    }
+
+    /**
+     * Sets the line of a repeating key whose first value is {@code first}, or adds one at the end.
+     * With {@code null} every such line goes.
+     */
+    public void setKeyed(String key, String first, @Nullable String value) {
+        if (value != null) {
+            Entry entry = lastKeyed(key, first);
+            if (entry != null) {
+                setLine(entry.line(), entry.key(), value);
+            } else {
+                lines.add(format(key, value));
+            }
+            return;
+        }
+        for (Entry entry = lastKeyed(key, first); entry != null; entry = lastKeyed(key, first)) {
+            lines.remove(entry.line());
+        }
+    }
+
+    private @Nullable Entry lastKeyed(String key, String first) {
+        String wantedKey = DefinitionValues.lower(key);
+        String wanted = bare(first);
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            Entry entry = entry(i);
+            if (entry != null && DefinitionValues.lower(entry.key()).equals(wantedKey)
+                    && bare(entry.value().split(",", 2)[0]).equals(wanted)) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    /** Model objects can be written with or without their {@code $}. */
+    private static String bare(String name) {
+        String lower = DefinitionValues.lower(name.trim());
+        return lower.startsWith("$") ? lower.substring(1) : lower;
+    }
+
     public void setLine(int line, String key, String value) {
         lines.set(line, format(key, value));
     }
