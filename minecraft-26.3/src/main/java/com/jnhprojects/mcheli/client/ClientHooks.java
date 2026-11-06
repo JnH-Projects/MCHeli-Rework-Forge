@@ -38,6 +38,8 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
@@ -50,6 +52,8 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
@@ -117,11 +121,17 @@ public final class ClientHooks {
         renderers.register(ModBlockEntities.DRAFTING_TABLE.get(), DraftingTableRenderer::new);
     }
 
+    /** How a loader registers the screen of a menu: vanilla's own method is not public on all of them. */
+    public interface MenuScreenRegistrar {
+        <M extends AbstractContainerMenu, U extends Screen & MenuAccess<M>> void register(MenuType<? extends M> type,
+                                                                                            MenuScreens.ScreenConstructor<M, U> screen);
+    }
+
     /** On the main thread during client setup, once our menu types are registered. */
-    public static void registerMenuScreens() {
-        MenuScreens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
-        MenuScreens.register(ModMenus.UAV_STATION.get(), UavStationScreen::new);
-        MenuScreens.register(ModMenus.DRAFTING_TABLE.get(), DraftingTableScreen::new);
+    public static void registerMenuScreens(MenuScreenRegistrar screens) {
+        screens.register(ModMenus.VEHICLE.get(), VehicleScreen::new);
+        screens.register(ModMenus.UAV_STATION.get(), UavStationScreen::new);
+        screens.register(ModMenus.DRAFTING_TABLE.get(), DraftingTableScreen::new);
     }
 
     public static List<KeyMapping> keyMappings() {
