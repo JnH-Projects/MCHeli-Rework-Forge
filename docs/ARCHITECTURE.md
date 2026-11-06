@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3, 26.2 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2, 26.1 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -102,6 +102,22 @@ NeoForge rolls the camera the other way round from Forge, so its mixin negates t
   not an event per key.
 - **Rider pose.** `CameraRenderState` does not carry the camera entity's partial tick, so Forge and
   Fabric ask `ClientHooks.cameraPartialTicks`. NeoForge's event has it.
+
+### Minecraft 26.1
+
+`minecraft-26.1` is `minecraft-26.2` with these differences:
+
+- **Depth.** 26.1 is the last version with a normal depth buffer, so the glow pipelines test with
+  `LESS_THAN_OR_EQUAL`. The enum exists on both sides of the change, so the wrong one compiles and
+  only shows as glows drawn through walls.
+- **Rendering API.** Pipelines take samplers and a vertex format through `withSampler` and
+  `withVertexFormat` rather than bind groups and a primitive topology.
+- **Screens.** They live on `Minecraft`, not `Gui`, as they do on 1.21.1.
+- **Teams.** There is no `TeamColor`. The team manager picks from the `ChatFormatting` colours.
+- **Block entity types.** The constructor is private in vanilla, so `Platform.blockEntityType` makes
+  them: Forge and NeoForge have opened the constructor, Fabric API has a builder.
+- **Camera hooks.** `GameRenderer.update` also takes whether game time advances, and Fabric's
+  camera mixin shadows `Vector3f` constants rather than `Vector3fc`.
 
 ### Minecraft 1.21.1
 
