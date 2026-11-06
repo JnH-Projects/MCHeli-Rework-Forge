@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.forge;
 
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import com.jnhprojects.mcheli.CommonHooks;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.item.VehicleIngredient;
@@ -38,6 +39,7 @@ public final class McheliForge {
                     helper -> helper.register(VehicleIngredient.ID, ForgeVehicleIngredient.SERIALIZER));
         });
         ForgeNetwork.register();
+        modBus.addListener((FMLCommonSetupEvent event) -> event.enqueueWork(CommonHooks::commonSetup));
         modBus.addListener((AddPackFindersEvent event) -> event.addRepositorySource(CommonHooks.packSource()));
 
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
