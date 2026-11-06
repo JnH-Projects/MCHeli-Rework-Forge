@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.fabric.mixin;
 
+import com.jnhprojects.mcheli.client.ClientHooks;
 import net.minecraft.client.Camera;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -7,6 +8,9 @@ import org.joml.Vector3fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Vanilla's camera has no roll. This is {@code Camera#setRotation} with the roll Forge patches in,
@@ -53,5 +57,11 @@ abstract class CameraMixin implements RollableCamera {
         UP.rotate(this.rotation, this.up);
         LEFT.rotate(this.rotation, this.left);
         this.matrixPropertiesDirty |= 3;
+    }
+
+    /** Zoom through a sight, where Forge fires its field of view event. */
+    @Inject(method = "calculateFov", at = @At("RETURN"), cancellable = true)
+    private void mcheli$calculateFov(float partialTicks, CallbackInfoReturnable<Float> cir) {
+        cir.setReturnValue(ClientHooks.fov(cir.getReturnValueF()));
     }
 }
