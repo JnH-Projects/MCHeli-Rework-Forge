@@ -1,11 +1,15 @@
 package com.jnhprojects.mcheli.workshop;
 
 import com.jnhprojects.mcheli.content.DefinitionReader;
+import com.jnhprojects.mcheli.content.DefinitionValues;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
+import com.jnhprojects.mcheli.content.aircraft.WeaponGroup;
+import com.jnhprojects.mcheli.content.aircraft.WeaponSound;
 import com.jnhprojects.mcheli.content.pack.ContentPack;
 import com.jnhprojects.mcheli.content.pack.PackException;
 import com.jnhprojects.mcheli.content.pack.PackFolder;
 import com.jnhprojects.mcheli.content.pack.PackManifest;
+import com.jnhprojects.mcheli.model.PartTextures;
 import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -19,8 +23,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -44,6 +50,8 @@ public final class WorkshopProject {
     private static final Pattern VEHICLE_NAME = Pattern.compile("[a-z0-9][a-z0-9_-]{0,63}");
     private static final Pattern FILE_SAFE = Pattern.compile("[^a-zA-Z0-9._-]");
     private static final int PLAIN_TEXTURE_GREY = 0xB0;
+    private static final String PART_TEXTURE = "PartTexture";
+    private static final String WEAPON_SOUND = "WeaponSound";
 
     private final Path root;
     private final WorkshopKind kind;
@@ -354,6 +362,148 @@ public final class WorkshopProject {
         return at;
     }
 
+    // Textures
+
+    /** The objects of the model that can have a texture of their own, by part name. */
+    public List<String> texturableParts() {
+        return PartTextures.names(model.mesh());
+    }
+
+    /** The name of the texture a part has of its own, or {@code null} if it wears the vehicle's paint. */
+    public @Nullable String partTexture(String part) {
+        String value = document.keyed(PART_TEXTURE, part);
+        String[] values = value != null ? value.split(",") : new String[0];
+        return values.length == 2 ? DefinitionValues.lower(values[1].trim()) : null;
+    }
+
+    /** The vehicle's own texture, the one a freshly placed vehicle wears. */
+    public String mainTexture() {
+        return definition.textures().getFirst();
+    }
+
+    /**
+     * Copies a PNG in as a part's texture, or as the vehicle's own with {@code part} {@code null}. The
+     * file replaces the one in the pack straight away, which is what makes the preview live. The
+     * definition line is a normal edit: it can be undone, and needs saving.
+     *
+     * @return the texture's name and what its author may want to fix
+     * @throws WorkshopException when the file cannot be used or copied
+     */
+    public ImportedTexture importTexture(@Nullable String part, Path png) throws WorkshopException {
+        AssetImport.Texture checked = AssetImport.texture(png);
+        String name = part != null ? vehicle + "_" + fileSafe(part) : mainTexture();
+        copyIn(png, assets().resolve("textures").resolve(kind.folder()).resolve(name + ".png"));
+        if (part != null) {
+            document.setKeyed(PART_TEXTURE, part, part + ", " + name);
+        }
+        return new ImportedTexture(name, checked);
+    }
+
+    /** A texture now in the pack. */
+    public record ImportedTexture(String name, AssetImport.Texture checked) {
+    }
+
+    /** Puts a part back in the vehicle's paint. The PNG stays in the pack, for undo. */
+    public void clearPartTexture(String part) {
+        document.setKeyed(PART_TEXTURE, part, null);
+    }
+
+    // Sounds
+
+    /** What a sound belongs to: the engine, the rotor, or one of the vehicle's weapons. */
+    public enum SoundKind {
+        ENGINE, ROTOR, WEAPON
+    }
+
+    /** @param weapon the weapon's name, for a {@link SoundKind#WEAPON} */
+    public record SoundSlot(SoundKind kind, @Nullable String weapon) {
+    }
+
+    /** Everything on this vehicle that can have a sound. Tanks and cars have no rotor. */
+    public List<SoundSlot> soundSlots() {
+        List<SoundSlot> slots = new ArrayList<>();
+        slots.add(new SoundSlot(SoundKind.ENGINE, null));
+        if (kind == WorkshopKind.HELICOPTER || kind == WorkshopKind.PLANE) {
+            slots.add(new SoundSlot(SoundKind.ROTOR, null));
+        }
+        Set<String> weapons = new LinkedHashSet<>();
+        for (WeaponGroup group : definition.weaponGroups) {
+            weapons.add(group.weaponType());
+        }
+        for (String weapon : weapons) {
+            slots.add(new SoundSlot(SoundKind.WEAPON, weapon));
+        }
+        return slots;
+    }
+
+    /** The name of the sound set for a slot in the definition, or {@code null} if none is. */
+    public @Nullable String sound(SoundSlot slot) {
+        return switch (slot.kind()) {
+            case ENGINE -> document.value("Sound");
+            case ROTOR -> document.value("RotorSound");
+            case WEAPON -> {
+                WeaponSound own = definition.weaponSounds.get(slot.weapon());
+                yield own != null ? own.sound() : null;
+            }
+        };
+    }
+
+    /**
+     * Copies an OGG in as a slot's sound, replacing the one in the pack straight away, and sets the
+     * definition line, which is a normal edit.
+     *
+     * @return the sound's name
+     * @throws WorkshopException when the file cannot be used or copied
+     */
+    public ImportedSound importSound(SoundSlot slot, Path ogg) throws WorkshopException {
+        List<String> warnings = AssetImport.sound(ogg);
+        String name = vehicle + "_" + switch (slot.kind()) {
+            case ENGINE -> "engine";
+            case ROTOR -> "rotor";
+            case WEAPON -> fileSafe(slot.weapon());
+        };
+        copyIn(ogg, assets().resolve("sounds").resolve(name + ".ogg"));
+        setSound(slot, name);
+        return new ImportedSound(name, warnings);
+    }
+
+    /** A sound now in the pack. */
+    public record ImportedSound(String name, List<String> warnings) {
+    }
+
+    /** Sets or, with {@code null}, clears a slot's sound. A file already in the pack stays there. */
+    public void setSound(SoundSlot slot, @Nullable String name) {
+        switch (slot.kind()) {
+            case ENGINE -> document.set("Sound", name);
+            case ROTOR -> document.set("RotorSound", name);
+            case WEAPON -> {
+                WeaponSound own = definition.weaponSounds.get(slot.weapon());
+                Float pitch = own != null ? own.pitch() : null;
+                document.setKeyed(WEAPON_SOUND, slot.weapon(), name == null ? null
+                        : slot.weapon() + ", " + name + (pitch != null ? ", " + WorkshopPart.number(pitch) : ""));
+            }
+        }
+    }
+
+    private static String fileSafe(String name) {
+        return name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "_");
+    }
+
+    /** A crash halfway through leaves the old file. Dropping a file from the pack itself changes nothing. */
+    private static void copyIn(Path from, Path to) throws WorkshopException {
+        try {
+            Files.createDirectories(to.getParent());
+            if (Files.exists(to) && Files.isSameFile(from, to)) {
+                return;
+            }
+            Path temp = to.resolveSibling(to.getFileName() + ".tmp");
+            Files.copy(from, temp, StandardCopyOption.REPLACE_EXISTING);
+            move(temp, to);
+        } catch (IOException e) {
+            throw new WorkshopException("Could not copy %s: %s".formatted(from.getFileName(), e));
+        }
+    }
+
     /** Whether the document differs from what is on disk. */
     public boolean isDirty() {
         return !document.snapshot().equals(saved);
@@ -380,6 +530,10 @@ public final class WorkshopProject {
     private static void writeAtomically(Path file, String text) throws IOException {
         Path temp = file.resolveSibling(file.getFileName() + ".tmp");
         Files.writeString(temp, text, StandardCharsets.UTF_8);
+        move(temp, file);
+    }
+
+    private static void move(Path temp, Path file) throws IOException {
         try {
             Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (AtomicMoveNotSupportedException e) {
