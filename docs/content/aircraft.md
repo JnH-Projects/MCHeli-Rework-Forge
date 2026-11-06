@@ -275,6 +275,11 @@ seconds is `MaxFuel / FuelConsumption`, here 1200 seconds.
 | Key | Meaning |
 |-----|---------|
 | `Sound = heli` | Engine sound, here `sounds/heli.ogg`. |
+| `SoundPitchCurve = 0:0.7, 0.5:1, 1:1.3` | How the engine's pitch follows the throttle, as `throttle:pitch` points with straight lines between them. Throttle runs 0 to 1 and rises from left to right; pitch is kept to 0.5 to 2, what the game can play. Without it, the pitch follows the throttle the way the kind of vehicle does. |
+| `RotorSound = my-rotor` | A second loop alongside the engine. Takes its throttle and range from the same places. |
+| `RotorSoundVolume = 1.0`, `RotorSoundPitchCurve = 0:0.7, 1:1.3` | Its volume and pitch curve. |
+| `WeaponSound = m230, my-gun, 1.2` | What weapon `m230` sounds like on this vehicle: `sounds/my-gun.ogg`, with an optional pitch of 0.5 to 2. Repeatable, one per weapon. Other vehicles using the weapon are not affected. |
+| `PartTexture = blade0, my-blade` | Draws an object of the model, here `$blade0`, with `textures/<kind>/my-blade.png`, whatever paint the vehicle wears. Plain objects behind a `$` part follow it unless they have their own line. Repeatable. |
 | `SmoothShading = false` | `false` for flat shading, `true` for smoothed normals. The `SmoothShading` option in `mcheli.cfg` overrides every vehicle. |
 | `HideEntity = false` | Hide the riding players. |
 | `EntityWidth = 0.9`, `EntityHeight = 0.9` | Render scale of riding mobs, -100.0 to 100.0. 0.5 halves them. |
