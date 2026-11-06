@@ -48,6 +48,14 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
 
+### 26.1 only
+
+- [ ] From the built jars on a launcher profile: thermal on and off on all three loaders, and the
+      drafting table places and draws on Fabric (its block entity type comes from Fabric API).
+- [ ] Tracers and flares are hidden by a block between them and the camera, and show in front of one.
+- [ ] Rider pose and the camera roll look right in a banked aircraft on all three loaders.
+- [ ] The team manager lists the chat colours, and a new team takes the one picked.
+
 ### 26.2 only
 
 - [ ] From the built jars on a launcher profile, not a dev run: the thermal view turns on and off on
