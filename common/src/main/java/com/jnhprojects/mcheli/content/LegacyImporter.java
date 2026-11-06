@@ -53,7 +53,7 @@ public final class LegacyImporter {
     public static final int FORMAT = 5;
 
     /**
-     * Written at the pack root for {@link ImportTarget#V1_21_1}: each original vehicle's
+     * Written at the pack root for every target but {@link ImportTarget#MODERN}: each original vehicle's
      * {@code custom_model_data}, as {@code name=index}, which the mod puts on the vehicle's stack.
      */
     public static final String ICONS_FILE = "item_icons.properties";
@@ -78,7 +78,7 @@ public final class LegacyImporter {
         this.target = target;
         this.packRoot = packRoot;
         this.assetsOut = packRoot.resolve("assets/mcheli");
-        this.recipesOut = packRoot.resolve("data/mcheli/recipe");
+        this.recipesOut = packRoot.resolve("data/mcheli/" + target.recipeFolder());
     }
 
     /**
@@ -117,7 +117,7 @@ public final class LegacyImporter {
         writeTranslations();
 
         ContentRegistry content = ContentRegistry.load(assetsOut);
-        Map<String, Integer> icons = target == ImportTarget.V1_21_1 ? writeKindModels(content) : Map.of();
+        Map<String, Integer> icons = target != ImportTarget.MODERN ? writeKindModels(content) : Map.of();
         LegacyRecipe.Generated recipes = LegacyRecipe.generate(content, target, icons);
         for (Map.Entry<String, String> e : recipes.files().entrySet()) {
             write(recipesOut.resolve(e.getKey()), e.getValue());
