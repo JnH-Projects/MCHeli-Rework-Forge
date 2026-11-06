@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.fabric.mixin;
 
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.fabric.RollableCamera;
 import net.minecraft.client.Camera;
@@ -33,6 +34,12 @@ abstract class GameRendererMixin {
         if (ClientHooks.hidesHand()) {
             ci.cancel();
         }
+    }
+
+    /** Zoom through a sight, where Forge fires its field of view event. */
+    @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
+    private void mcheli$getFov(Camera camera, float partialTicks, boolean useFovSetting, CallbackInfoReturnable<Double> cir) {
+        cir.setReturnValue((double) ClientHooks.fov((float) cir.getReturnValueD()));
     }
 
     private static void setRotation(Camera camera, float yaw, float pitch, float roll) {
