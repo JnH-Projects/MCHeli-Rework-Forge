@@ -70,7 +70,9 @@ public final class VehicleWeapons {
         for (WeaponGroup group : def.weaponGroups) {
             WeaponDefinition weapon = MCHeli.content().weapon(group.weaponType());
             if (weapon != null && !group.mounts().isEmpty()) {
-                sets.add(new WeaponSet(weapon, group.mounts(), clientSide));
+                WeaponSet set = new WeaponSet(weapon, group.mounts(), clientSide);
+                set.ownSound = def.weaponSounds.get(group.weaponType());
+                sets.add(set);
             }
         }
         selected = new int[def.seatCount()];
