@@ -41,7 +41,8 @@ Shared properties live in the root `gradle.properties`: `mod_version`, the mod m
 of loader modules (`platforms`) and the library versions `common` compiles against. Each loader
 module has its own `gradle.properties` with its loader, Minecraft and Java versions. During the
 betas up to beta.8, `platforms` listed only `forge-26.3`. Roadmap phase 13 adds modules back as each
-one catches up, currently the three on 26.3; the others stay in the repository until they are ported.
+one catches up, currently the three on 26.3 and the three on 1.21.1; the others stay in the repository
+until they are ported.
 `mods.toml`, `neoforge.mods.toml`, `fabric.mod.json` and `pack.mcmeta` are filled in from them
 at build time. What every loader module shares (source folders, jar contents, manifest, file
 names) is in `gradle/loader.gradle`.
