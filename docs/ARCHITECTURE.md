@@ -714,6 +714,9 @@ The pure half is `workshop` in `common`, tested without Minecraft:
 - **`EditHistory`** is undo and redo by snapshot of the lines. Consecutive changes with one merge key
   are one step, which is what makes a drag or a typed number undo in one go.
 - **`WorkshopCamera`** is the orthographic view: `project` for gizmos, `unproject` for dragging.
+- **`AssetImport`** checks a PNG or OGG before it is copied in. Both would otherwise fail silently in
+  game, an OGG holding Opus most of all, so the codec is read from the file's first page.
+- **`PackCatalog`** is what the package browser lists, with nothing left open, and installs a zip.
 
 `client.workshop` holds the screens. `WorkshopScreen` hands an `AircraftRenderState` holding the
 parsed definition to vanilla's `GuiGraphicsExtractor.entity`, which draws through the registered
@@ -731,8 +734,64 @@ A test flight (`TestFlightPacket`, `workshop.TestFlight`) saves, reloads the con
 `/mcheli reload` would, and seats the player in a vehicle made with `AircraftEntity.startTestFlight`.
 It takes no damage, is not saved with the world, returns its pilot through the same path as a remote
 pilot and discards itself on its next tick. Only the owner of an integrated server may ask: the pack
-is on that machine, and a dedicated server has no way to get it yet. `WorkshopClient` keeps the screen
-across the flight and reopens it when the player is out, or after five seconds if no vehicle came.
+is on that machine, and on a dedicated server it arrives only by operator approval, when it is no longer
+a test. `WorkshopClient` keeps the screen across the flight and reopens it when the player is out, or
+after five seconds if no vehicle came.
+
+### Part textures
+
+`PartTexture` is a map on the definition from part name to texture name. `PartRenderer.submit` takes a
+list of `MeshGroup`s and stays on its old single-texture path when the map is empty, so no existing
+vehicle pays anything. Otherwise `model.PartTextures.assign` sorts the groups by texture, following the
+rule that a `$` object owns the plain objects behind it, and `GlassSplit` caches the result. The
+buckets stay the same objects from frame to frame, which its identity-keyed glass cache relies on.
+
+A `$` object nothing animates would never draw, since it also ends `$body`, so `hull()` draws
+`$cockpit` right after the body. No model in the 1.0.3 content has one, so this changes nothing there.
+
+An import overwrites the file in the pack at once and calls `RuntimeAssets.refreshTexture`, then clears
+the mesh cache, because glass is worked out from the texture's alpha. Only the definition line is in the
+undo history.
+
+### Pack sounds
+
+Loops have always streamed their file through `RuntimeSoundInstance`. One-shots did not: the server's
+`level.playSound` ends at a `SimpleSoundInstance` on the client, and the sound manager drops an event it
+does not know from a `sounds.json`, which a pack cannot have. So a pack's weapon sound was silent.
+`ModSounds.playAt` and `playTo` now check `ContentPacks.hasSound` and send those sounds as a
+`PackSoundPacket`, with vanilla's range, which `OneShotSound` plays through the same stream path.
+Sounds from the import or a resource pack still go the vanilla way.
+
+`EngineSoundPlayer` keeps up to two loops per vehicle, engine and rotor. Both take their pitch from the
+definition's `PitchCurve` when it has one, at `visibleThrottle`, and from `EngineSoundSource.enginePitch`
+when it does not. The curve keeps pitch to 0.5 to 2, the range `SoundEngine` clamps to. `WeaponSound`
+sets `WeaponSet.ownSound`, which only `ServerFiring` reads, so weapon files stay shared.
+
+### Submissions
+
+Any player can reach the upload packet, so it is written as untrusted input and off by default
+(`packs.allowSubmissions`).
+
+```
+Send to server   ── PackSubmitPacket(offset, total, 30 KiB) ──▶  network.PackSubmissions
+                                                                   │ off, too large, busy: refused
+                     PendingPacks.store, off the main thread  ◀────┘ out of order: dropped
+                                 │  mcheli/pending/<hash>.zip + <hash>.properties
+/mcheli approve  ── PendingPacks.install ──▶ mcheli/packs/<id>.zip ── ContentReload ──▶ every player
+```
+
+- A serverbound custom payload is capped at 32 KiB, a good deal lower than the 128 KiB chunks of a
+  download, which is why the packet is separate from `PackDataPacket`.
+- `total` is checked against `maxPackBytes` on the first chunk and again on each one. The buffer grows
+  as bytes arrive rather than being allocated from what the client claims.
+- `PendingPacks` names files by hash, never from anything the client sent, and opens each with
+  `ContentPack`, which bounds files and unpacked size and refuses anything but pack content. One
+  submission per player and `MAX_PENDING` overall bound the disk. The manifest's author is unverified,
+  so a submission also records the player the server saw.
+- A zip in use stays open, and Windows will not overwrite it, so `install` renames the old one to
+  `*.zip.replaced-<hash>`, which the scan ignores, and `cleanReplaced` deletes it on a later load.
+  `PendingPacksTest` does this over an open pack; a test on Windows is the one that counts.
+- With `requireApproval` off a pack goes live on arrival, unless its id is already in use.
 
 ## Assets
 
@@ -761,7 +820,7 @@ convert again (1.1.0-beta.1 bumped it to 2 for the generic item recipes).
 ### Runtime assets
 
 Vehicle content can change while the game runs (`/mcheli reload`, content packs arriving from a
-server, and the workshop later), and a resource reload is slow and does not exist on a server.
+server, and the workshop), and a resource reload is slow and does not exist on a server.
 The client therefore reads vehicle assets through `client.RuntimeAssets`: the resource manager
 first, so resource packs keep the last word, then the runtime roots, the `assets/mcheli` folders
 of the content packs in use.
