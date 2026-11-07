@@ -7,6 +7,14 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [1.1.0-beta.9] - 2026-11-07
+
+Phase 13 of the road to 1.1.0: every loader on every supported version. This beta ships 21 jars, one per
+loader and Minecraft version, from 1.20.6 to 26.3. Betas are not uploaded to CurseForge. Worlds from
+1.1.0-beta.8.1 load as before, and the network protocol is unchanged (11). Only the Forge 26.3 jar has been
+started from a launcher profile so far, and nobody has flown on the new jars yet; see the smoke test in
+[docs/TESTING.md](docs/TESTING.md) before relying on one.
+
 ### Added
 
 - NeoForge and Fabric on Minecraft 26.3 catch up with Forge: everything from phases 8 to 12 now runs
@@ -36,6 +44,10 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 - On 1.21.1 the E-767 recipe failed to load, since its UAV station ingredient used the newer format.
 - On Forge 1.21.1, recipes that use gunpowder or feathers could not be crafted, since Forge names those
   tags differently from the conventional ones our recipes use. The Forge modules on 1.21.x now define them.
+- Sounds that come from a content pack or the workshop were silent on Forge 26.3, engine loops and
+  one-shots alike, and left a sound channel open. Forge's sound engine on 1.21.11 and later never asks the
+  sound for its stream, so the file on disk was never read. Forge 1.21.11, 26.1, 26.2 and 26.3 now read it
+  from the sound engine's own library.
 
 ## [1.1.0-beta.8.1] - 2026-11-06
 
@@ -748,6 +760,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.9]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.9
 [1.1.0-beta.8.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8.1
 [1.1.0-beta.8]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8
 [1.1.0-beta.7]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.7
