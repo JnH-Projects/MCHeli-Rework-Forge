@@ -5,6 +5,7 @@ import com.jnhprojects.mcheli.content.pack.ContentPack;
 import com.jnhprojects.mcheli.content.pack.ContentSource;
 import com.jnhprojects.mcheli.content.pack.PackFolder;
 import com.jnhprojects.mcheli.content.pack.PackProblem;
+import com.jnhprojects.mcheli.content.pack.PendingPacks;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
@@ -12,7 +13,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -30,15 +33,19 @@ import java.util.function.Consumer;
  */
 public final class ContentPacks {
     private static final int PROBLEMS_IN_CHAT = 8;
+    private static final String SOUNDS = "assets/mcheli/sounds/";
 
     private final Path folder;
+    private final PendingPacks pending;
     private final LegacyContent legacy;
     private volatile List<ContentPack> active = List.of();
     private volatile List<PackProblem> problems = List.of();
+    private volatile Set<String> sounds = Set.of();
     private List<ContentPack> retired = List.of();
 
     ContentPacks(Path gameDir, LegacyContent legacy) {
         this.folder = gameDir.resolve(MCHeli.MOD_ID).resolve("packs");
+        this.pending = new PendingPacks(gameDir.resolve(MCHeli.MOD_ID).resolve("pending"));
         this.legacy = legacy;
     }
 
@@ -106,11 +113,40 @@ public final class ContentPacks {
         found.addAll(registry.problems());
 
         close(retired);
+        PendingPacks.cleanReplaced(folder);
         retired = active;
         active = List.copyOf(accepted);
         problems = List.copyOf(found);
+        sounds = soundsOf(accepted);
         MCHeli.LOGGER.info("Content packs in use: {}", active.isEmpty() ? "none" : active);
         return registry;
+    }
+
+    /** Sound names as {@code RuntimeAssets.soundFile} finds them: {@code heli.ogg} and {@code heli1.ogg} are both {@code heli}. */
+    private static Set<String> soundsOf(List<ContentPack> packs) {
+        Set<String> names = new HashSet<>();
+        for (ContentPack pack : packs) {
+            for (String file : pack.files()) {
+                if (file.startsWith(SOUNDS) && file.endsWith(".ogg")) {
+                    String name = file.substring(SOUNDS.length(), file.length() - ".ogg".length());
+                    names.add(name);
+                    if (name.endsWith("1")) {
+                        names.add(name.substring(0, name.length() - 1));
+                    }
+                }
+            }
+        }
+        return Set.copyOf(names);
+    }
+
+    /** Whether a pack in use brought this sound, so that the sound manager has not heard of it. */
+    public boolean hasSound(String name) {
+        return sounds.contains(name);
+    }
+
+    /** What players have sent this server, waiting for an operator. */
+    public PendingPacks pending() {
+        return pending;
     }
 
     private static @Nullable String refusal(ContentPack pack, long size, long total) {

@@ -7,6 +7,48 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [1.1.0-beta.9] - 2026-11-07
+
+Phase 13 of the road to 1.1.0: every loader on every supported version. This beta ships 21 jars, one per
+loader and Minecraft version, from 1.20.6 to 26.3. Betas are not uploaded to CurseForge. Worlds from
+1.1.0-beta.8.1 load as before, and the network protocol is unchanged (11). Only the Forge 26.3 jar has been
+started from a launcher profile so far, and nobody has flown on the new jars yet; see the smoke test in
+[docs/TESTING.md](docs/TESTING.md) before relying on one.
+
+### Added
+
+- NeoForge and Fabric on Minecraft 26.3 catch up with Forge: everything from phases 8 to 12 now runs
+  there, from the drafting table and vehicle screen to smoke and sight zoom.
+- Minecraft 1.21.1 on Forge, NeoForge and Fabric gets everything from phases 8 to 12: fuel, equipment,
+  the vehicle screen, the drafting table, team manager, UAV stations and the workshop. On 1.21.1 the PVP
+  button of the team manager switches the server's PVP setting until a restart, since that version has
+  no game rule for it, and target markers ignore view bobbing.
+- Minecraft 26.2, 26.1, 1.21.11, 1.21.5 and 1.20.6 on Forge, NeoForge and Fabric, with everything 26.3 has. On
+  26.1 and older, teams pick from the sixteen chat colours, since those versions have no separate team
+  colours. On 1.21.5 and 1.20.6 the PVP button of the team manager switches the server's PVP setting until a
+  restart.
+
+### Changed
+
+- Forge, NeoForge and Fabric on 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 are all built on every pull request.
+- 1.1.0 ships on 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 on all three loaders (21 jars).
+  1.20.2 and 1.19.4 are on hold and not part of it.
+- Clients and servers on different loaders cannot play together, which the roadmap used to promise.
+  Each loader refuses the other at its own handshake, before the mod runs. A pack zip still works on
+  every loader when copied by hand.
+
+### Fixed
+
+- Fabric clients crashed at startup on 26.3 and 1.21.1, because `RollableCamera` sat in the mixin package.
+- Glow particles were invisible on Fabric 1.21.1: vanilla only draws the particle types on its own list.
+- On 1.21.1 the E-767 recipe failed to load, since its UAV station ingredient used the newer format.
+- On Forge 1.21.1, recipes that use gunpowder or feathers could not be crafted, since Forge names those
+  tags differently from the conventional ones our recipes use. The Forge modules on 1.21.x now define them.
+- Sounds that come from a content pack or the workshop were silent on Forge 26.3, engine loops and
+  one-shots alike, and left a sound channel open. Forge's sound engine on 1.21.11 and later never asks the
+  sound for its stream, so the file on disk was never read. Forge 1.21.11, 26.1, 26.2 and 26.3 now read it
+  from the sound engine's own library.
+
 ## [1.1.0-beta.8.1] - 2026-11-06
 
 A hotfix for the Forge 26.3 jar, with no other changes. Worlds from 1.1.0-beta.8 load as before, and
@@ -718,6 +760,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0-beta.9]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.9
 [1.1.0-beta.8.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8.1
 [1.1.0-beta.8]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8
 [1.1.0-beta.7]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.7

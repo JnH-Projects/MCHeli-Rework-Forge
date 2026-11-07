@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/oak_planks",
+    "legs": "minecraft:block/iron_block",
+    "board": "minecraft:block/oak_planks",
+    "paper": "minecraft:block/white_concrete"
+  },
+  "elements": [
+    { "from": [1, 0, 2], "to": [2.5, 10, 3.5], "faces": {
+      "north": {"texture": "#legs"}, "south": {"texture": "#legs"}, "east": {"texture": "#legs"}, "west": {"texture": "#legs"}, "down": {"texture": "#legs"} } },
+    { "from": [13.5, 0, 2], "to": [15, 10, 3.5], "faces": {
+      "north": {"texture": "#legs"}, "south": {"texture": "#legs"}, "east": {"texture": "#legs"}, "west": {"texture": "#legs"}, "down": {"texture": "#legs"} } },
+    { "from": [1, 0, 12.5], "to": [2.5, 10, 14], "faces": {
+      "north": {"texture": "#legs"}, "south": {"texture": "#legs"}, "east": {"texture": "#legs"}, "west": {"texture": "#legs"}, "down": {"texture": "#legs"} } },
+    { "from": [13.5, 0, 12.5], "to": [15, 10, 14], "faces": {
+      "north": {"texture": "#legs"}, "south": {"texture": "#legs"}, "east": {"texture": "#legs"}, "west": {"texture": "#legs"}, "down": {"texture": "#legs"} } },
+    { "from": [0, 10, 1], "to": [16, 11.5, 15],
+      "rotation": { "origin": [8, 10.5, 8], "axis": "x", "angle": -22.5 },
+      "faces": {
+        "north": {"texture": "#board"}, "south": {"texture": "#board"}, "east": {"texture": "#board"}, "west": {"texture": "#board"},
+        "up": {"texture": "#board"}, "down": {"texture": "#board"} } },
+    { "from": [2, 11.5, 2.5], "to": [14, 11.6, 13.5],
+      "rotation": { "origin": [8, 10.5, 8], "axis": "x", "angle": -22.5 },
+      "faces": { "up": {"texture": "#paper"} } }
+  ]
+}

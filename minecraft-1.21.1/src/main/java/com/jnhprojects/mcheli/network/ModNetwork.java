@@ -21,23 +21,32 @@ import java.util.function.Consumer;
  */
 public final class ModNetwork {
     /** Bump whenever a packet layout changes. Clients and servers must match exactly. */
-    public static final int PROTOCOL_VERSION = 6;
+    public static final int PROTOCOL_VERSION = 11;
 
     /** Client to server. The handler gets the sending player. */
     public static final List<Serverbound<?>> SERVERBOUND = List.of(
             new Serverbound<>(PilotStatePacket.TYPE, PilotStatePacket.STREAM_CODEC, PilotStatePacket::handle),
             new Serverbound<>(CrewActionPacket.TYPE, CrewActionPacket.STREAM_CODEC, CrewActionPacket::handle),
+            new Serverbound<>(EquipmentActionPacket.TYPE, EquipmentActionPacket.STREAM_CODEC, EquipmentActionPacket::handle),
+            new Serverbound<>(SpotPacket.TYPE, SpotPacket.STREAM_CODEC, SpotPacket::handle),
+            new Serverbound<>(LauncherPacket.TYPE, LauncherPacket.STREAM_CODEC, LauncherPacket::handle),
+            new Serverbound<>(DraftingTablePacket.TYPE, DraftingTablePacket.STREAM_CODEC, DraftingTablePacket::handle),
+            new Serverbound<>(TeamPacket.TYPE, TeamPacket.STREAM_CODEC, TeamPacket::handle),
+            new Serverbound<>(TestFlightPacket.TYPE, TestFlightPacket.STREAM_CODEC, TestFlightPacket::handle),
             new Serverbound<>(FireWeaponPacket.TYPE, FireWeaponPacket.STREAM_CODEC, FireWeaponPacket::handle),
             new Serverbound<>(BoardVehiclePacket.TYPE, BoardVehiclePacket.STREAM_CODEC, BoardVehiclePacket::handle),
             new Serverbound<>(LockWarningPacket.TYPE, LockWarningPacket.STREAM_CODEC, LockWarningPacket::handle),
-            new Serverbound<>(PackRequestPacket.TYPE, PackRequestPacket.STREAM_CODEC, PackRequestPacket::handle));
+            new Serverbound<>(PackRequestPacket.TYPE, PackRequestPacket.STREAM_CODEC, PackRequestPacket::handle),
+            new Serverbound<>(PackSubmitPacket.TYPE, PackSubmitPacket.STREAM_CODEC, PackSubmitPacket::handle));
 
     /** Server to client. Handlers touch client classes, so they only ever run on a client. */
     public static final List<Clientbound<?>> CLIENTBOUND = List.of(
             new Clientbound<>(WeaponStatePacket.TYPE, WeaponStatePacket.STREAM_CODEC, WeaponStatePacket::handle),
             new Clientbound<>(ExplosionEffectPacket.TYPE, ExplosionEffectPacket.STREAM_CODEC, ExplosionEffectPacket::handle),
             new Clientbound<>(PackListPacket.TYPE, PackListPacket.STREAM_CODEC, PackListPacket::handle),
-            new Clientbound<>(PackDataPacket.TYPE, PackDataPacket.STREAM_CODEC, PackDataPacket::handle));
+            new Clientbound<>(PackDataPacket.TYPE, PackDataPacket.STREAM_CODEC, PackDataPacket::handle),
+            new Clientbound<>(PackSoundPacket.TYPE, PackSoundPacket.STREAM_CODEC, PackSoundPacket::handle),
+            new Clientbound<>(MarkerPacket.TYPE, MarkerPacket.STREAM_CODEC, MarkerPacket::handle));
 
     private ModNetwork() {
     }

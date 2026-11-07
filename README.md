@@ -2,22 +2,21 @@
 
 <img src="docs/images/mcheli-rework-icon.png" alt="MCHeli Rework icon" width="160">
 
-Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3** and **1.21.1**, on **Forge**,
-**NeoForge** and **Fabric**.
+Helicopters, planes, tanks and ground vehicles for **Minecraft 26.3**, **26.2**, **26.1**,
+**1.21.11**, **1.21.5**, **1.21.1** and **1.20.6**, on **Forge**, **NeoForge** and **Fabric**.
 
 MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecraft 1.7.10. Every
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0, now at phase 12 (`1.1.0-beta.8.1`). Every helicopter, plane,
+> **Status:** on the way to 1.1.0, now at phase 13 (`1.1.0-beta.9`). Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
 > equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
 > workshop builds new vehicles in game from a Blockbench or Blender model, with their own textures
-> and sounds, and sends them to a server for its operators to approve. Betas ship the
-> Forge 26.3 jar only; 1.1.0 ships on Forge and Fabric for every version from 1.19.4 to 26.3, and
-> on NeoForge from 1.20.6 (see [supported versions](docs/ROADMAP.md#supported-versions)). See the
-> [roadmap](docs/ROADMAP.md).
+> and sounds, and sends them to a server for its operators to approve. From `1.1.0-beta.9` on,
+> every jar ships: Forge, NeoForge and Fabric for every version from 1.20.6 to 26.3 (see
+> [supported versions](docs/ROADMAP.md#supported-versions)). See the [roadmap](docs/ROADMAP.md).
 
 ## Showcase video
 
@@ -84,16 +83,21 @@ Reserved original, the code is source available rather than open source.
 
 ## Requirements
 
-| | Minecraft 26.3 | Minecraft 1.21.1 |
-|---|---|---|
-| Forge | 66.1.0 or newer in the 66.x line | 52.1.0 or newer |
-| NeoForge | 26.3.0.99 or newer | 21.1.200 or newer |
-| Fabric | Loader 0.20 and Fabric API | Loader 0.16 and Fabric API |
-| Java | 25 (bundled with the launcher) | 21 (bundled with the launcher) |
+| Minecraft | Forge | NeoForge | Fabric | Java |
+|---|---|---|---|---|
+| 26.3 | 66.1.0 or newer in 66.x | 26.3.0.99 or newer | Loader 0.20 and Fabric API | 25 |
+| 26.2 | 65.1.5 or newer in 65.x | 26.2.0.93 or newer | Loader 0.20 and Fabric API | 25 |
+| 26.1 | 62.0.9 or newer in 62.x | 26.1.2.126 or newer | Loader 0.20 and Fabric API | 25 |
+| 1.21.11 | 61.2.4 or newer in 61.x | 21.11.48 or newer | Loader 0.16 and Fabric API | 21 |
+| 1.21.5 | 55.1.18 or newer in 55.x | 21.5.101 or newer | Loader 0.16 and Fabric API | 21 |
+| 1.21.1 | 52.1.0 or newer | 21.1.200 or newer | Loader 0.16 and Fabric API | 21 |
+| 1.20.6 | 50.2.14 or newer in 50.x | 20.6.144 or newer | Loader 0.16 and Fabric API | 21 |
+
+The launcher bundles the right Java for each version.
 
 ## Installing
 
-1. Install Forge, NeoForge or Fabric for Minecraft 26.3 or 1.21.1. On Fabric, also install
+1. Install Forge, NeoForge or Fabric for Minecraft 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 or 1.20.6. On Fabric, also install
    [Fabric API](https://modrinth.com/mod/fabric-api).
 2. Download the jar for your loader from the
    [releases](https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases):
@@ -118,7 +122,8 @@ zip goes.
 Use a separate game directory for each loader and version. Mods built for other loaders or older
 versions in a shared `mods` folder will stop the game from starting. Worlds and the `mcheli`
 folder can move between loaders on the same Minecraft version: the imported content, content packs
-and configs are the same files on all three. Do not open a 26.3 world in 1.21.1.
+and configs are the same files on all three. Do not open a world in an older Minecraft version than
+the one that last saved it.
 
 ## Playing
 

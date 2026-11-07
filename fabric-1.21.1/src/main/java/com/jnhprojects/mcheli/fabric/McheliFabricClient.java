@@ -1,5 +1,10 @@
 package com.jnhprojects.mcheli.fabric;
 
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.Minecraft;
+import com.jnhprojects.mcheli.fabric.mixin.GameRendererInvoker;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
 import com.jnhprojects.mcheli.network.ModNetwork;
@@ -32,9 +37,12 @@ public final class McheliFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientHooks.init();
+        ClientHooks.init(effect -> ((GameRendererInvoker) Minecraft.getInstance().gameRenderer).mcheli$loadEffect(effect));
         ClientHooks.registerEntityRenderers(EntityRendererRegistry::register);
+        ClientHooks.registerBlockEntityRenderers(BlockEntityRenderers::register);
+        ClientHooks.registerMenuScreens(MenuScreens::register);
         ParticleFactoryRegistry.getInstance().register(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+        ParticleFactoryRegistry.getInstance().register(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
         ClientHooks.keyMappings().forEach(KeyBindingHelper::registerKeyBinding);
         ResourceManagerHelper resources = ResourceManagerHelper.get(PackType.CLIENT_RESOURCES);
         ClientHooks.reloadListeners().forEach((id, listener) -> resources.registerReloadListener(new Identified(id, listener)));

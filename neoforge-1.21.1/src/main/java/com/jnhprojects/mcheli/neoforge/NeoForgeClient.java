@@ -1,5 +1,10 @@
 package com.jnhprojects.mcheli.neoforge;
 
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.minecraft.client.Minecraft;
+import com.jnhprojects.mcheli.neoforge.mixin.GameRendererInvoker;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
 import com.jnhprojects.mcheli.registry.ModParticles;
@@ -27,11 +32,16 @@ final class NeoForgeClient {
     }
 
     static void init(IEventBus modBus) {
-        ClientHooks.init();
+        ClientHooks.init(effect -> ((GameRendererInvoker) Minecraft.getInstance().gameRenderer).mcheli$loadEffect(effect));
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
                 event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
-        modBus.addListener(RegisterParticleProvidersEvent.class,
-                event -> event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new));
+        modBus.addListener(EntityRenderersEvent.RegisterRenderers.class,
+                event -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
+        modBus.addListener(RegisterMenuScreensEvent.class, event -> ClientHooks.registerMenuScreens(event::register));
+        modBus.addListener(RegisterParticleProvidersEvent.class, event -> {
+            event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+            event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
+        });
         modBus.addListener(RegisterKeyMappingsEvent.class, event -> ClientHooks.keyMappings().forEach(event::register));
         modBus.addListener(RegisterClientReloadListenersEvent.class,
                 event -> ClientHooks.reloadListeners().values().forEach(event::registerReloadListener));
@@ -39,6 +49,7 @@ final class NeoForgeClient {
                 event -> event.registerAbove(VanillaGuiLayers.SLEEP_OVERLAY, ClientHooks.HUD_LAYER, ClientHooks::drawHud));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ClientHooks.clientTickEnd());
+        NeoForge.EVENT_BUS.addListener(ViewportEvent.ComputeFov.class, event -> event.setFOV(ClientHooks.fov((float) event.getFOV())));
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, event -> event.setCanceled(ClientHooks.hidesHand()));
         NeoForge.EVENT_BUS.addListener(RenderLivingEvent.Pre.class,
                 event -> ClientHooks.beforeRenderLiving(event.getEntity(), event.getPoseStack(), event.getPartialTick()));

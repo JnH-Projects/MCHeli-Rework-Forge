@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.fabric.mixin;
 
+import com.jnhprojects.mcheli.fabric.RollableCamera;
 import net.minecraft.client.Camera;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;

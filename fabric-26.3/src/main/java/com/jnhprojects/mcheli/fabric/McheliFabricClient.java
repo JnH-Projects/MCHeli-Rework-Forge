@@ -2,6 +2,7 @@ package com.jnhprojects.mcheli.fabric;
 
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
+import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.network.ModNetwork;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
@@ -14,6 +15,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.minecraft.client.gui.screens.MenuScreens;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.packs.PackType;
 
@@ -29,7 +32,10 @@ public final class McheliFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         ClientHooks.init();
         ClientHooks.registerEntityRenderers(EntityRendererRegistry::register);
+        ClientHooks.registerBlockEntityRenderers(BlockEntityRenderers::register);
+        ClientHooks.registerMenuScreens(MenuScreens::register);
         ParticleProviderRegistry.getInstance().register(ModParticles.GLOW.get(), GlowParticle.Provider::new);
+        ParticleProviderRegistry.getInstance().register(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
         ClientHooks.keyMappings().forEach(KeyMappingHelper::registerKeyMapping);
         ClientHooks.reloadListeners().forEach(ResourceLoader.get(PackType.CLIENT_RESOURCES)::registerReloadListener);
         HudElementRegistry.attachElementAfter(VanillaHudElements.SLEEP, ClientHooks.HUD_LAYER, ClientHooks::drawHud);

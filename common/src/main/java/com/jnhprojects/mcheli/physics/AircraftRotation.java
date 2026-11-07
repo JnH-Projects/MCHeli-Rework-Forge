@@ -1,5 +1,6 @@
 package com.jnhprojects.mcheli.physics;
 
+import org.joml.Matrix3d;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -12,6 +13,9 @@ import org.joml.Vector3f;
  * {@code rotY(-yaw) * rotX(pitch) * rotZ(roll)}.
  */
 public final class AircraftRotation {
+    /** Below this cosine of the middle angle, {@link #rollInXyzOrder} treats the first and last as one axis. */
+    private static final double GIMBAL_LOCK = 1.0E-9;
+
     private AircraftRotation() {
     }
 
@@ -67,6 +71,39 @@ public final class AircraftRotation {
             return 0.0F;
         }
         return (float) Math.toDegrees(Math.atan2(onLeft, onUp));
+    }
+
+    /**
+     * Angles for a view matrix built as {@code rotationXYZ(pitch, yaw + PI, roll)}, the way Forge
+     * builds it on Minecraft 1.20.6, so that the matrix comes out as a camera roll stacked on top of
+     * the other two rotations. Fed the plain angles that matrix applies the roll around the world's
+     * Z axis instead: a bank would look like a bank going south, the opposite one going north, and a
+     * change of pitch going east or west.
+     *
+     * @param yaw   the camera yaw, in degrees
+     * @param pitch the camera pitch, in degrees
+     * @param roll  the roll as {@link #cameraRoll} returns it, in degrees
+     * @return {@code {yaw, pitch, roll}} in degrees, to pass on to that matrix
+     */
+    public static float[] rollInXyzOrder(float yaw, float pitch, float roll) {
+        Matrix3d view = new Matrix3d()
+                .rotationZ(Math.toRadians(-roll))
+                .rotateX(Math.toRadians(pitch))
+                .rotateY(Math.toRadians(yaw) + Math.PI);
+        // The matrix above equals rotX(x) * rotY(y) * rotZ(z); read those three back from it.
+        double cosY = Math.hypot(view.m00, view.m10);
+        double x;
+        double z;
+        if (cosY > GIMBAL_LOCK) {
+            x = Math.atan2(-view.m21, view.m22);
+            z = Math.atan2(-view.m10, view.m00);
+        } else {
+            // Looking along X: the first and last rotation turn around the same axis, so Z can stay 0.
+            x = Math.atan2(view.m12, view.m11);
+            z = 0.0;
+        }
+        double y = Math.atan2(view.m20, cosY);
+        return new float[]{(float) Math.toDegrees(y - Math.PI), (float) Math.toDegrees(x), (float) Math.toDegrees(z)};
     }
 
     public static float wrap(float degrees) {

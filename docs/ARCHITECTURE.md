@@ -51,7 +51,7 @@ loader. The top layer is a thin module per loader and Minecraft version, which c
 lower layers together with its own glue into one jar. See
 [DEVELOPMENT.md](DEVELOPMENT.md#three-layers).
 
-Only 26.3 and 1.21.1 have the middle layer so far. The other supported versions have placeholder
+Only 26.3, 26.2, 26.1, 1.21.11, 1.21.5, 1.21.1 and 1.20.6 have the middle layer so far. The other supported versions have placeholder
 loader modules (`scaffold=true`) that compile neither lower layer: just an entry point that logs,
 against that version's loader and toolchain. Porting a version means adding its
 `minecraft-<version>` folder, copying the loader glue in and dropping the flag.
@@ -78,9 +78,95 @@ fires its event, so the shared code sees the same thing on every loader:
 | Use and pick block keys | `InputEvent.InteractionKeyMappingTriggered` | the same | mixin on `Minecraft` |
 | Rider tilt | `RenderLivingEvent.Pre` | `RenderLivingEvent.Pre` | mixin on `LivingEntityRenderer.submit` |
 | Imported content pack | `AddPackFindersEvent` | `AddPackFindersEvent` | mixin on the `PackRepository` constructor |
-| Streamed sounds | `SoundInstance.getStream` | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
+| Streamed sounds | `SoundInstance.getStream` up to 1.21.5; `PackSoundBuffers` from 1.21.11 | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
 
 NeoForge rolls the camera the other way round from Forge, so its mixin negates the roll.
+
+Forge 1.21.11 and later still declare `SoundInstance.getStream`, but their `SoundEngine` calls
+`SoundBufferLibrary.getStream` directly, and a failed stream leaves no trace in the log. So
+`forge-<version>` swaps the library for its own subclass on `SoundEngineLoadEvent`, through an access
+transformer on the field. The subclass only steps in for an `mcheli` sound no resource pack has.
+
+### Minecraft 26.2
+
+`minecraft-26.2` is `minecraft-26.3` with these differences:
+
+- **Rendering API.** Pipelines live in `com.mojang.blaze3d` rather than `com.mojang.renderpearl`,
+  there are no order independent transparency pipelines to name, and `PoseStack` turns through
+  `mulPose`. `Glow` spells out vanilla's eyes pipeline, which has no snippet to build on yet, and
+  `ProjectileRenderer` makes its own translucent culled render type, since vanilla only offers one
+  drawn into the item target.
+- **Interpolation.** `Entity` does not own or run a handler. Each of our entities holds an
+  `InterpolationHandler`, returns it from `getInterpolation` and calls `interpolate` after
+  `super.tick()`, the way vanilla's boat does.
+- **Thermal view.** There is one post effect slot on `GameRenderer` rather than a list on the player,
+  and its setter is private, so each loader hands `ClientHooks.init` a way to call it: an access
+  transformer on Forge, a mixin invoker on NeoForge and Fabric. The shader has no explicit attribute
+  locations, matching vanilla's on this version.
+- **Input on Forge.** `InteractionKeyMappingTriggered` is one event with `isUseItem` and `isPickBlock`,
+  not an event per key.
+- **Rider pose.** `CameraRenderState` does not carry the camera entity's partial tick, so Forge and
+  Fabric ask `ClientHooks.cameraPartialTicks`. NeoForge's event has it.
+
+### Minecraft 26.1
+
+`minecraft-26.1` is `minecraft-26.2` with these differences:
+
+- **Depth.** 26.1 is the last version with a normal depth buffer, so the glow pipelines test with
+  `LESS_THAN_OR_EQUAL`. The enum exists on both sides of the change, so the wrong one compiles and
+  only shows as glows drawn through walls.
+- **Rendering API.** Pipelines take samplers and a vertex format through `withSampler` and
+  `withVertexFormat` rather than bind groups and a primitive topology.
+- **Screens.** They live on `Minecraft`, not `Gui`, as they do on 1.21.1.
+- **Teams.** There is no `TeamColor`. The team manager picks from the `ChatFormatting` colours.
+- **Block entity types.** The constructor is private in vanilla, so `Platform.blockEntityType` makes
+  them: Forge and NeoForge have opened the constructor, Fabric API has a builder.
+- **Camera hooks.** `GameRenderer.update` also takes whether game time advances, and Fabric's
+  camera mixin shadows `Vector3f` constants rather than `Vector3fc`.
+
+### Minecraft 1.21.11
+
+`minecraft-1.21.11` is `minecraft-26.1` with these differences. It is obfuscated in production, so
+Forge sets the official mappings and Fabric uses the remapping Loom plugin.
+
+- **Cutout render types.** `entityCutout` culls here and does not on 26.x, and `entityCutoutNoCull`
+  is what 26.x calls `entityCutout`. The names exist on both sides, so a straight copy compiles and
+  turns parts inside out.
+- **Screens.** `render`, `renderBg` and `renderLabels` rather than the `extract` methods, on
+  `GuiGraphics` with `drawString` rather than `GuiGraphicsExtractor` with `text`. Container screens
+  set their size after `super`.
+- **Pipelines.** `withBlend` and `withDepthWrite` rather than colour target and depth stencil states.
+- **Interaction.** A click on the hull arrives through `interactAt`, as on 1.21.1.
+- **Camera.** `GameRenderer.updateCamera` calls `Camera.setup`, and NeoForge and Fabric hook after that
+  and at the head of `extractCamera`. Field of view is `GameRenderer.getFov`.
+- **Pack metadata.** One `pack.mcmeta` is read both as client resources and as server data, and each has
+  its own limit: resources refuse `supported_formats` above format 64, data requires it up to 81. So a range
+  can only start at 82, above the game's own resource format of 75. All three loaders still load the mod's
+  resources, since mod packs are not refused for their format.
+- **Fabric API.** The older names: `KeyBindingHelper`, `ParticleFactoryRegistry`, `FabricItemGroup`,
+  `PayloadTypeRegistry.playS2C`, and on `CustomIngredient` `getMatchingItems` and `toDisplay`.
+- **Conventional tags.** Forge on 1.21.x has `forge:gunpowder` and `forge:feathers` but not the `c:`
+  names our recipes use, so its modules define `c:gunpowders` and `c:feathers` from those.
+
+### Minecraft 1.21.5
+
+`minecraft-1.21.5` takes entities, items, recipes and networking from `minecraft-1.21.11`, and its
+screens' input handling and the workshop from `minecraft-1.21.1`. What differs:
+
+- **Rendering.** There are render states but no submit step. `render` draws straight into a
+  `MultiBufferSource`, and `Geometry.submit` keeps those calls reading the same as elsewhere.
+- **Save data.** `CompoundTag` has `store`, `read` and `getIntOr`, so it stands in for `ValueOutput`
+  and `ValueInput`. Anything holding items needs the registries passed along.
+- **Interpolation.** A packet with only a rotation interpolates to where the entity is now, dropping
+  the target, so `VehicleInterpolation` keeps the target in that case.
+- **Thermal view.** Post effects use plain uniforms: `InSize` rather than a `SamplerInfo` block, and
+  a `uniforms` list in the JSON.
+- **`blit`.** It takes a render type function, then position, texels and size in that order, so a
+  call from 1.21.1 with its size first still compiles and draws the wrong region.
+- **Glow.** Our render types come from a nested subclass, the only place the shards they need can be
+  seen, and vanilla's `itemEntityTranslucentCull` draws translucent rounds.
+- **Hull outline.** The render step has no entity, so the extract step copies the boxes into the state.
+- **Teams.** There is no PVP game rule, so the team manager switches the server's setting, as on 1.21.1.
 
 ### Minecraft 1.21.1
 
@@ -106,6 +192,39 @@ the betas it is not kept in step; each final release brings it, and every other
 - **Camera.** Forge 1.21.1 fires its camera event after the camera is placed, so Forge uses the
   event. NeoForge and Fabric hook `GameRenderer.renderLevel` just before the camera rotation turns
   into the view matrix, the spot Forge fires from.
+- **Drafting table.** There is no recipe display system. The client holds every recipe, so the
+  screen reads its `RecipeManager` and `DraftingTablePacket` sends the recipe's id.
+- **Thermal view.** Post effects are the older `shaders/post` chains, and vanilla loads programs
+  from the `minecraft` namespace only, so ours is `assets/minecraft/shaders/program/mcheli_thermal`.
+  `GameRenderer.loadEffect` is private, so each loader hands `ClientHooks.init` a way to call it.
+- **Particles.** Smoke is a custom `ParticleRenderType` too. Vanilla only draws the types on its
+  own list, so `ParticleEngineMixin` adds ours on Fabric; Forge and NeoForge draw every type in use.
+- **Workshop preview.** With no GUI entity renderer, `WorkshopScreen` draws through
+  `AircraftRenderer.draw` the way vanilla draws a mob in the inventory, then clears the depth
+  buffer so the gizmos stay on top.
+- **Shaders.** There is no `IrisCompat`: Iris's pipeline assignment only exists for 26.x.
+- **Teams.** There is no PVP game rule or `TeamColor`. The team manager switches the server's PVP
+  setting, which lasts until a restart, and picks from the `ChatFormatting` colours.
+
+### Minecraft 1.20.6
+
+`minecraft-1.20.6` is `minecraft-1.21.1` with these differences:
+
+- **Data folders.** They still have plural names (`recipes`, `loot_tables`, `tags/items`), so
+  `ImportTarget.V1_20_6` writes recipes to `data/mcheli/recipes`, and the jar guard in
+  `gradle/loader.gradle` keeps EMB4's out of both spellings.
+- **Vertices.** The older builder: `vertex`, `color`, `uv`, `overlayCoords`, `uv2`, `normal`, and an
+  `endVertex` to finish each one.
+- **Particle render types.** `begin` is handed a builder and `end` a tesselator.
+- **Camera.** The view matrix comes from the camera's angles rather than its quaternion, and each loader
+  gets the roll in differently. NeoForge's `ComputeCameraAngles` stacks it on top of the view with the
+  opposite sign, so its glue negates it and needs no camera mixin. Fabric hooks after
+  `resetProjectionMatrix` and wraps `Matrix4f.rotationXYZ` to do the same. Forge passes the event's roll
+  into `rotationXYZ` itself, where it turns around the world's Z axis, so `ForgeClient` replaces all three
+  angles with `AircraftRotation.rollInXyzOrder`, which builds the same matrix.
+- **Conventional tags.** Forge has none of the `c:` tags, so `forge-1.20.6` defines all our recipes use,
+  from the vanilla items and any matching `forge:` tag. Fabric lacks five, defined in `fabric-1.20.6`.
+- **Respawn.** `TeamManager` finds the respawn point itself, since there is no `DimensionTransition`.
 
 `client` is only referenced from the loader modules behind a physical client check, so a
 dedicated server never loads a client class.

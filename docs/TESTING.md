@@ -31,7 +31,8 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 - [ ] Fire a missile from a helicopter or jet: the use key fires without swinging the arm, the pick
       block key switches weapons, the weapon HUD draws, the missile hits and explodes.
 - [ ] Right-clicking the hull outside the main hit box boards the vehicle (the arm swings).
-- [ ] Engine and rotor sounds play, including a content pack sound (the example pack).
+- [ ] Engine and rotor sounds play. Also a content pack sound: the example pack has none, so give a
+      workshop vehicle an OGG for its engine or a weapon and listen to it.
 - [ ] `config/mcheli-client.toml` exists; setting `nightGlow = false` and restarting removes the
       glow.
 - [ ] Join a dedicated server running the same jar: the server log has no `mcheli` errors, the
@@ -44,8 +45,52 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 
 - [ ] A world made on Forge 26.3 with vehicles in it opens on NeoForge and Fabric 26.3 with the
       vehicles and items intact, and back.
-- [ ] A Fabric client joins a NeoForge server (both with the mod) and downloads its packs.
+- [ ] A client on the same loader as the dedicated server joins and downloads its packs. A client on
+      another loader is refused by the loaders themselves, with a message naming the one it needs.
 - [ ] A `serverconfig/mcheli-server.toml` written by 1.1.0-beta.2 (Forge) keeps its values.
+
+### 1.20.6 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
+- [ ] In a flight with real turns, banked right, the cockpit stays upright on screen and the horizon's right
+      side rises, on every heading and all three loaders. Held at a fixed bank in a driver this already
+      matches 1.21.1 (see `AircraftRotation.rollInXyzOrder`); nobody has flown it.
+- [ ] Sight zoom works on all three loaders.
+- [ ] A vehicle's recipe crafts on each loader, including one with gunpowder or feathers.
+- [ ] "Respawn all" in the team manager sends a player to their bed, and to world spawn without one.
+
+### 1.21.5 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
+- [ ] A vehicle that turns on the spot stays where the server has it, seen from a second client.
+- [ ] Inventory, cargo and a UAV station's item survive a world reload.
+- [ ] F3+B outlines the hull boxes next to vanilla's box, and they follow a moving vehicle.
+- [ ] The vehicle screen, drafting table and workshop textures sit where they should.
+- [ ] The team manager's PVP button works, and PVP goes back to `server.properties` after a restart.
+
+### 1.21.11 only
+
+- [ ] From the built jars on a launcher profile: all three loaders start, which proves Fabric's remapped
+      jar and its mixins, and thermal turns on and off.
+- [ ] Vehicle parts are not inside out, from outside and from a seat.
+- [ ] Sight zoom works on all three loaders, and rider pose and camera roll look right in a banked aircraft.
+- [ ] A recipe with gunpowder or feathers crafts on Forge, here and on 1.21.1.
+
+### 26.1 only
+
+- [ ] From the built jars on a launcher profile: thermal on and off on all three loaders, and the
+      drafting table places and draws on Fabric (its block entity type comes from Fabric API).
+- [ ] Tracers and flares are hidden by a block between them and the camera, and show in front of one.
+- [ ] Rider pose and the camera roll look right in a banked aircraft on all three loaders.
+- [ ] The team manager lists the chat colours, and a new team takes the one picked.
+
+### 26.2 only
+
+- [ ] From the built jars on a launcher profile, not a dev run: the thermal view turns on and off on
+      Forge (its setter is opened by an access transformer, which a dev run applies differently),
+      NeoForge and Fabric.
+- [ ] Rider pose and the camera roll look right in a banked aircraft on all three loaders.
+- [ ] With Sodium and Iris for 26.2, tracers, flares and smoke look right (or note how they look).
 
 ### 1.21.1 only
 
@@ -55,6 +100,10 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
       its icon.
 - [ ] Glow halos, tracers and the glow particle are additive and do not hide smoke behind them.
 - [ ] A vehicle hit by a weapon wobbles (hurt time) and takes damage only once per hit.
+- [ ] Smoke grenades show their own icons, in the hand and in the drafting table's result slot.
+- [ ] The workshop's model turns, zooms and pans with its gizmos staying on the right parts.
+- [ ] The team manager's PVP button works, and PVP goes back to `server.properties` after a restart.
+- [ ] With Sodium and Iris for 1.21.1, tracers, flares and smoke look right (or note how they look).
 
 ## Phase 1 checklist
 

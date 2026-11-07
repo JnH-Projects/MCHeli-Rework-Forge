@@ -3,6 +3,7 @@ package com.jnhprojects.mcheli.registry;
 import com.jnhprojects.mcheli.MCHeli;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.item.AircraftItem;
+import com.jnhprojects.mcheli.item.ThrowableItem;
 import com.jnhprojects.mcheli.platform.Platform;
 import com.jnhprojects.mcheli.platform.Registered;
 import com.jnhprojects.mcheli.platform.Registration;
@@ -16,8 +17,9 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * One tab per vehicle kind, listing a stack for each loaded definition of that kind. The list is
- * read from the content registry whenever a tab is built, so reloaded content shows up.
+ * One tab per vehicle kind, listing a stack for each loaded definition of that kind, and one for
+ * the equipment and throwables. Those lists are read from the content registry whenever a tab is
+ * built, so reloaded content shows up.
  */
 public final class ModCreativeTabs {
     public static final Registered<CreativeModeTab> HELICOPTERS = register("helicopters", "helicopter", "ah-64",
@@ -25,6 +27,15 @@ public final class ModCreativeTabs {
     public static final Registered<CreativeModeTab> PLANES = register("planes", "plane", "f-35b", key(HELICOPTERS));
     public static final Registered<CreativeModeTab> TANKS = register("tanks", "tank", "m1a2", key(PLANES));
     public static final Registered<CreativeModeTab> VEHICLES = register("vehicles", "vehicle", "mk15", key(TANKS));
+    public static final Registered<CreativeModeTab> EQUIPMENT = Registration.register(Registries.CREATIVE_MODE_TAB, "equipment",
+            key -> Platform.get().creativeTab(key(VEHICLES))
+                    .title(Component.translatable("itemGroup.mcheli.equipment"))
+                    .icon(() -> new ItemStack(ModItems.WRENCH.get()))
+                    .displayItems((params, output) -> {
+                        ModItems.EQUIPMENT.forEach(item -> output.accept(item.get()));
+                        MCHeli.content().throwables().forEach(def -> output.accept(ThrowableItem.stackOf(def)));
+                    })
+                    .build());
 
     private ModCreativeTabs() {
     }
@@ -52,7 +63,7 @@ public final class ModCreativeTabs {
 
     /** Our tabs, for rebuilding their contents after a content reload. */
     public static List<CreativeModeTab> all() {
-        return List.of(HELICOPTERS.get(), PLANES.get(), TANKS.get(), VEHICLES.get());
+        return List.of(HELICOPTERS.get(), PLANES.get(), TANKS.get(), VEHICLES.get(), EQUIPMENT.get());
     }
 
     /** Declares the entries; the loader module registers them. */

@@ -27,8 +27,8 @@ public final class RiderPose {
         if (!(rider instanceof Player) || !(rider.getVehicle() instanceof AircraftEntity vehicle)) {
             return;
         }
-        float yaw = vehicle.getYRot(partialTicks);
-        float pitch = vehicle.getXRot(partialTicks);
+        float yaw = vehicle.getViewYRot(partialTicks);
+        float pitch = vehicle.getViewXRot(partialTicks);
         float roll = vehicle.roll(partialTicks);
         if (pitch == 0.0F && roll == 0.0F) {
             return;

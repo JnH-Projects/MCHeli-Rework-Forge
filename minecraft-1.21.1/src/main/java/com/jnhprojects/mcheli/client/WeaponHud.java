@@ -88,7 +88,7 @@ final class WeaponHud {
             } else if (set.isInPreparation()) {
                 status = Component.translatable("hud.mcheli.preparing");
             } else if (set.magazineSize() > 0 && set.ammo() == 0 && set.restAmmo() == 0) {
-                status = Component.translatable("hud.mcheli.resupply", KeyBindings.RESUPPLY.getTranslatedKeyMessage());
+                status = Component.translatable("hud.mcheli.resupply", KeyBindings.VEHICLE_SCREEN.getTranslatedKeyMessage());
                 color = RED;
             }
             Guidance lock = weapons.guidance(weapons.selected(seat));

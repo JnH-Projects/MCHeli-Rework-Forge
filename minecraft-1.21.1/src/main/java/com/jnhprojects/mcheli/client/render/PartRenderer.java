@@ -1,5 +1,7 @@
 package com.jnhprojects.mcheli.client.render;
 
+import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.client.RuntimeAssets;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
 import com.jnhprojects.mcheli.content.aircraft.HelicopterDefinition;
@@ -22,7 +24,9 @@ import com.jnhprojects.mcheli.content.aircraft.part.WheelPart;
 import com.jnhprojects.mcheli.content.aircraft.part.WingPart;
 import com.jnhprojects.mcheli.model.Mesh;
 import com.jnhprojects.mcheli.model.MeshGroup;
+import com.jnhprojects.mcheli.model.PartTextures;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -82,19 +86,19 @@ final class PartRenderer {
                 nozzles(plane);
                 wings(plane);
                 propellers(plane);
-                submit(mesh.body());
+                hull();
             }
             case HelicopterDefinition heli -> {
-                submit(mesh.body());
+                hull();
                 rotors(heli);
             }
             case VehicleDefinition vehicle -> {
-                submit(mesh.body());
+                hull();
                 for (VehiclePart part : vehicle.parts) {
                     vehiclePart(vehicle, part);
                 }
             }
-            default -> submit(mesh.body());
+            default -> hull();
         }
         weapons();
         rotatingParts();
@@ -110,10 +114,23 @@ final class PartRenderer {
         movingParts(def.canopies, state.canopy);
     }
 
+    /**
+     * The body and, as a {@code $} object of its own so it can have its own {@code PartTexture},
+     * the cockpit. A model without {@code $body} draws as one piece, cockpit included, and no original
+     * model has a {@code $cockpit}.
+     */
+    private void hull() {
+        submit(mesh.body());
+        if (mesh.contains("$body")) {
+            submit(mesh.part("$cockpit"));
+        }
+    }
+
     // Kind specific parts
 
     private void rotors(HelicopterDefinition heli) {
-        for (RotorDefinition rotor : heli.rotors) {
+        for (int r = 0; r < heli.rotors.size(); r++) {
+            RotorDefinition rotor = heli.rotors.get(r);
             List<MeshGroup> blade = part(rotor.part());
             if (blade.isEmpty() || isZero(rotor.axis())) {
                 continue;
@@ -124,7 +141,8 @@ final class PartRenderer {
                 pose.pushPose();
                 Vector3 p = rotor.position();
                 translate(p, 1.0F);
-                rotate(state.rotorAngle + i * step, rotor.axis());
+                float[] angles = r < state.bladeAngles.length ? state.bladeAngles[r] : null;
+                rotate(angles != null && i < angles.length ? angles[i] : state.rotorAngle + i * step, rotor.axis());
                 if (!rotor.legacyPivot()) {
                     translate(p, -1.0F);
                 }
@@ -480,12 +498,34 @@ final class PartRenderer {
         if (groups.isEmpty()) {
             return;
         }
+        if (def.partTextures.isEmpty()) {
+            submit(groups, texture, opaqueType, glassType);
+            return;
+        }
+        for (PartTextures.Bucket bucket : GlassSplit.INSTANCE.buckets(groups, def.partTextures)) {
+            if (bucket.texture() == null) {
+                submit(bucket.groups(), texture, opaqueType, glassType);
+            } else {
+                ResourceLocation own = RuntimeAssets.texture(ResourceLocation.fromNamespaceAndPath(MCHeli.MOD_ID,
+                        "textures/" + def.folder() + "/" + bucket.texture() + ".png"));
+                submit(bucket.groups(), own, RenderType.entityCutout(own), RenderType.entityTranslucentEmissive(own));
+            }
+        }
+    }
+
+    private void submit(List<MeshGroup> groups, ResourceLocation texture, RenderType opaqueType, RenderType glassType) {
         GlassSplit.Split split = GlassSplit.INSTANCE.split(groups, texture);
         if (!split.opaque().isEmpty()) {
             MeshRenderer.emit(split.opaque(), pose.last(), buffers.getBuffer(opaqueType), light, overlay);
         }
         if (!split.glass().isEmpty()) {
-            MeshRenderer.emitFrontFaces(split.glass(), pose.last(), buffers.getBuffer(glassType), light, overlay, glassColor);
+            VertexConsumer buffer = buffers.getBuffer(glassType);
+            // Culling glass relies on the camera sitting at the origin, which is not so in a GUI.
+            if (state.inGui) {
+                MeshRenderer.emit(split.glass(), pose.last(), buffer, light, overlay, glassColor);
+            } else {
+                MeshRenderer.emitFrontFaces(split.glass(), pose.last(), buffer, light, overlay, glassColor);
+            }
         }
     }
 

@@ -1,0 +1,5 @@
+{
+  "multipart": [
+    { "apply": { "model": "mcheli:block/drafting_table" } }
+  ]
+}

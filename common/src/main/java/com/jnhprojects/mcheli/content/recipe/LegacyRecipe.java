@@ -199,7 +199,7 @@ public final class LegacyRecipe {
     private static String model(Vehicle result, ImportTarget target) {
         return switch (target) {
             case MODERN -> "\"minecraft:item_model\": \"mcheli:" + result.name() + '"';
-            case V1_21_1 -> "\"minecraft:custom_model_data\": " + result.icon();
+            case V1_21_1, V1_20_6 -> "\"minecraft:custom_model_data\": " + result.icon();
         };
     }
 
@@ -208,7 +208,7 @@ public final class LegacyRecipe {
         String lower = name.trim().toLowerCase(Locale.ROOT);
         if (lower.startsWith("mcheli:")) {
             if (EQUIPMENT_ITEMS.contains(lower)) {
-                return '"' + lower + '"';
+                return target == ImportTarget.MODERN ? '"' + lower + '"' : "{\"item\": \"" + lower + "\"}";
             }
             if (!modItems.test(lower)) {
                 throw new InvalidRecipeException(lower + " does not exist (yet)");

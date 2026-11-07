@@ -12,7 +12,7 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, equipment, workshop, every release version from 1.19.4 to 26.3 ([plan](#road-to-110)) | In progress |
+| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, equipment, workshop, every release version from 1.20.6 to 26.3 ([plan](#road-to-110)) | In progress |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 ## Phase 1: foundation and flyable helicopters
@@ -140,7 +140,7 @@ Rules that hold for every beta:
 | 11 | `1.1.0-beta.7` | Workshop: model, parts and tuning (Forge 26.3 only) | Released |
 | 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Released |
 | | `1.1.0-beta.8.1` | Hotfix: the files missing from the released jars | Released |
-| 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.19.4 to 26.3 | Planned |
+| 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.20.6 to 26.3 | Released |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
@@ -166,13 +166,12 @@ only.
 | 1.21.5 | 21 | yes | yes | yes |
 | 1.21.1 | 21 | yes | yes | yes |
 | 1.20.6 | 21 | yes | yes | yes |
-| 1.20.2 | 17 | yes | no | yes |
-| 1.19.4 | 17 | yes | no | yes |
 
-That is 25 jars per final release. NeoForge starts at 1.20.6 (ModDevGradle, which builds the
-NeoForge jars, cannot set up NeoForge 1.20.2), and 1.19.4 is the oldest version.
-Older versions are not frozen: every final release ships on the whole list again. Every pair
-already has a Gradle module; the ones not ported yet are placeholders that only load and log
+That is 21 jars per final release. Older versions are not frozen: every final release ships on the
+whole list again.
+
+1.20.2 and 1.19.4 (Forge and Fabric) are on hold and not part of 1.1.0: they need Java 17 and vehicle
+items without data components. Their Gradle modules remain as placeholders that only load and log
 (see [DEVELOPMENT.md](DEVELOPMENT.md#placeholder-modules)).
 
 ## Phase 5: groundwork (`1.1.0-beta.1`)
@@ -226,8 +225,9 @@ almost everything, adds NeoForge and Fabric on 26.3, then brings all three to 1.
 - [x] NeoForge and Fabric on 26.3, with the same features and checklists as Forge
 - [x] 1.21.1 (Java 21) on Forge, NeoForge and Fabric: older rendering (no render states), older
       networking, item models from the item JSON instead of `item_model`
-- [ ] Content packs and their sync work across loaders on the same Minecraft version (a Fabric
-      client on a NeoForge server)
+- Dropped: a Fabric client on a NeoForge server, or the reverse. Tried in phase 13, each loader
+  refuses the other at its own handshake before the mod runs. A pack zip copied by hand still works
+  on every loader, since the format knows nothing about them.
 - [x] Legacy importer checked on 1.21.1 (pack format numbers and the asset layout differ)
 - [x] Jar names carry the loader and the Minecraft version, such as
       `mcheli-fabric-1.21.1-1.1.0-beta.3.jar`; the release workflow publishes every jar
@@ -300,26 +300,35 @@ built here syncs to other players with no extra work.
 
 Betas 4 to 8 ship only the Forge 26.3 jar, to keep builds fast. This phase brings the features
 added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest of the
-[supported versions](#supported-versions), down to 1.19.4. All 25 jars ship from here on.
+[supported versions](#supported-versions), down to 1.20.6. All 21 jars ship from here on.
 
 - [x] A Gradle module for every version and loader pair, the missing ones as placeholders that
       download their loader and only load and log
-- [ ] Every module in `platforms`; phases 8 to 12 ported to NeoForge and Fabric on 26.3 and to all
-      three loaders on 1.21.1
-- [ ] `minecraft-26.2`, `minecraft-26.1`, `minecraft-1.21.11`, `minecraft-1.21.5`,
-      `minecraft-1.20.6`, `minecraft-1.20.2` and `minecraft-1.19.4`, each replacing its
-      placeholder modules with real glue
-- [ ] `common` compiles for Java 17 (no pattern matching `switch`, no `SequencedCollection`
-      methods)
-- [ ] Vehicle items keep their vehicle in NBT on 1.20.2 and 1.19.4, since data components only
-      arrived in 1.20.5
-- [ ] Legacy importer and content packs checked on every version
-- [ ] The phase 7 smoke tests for every jar
+- [x] Phases 8 to 12 ported to NeoForge and Fabric on 26.3
+- [x] Every resource the repository holds ships in the jar (betas 4 to 8 lacked recipes, the thermal
+      shader, the smoke particle and the drafting table model)
+- [x] Phases 8 to 12 ported to all three loaders on 1.21.1
+- [x] Every supported version's modules in `platforms`
+- [x] `minecraft-26.2` with its Forge, NeoForge and Fabric glue
+- [x] `minecraft-26.1` with its Forge, NeoForge and Fabric glue
+- [x] `minecraft-1.21.11` with its Forge, NeoForge and Fabric glue
+- [x] `minecraft-1.21.5` with its Forge, NeoForge and Fabric glue
+- [x] `minecraft-1.20.6` with its Forge, NeoForge and Fabric glue
+- [x] Legacy importer and content packs checked on every version: a scripted client on each of the 21
+      modules loads the imported recipes and the example pack, spawns its vehicle and plays a pack
+      sound from the server. Server sync of packs moved to the smoke tests below
+- [x] Pack sounds play on every Forge version (silent on 1.21.11 and later before this phase)
+- [x] The camera roll on 1.20.6 follows the hull on all three loaders
+
+Scripted clients found the bugs above, but nobody has played these jars, so the phase 7 smoke tests moved
+to the 1.1.0 release. Only the Forge 26.3 jar has been started from a launcher profile.
 
 ## 1.1.0 release
 
 No new features after beta.9; a `1.1.0-rc.N` follows only if beta.9 testing finds problems.
 
+- [ ] The phase 7 smoke tests for every jar ([TESTING.md](TESTING.md#smoke-test-every-jar)), each from a
+      launcher profile, with a real flight, weapons, sound by ear and a pack download from a server
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
 - [ ] A pack made in the workshop on one version loads on every other supported version

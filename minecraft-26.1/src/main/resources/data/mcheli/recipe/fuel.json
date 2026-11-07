@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": "minecraft:coal",
+    "I": "#c:ingots/iron"
+  },
+  "pattern": [
+    "ICI",
+    "III"
+  ],
+  "result": {
+    "id": "mcheli:fuel"
+  }
+}

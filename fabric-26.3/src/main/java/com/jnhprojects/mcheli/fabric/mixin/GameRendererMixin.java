@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.fabric.mixin;
 
 import com.jnhprojects.mcheli.client.ClientHooks;
+import com.jnhprojects.mcheli.fabric.RollableCamera;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;

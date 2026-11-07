@@ -1,19 +1,70 @@
 package com.jnhprojects.mcheli.forge;
 
+import com.jnhprojects.mcheli.CommonHooks;
+import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.item.VehicleIngredient;
+import com.jnhprojects.mcheli.platform.Platform;
+import com.jnhprojects.mcheli.platform.Registration;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.AddPackFindersEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.fml.common.Mod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegisterEvent;
 
-/**
- * Placeholder entry point for Minecraft 26.2. It only proves that the module builds and loads;
- * the Forge glue from forge-26.3 replaces it when this version is ported for a final release.
- */
-@Mod("mcheli")
+/** The Forge entry point: everything here only connects Forge to the shared code. */
+@Mod(MCHeli.MOD_ID)
 public final class McheliForge {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("MCHeli");
+    public McheliForge(FMLJavaModLoadingContext context) {
+        BusGroup modBus = context.getModBusGroup();
+        Platform.install(new ForgePlatform());
+        MCHeli.init();
 
-    public McheliForge() {
-        LOGGER.info("MCHeli Rework placeholder loaded on Forge for Minecraft 26.2; no content yet");
+        RegisterEvent.getBus(modBus).addListener(event -> {
+            for (ResourceKey<? extends Registry<?>> registry : Registration.registries()) {
+                register(event, Registration.typed(registry));
+            }
+            event.register(ForgeRegistries.Keys.INGREDIENT_SERIALIZERS,
+                    helper -> helper.register(VehicleIngredient.ID, ForgeVehicleIngredient.SERIALIZER));
+        });
+        ForgeNetwork.register();
+        FMLCommonSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(CommonHooks::commonSetup));
+
+        AddPackFindersEvent.BUS.addListener(event -> event.addRepositorySource(CommonHooks.packSource()));
+        ServerAboutToStartEvent.BUS.addListener(event -> CommonHooks.serverAboutToStart(event.getServer()));
+        ServerStoppedEvent.BUS.addListener(event -> CommonHooks.serverStopped());
+        TickEvent.ServerTickEvent.Post.BUS.addListener(event -> CommonHooks.serverTickEnd(event.server()));
+        RegisterCommandsEvent.BUS.addListener(event -> CommonHooks.registerCommands(event.getDispatcher()));
+        PlayerEvent.PlayerLoggedInEvent.BUS.addListener(event -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                CommonHooks.playerLoggedIn(player);
+            }
+        });
+        PlayerEvent.PlayerLoggedOutEvent.BUS.addListener(event -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                CommonHooks.playerLoggedOut(player);
+            }
+        });
+
+        if (Platform.get().isClient()) {
+            ForgeClient.init(modBus);
+        }
+    }
+
+    /** Only once Forge asks for that registry, with our entries in declaration order. */
+    private static <T> void register(RegisterEvent event, ResourceKey<? extends Registry<T>> registry) {
+        if (event.getRegistryKey().equals(registry)) {
+            event.register(registry, helper -> Registration.registerAll(registry, helper::register));
+        }
     }
 }

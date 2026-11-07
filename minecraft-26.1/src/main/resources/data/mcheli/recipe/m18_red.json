@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "D": "minecraft:red_dye",
+    "Y": "#c:ingots/iron"
+  },
+  "pattern": [
+    "DY"
+  ],
+  "result": {
+    "id": "mcheli:throwable",
+    "components": {
+      "mcheli:throwable": "m18_red",
+      "minecraft:item_model": "mcheli:m18_red",
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

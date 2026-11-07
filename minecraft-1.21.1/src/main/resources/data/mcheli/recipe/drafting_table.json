@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {"item": "minecraft:crafting_table"},
+    "F": {"tag": "minecraft:wooden_fences"},
+    "P": {"tag": "minecraft:planks"},
+    "R": {"tag": "c:dusts/redstone"}
+  },
+  "pattern": [
+    "R  ",
+    "PCP",
+    "F F"
+  ],
+  "result": {
+    "id": "mcheli:drafting_table"
+  }
+}

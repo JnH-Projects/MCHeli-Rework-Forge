@@ -26,8 +26,8 @@ public class A10Renderer extends EntityRenderer<A10Entity> {
         Mesh mesh = entity.isVisible() ? MeshCache.INSTANCE.get("", "a-10") : null;
         if (mesh != null) {
             pose.pushPose();
-            pose.mulPose(Axis.YP.rotationDegrees(-entity.getYRot(partialTicks)));
-            pose.mulPose(Axis.XP.rotationDegrees(-entity.getXRot(partialTicks)));
+            pose.mulPose(Axis.YP.rotationDegrees(-entity.getViewYRot(partialTicks)));
+            pose.mulPose(Axis.XP.rotationDegrees(-entity.getViewXRot(partialTicks)));
             MeshRenderer.emit(mesh.groups(), pose.last(), buffers.getBuffer(RenderType.entityCutout(TEXTURE)), light, OverlayTexture.NO_OVERLAY);
             pose.popPose();
         }

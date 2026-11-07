@@ -1,6 +1,7 @@
 package com.jnhprojects.mcheli.client;
 
 import com.jnhprojects.mcheli.MCHeli;
+import com.jnhprojects.mcheli.ModSounds;
 import com.jnhprojects.mcheli.client.hud.HudRenderer;
 import com.jnhprojects.mcheli.content.Vector3;
 import com.jnhprojects.mcheli.content.aircraft.AircraftDefinition;
@@ -22,6 +23,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
@@ -99,6 +101,10 @@ final class CrewController {
             tracking = false;
             viewVehicle = null;
             viewSeat = -1;
+            // The GLTD's sight shares the zoom and camera mode; only leaving it resets them.
+            if (GltdController.gltdOf(player) == null) {
+                VehicleCamera.reset();
+            }
             return;
         }
         int seat = vehicle.seatOf(player);
@@ -109,6 +115,7 @@ final class CrewController {
             cameraIndex = 0;
             gunnerSight = false;
             tracking = false;
+            VehicleCamera.reset();
         }
 
         Input keys = player.input;
@@ -155,6 +162,9 @@ final class CrewController {
         while (KeyBindings.SWITCH_SEAT.consumeClick()) {
             send(vehicle, CrewActionPacket.Action.SWITCH_SEAT);
         }
+        while (KeyBindings.DROP_CREW.consumeClick()) {
+            send(vehicle, pilot ? CrewActionPacket.Action.DROP_CREW : CrewActionPacket.Action.JUMP_OUT);
+        }
         while (KeyBindings.SWITCH_CAMERA.consumeClick()) {
             switchCamera(vehicle, seat);
         }
@@ -164,8 +174,24 @@ final class CrewController {
             }
         }
         while (KeyBindings.FOLD.consumeClick()) {
-            if (pilot) {
+            if (looksThroughSight(vehicle, seat)) {
+                VehicleCamera.onZoomKey(player, vehicle);
+            } else if (pilot) {
                 send(vehicle, CrewActionPacket.Action.FOLD);
+            }
+        }
+        while (KeyBindings.CAMERA_MODE.consumeClick()) {
+            // As in the original, the key works the search light in vehicles that have one.
+            if (vehicle.canSwitchSearchLight(player)) {
+                send(vehicle, CrewActionPacket.Action.SEARCH_LIGHT);
+                player.level().playLocalSound(player, ModSounds.get("pi"), SoundSource.PLAYERS, 0.5F, 1.0F);
+            } else {
+                VehicleCamera.onCameraModeKey(player, vehicle);
+            }
+        }
+        while (KeyBindings.VEHICLE_SCREEN.consumeClick()) {
+            if (!vehicle.isDestroyed()) {
+                send(vehicle, CrewActionPacket.Action.VEHICLE_SCREEN);
             }
         }
         while (KeyBindings.VTOL.consumeClick()) {
@@ -183,6 +209,18 @@ final class CrewController {
                 send(vehicle, CrewActionPacket.Action.RACK_UNLOAD);
             }
         }
+    }
+
+    /**
+     * Whether this seat sees through a sight that can zoom: a camera position or gunner sight, the
+     * pilot in gunner mode, or the pilot of a UAV. The zoom key folds the wings everywhere else.
+     */
+    private static boolean looksThroughSight(AircraftEntity vehicle, int seat) {
+        AircraftDefinition def = vehicle.definition();
+        if (def == null || seat < 0 || seat >= def.seatCount() || def.cameraZoom <= 1) {
+            return false;
+        }
+        return eyePosition(vehicle, def, seat) != null || vehicle.isGunnerMode() || def.uav;
     }
 
     private static void send(AircraftEntity vehicle, CrewActionPacket.Action action) {
@@ -261,7 +299,7 @@ final class CrewController {
         TvMissileEntity missile = tvCamera(vehicle, seat);
         if (!(firstPerson && missile != null)) {
             // Every seat of every kind tilts with the hull, measured along the way the rider looks.
-            event.setRoll(AircraftRotation.cameraRoll(vehicle.getYRot(partialTicks), vehicle.getXRot(partialTicks),
+            event.setRoll(AircraftRotation.cameraRoll(vehicle.getViewYRot(partialTicks), vehicle.getViewXRot(partialTicks),
                     vehicle.roll(partialTicks), event.yaw(), event.pitch()));
         }
         if (firstPerson && missile != null) {
@@ -304,9 +342,9 @@ final class CrewController {
             tracking = false;
         }
         if (firstPerson && !freeLook) {
-            event.setYaw(vehicle.getYRot(partialTicks));
+            event.setYaw(vehicle.getViewYRot(partialTicks));
             if (!ownPitch) {
-                event.setPitch(vehicle.getXRot(partialTicks));
+                event.setPitch(vehicle.getViewXRot(partialTicks));
             }
         }
     }
@@ -388,7 +426,7 @@ final class CrewController {
         }
         SeatDefinition s = def.seats.get(seat);
         Vector3 local = s.rotatingSeat() ? vehicle.onTurret(def, eye, partialTicks) : eye;
-        Vector3f offset = AircraftRotation.toWorld(vehicle.getYRot(partialTicks), vehicle.getXRot(partialTicks), vehicle.roll(partialTicks),
+        Vector3f offset = AircraftRotation.toWorld(vehicle.getViewYRot(partialTicks), vehicle.getViewXRot(partialTicks), vehicle.roll(partialTicks),
                 local.x(), local.y(), local.z());
         placeCamera(camera, new Vec3(Mth.lerp(partialTicks, vehicle.xo, vehicle.getX()) + offset.x,
                 Mth.lerp(partialTicks, vehicle.yo, vehicle.getY()) + offset.y,
@@ -409,7 +447,7 @@ final class CrewController {
         return missile;
     }
 
-    private static void placeCamera(Camera camera, Vec3 at) {
+    static void placeCamera(Camera camera, Vec3 at) {
         MethodHandle setter = cameraSetter();
         if (setter == null) {
             return;

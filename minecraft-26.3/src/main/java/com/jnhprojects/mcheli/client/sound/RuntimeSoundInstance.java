@@ -55,8 +55,9 @@ public abstract class RuntimeSoundInstance extends AbstractTickableSoundInstance
     }
 
     /**
-     * Forge and NeoForge call this through their sound instance extension, which it overrides
-     * without saying so: Fabric has no such method and calls {@link #openStream} from a mixin.
+     * NeoForge calls this through its sound instance extension, which it overrides without saying
+     * so. Fabric has no such method and calls {@link #openStream} from a mixin. Forge declares it
+     * too but never calls it on this version, see {@code PackSoundBuffers} in its module.
      */
     public CompletableFuture<AudioStream> getStream(SoundBufferLibrary buffers, Sound sound, boolean looping) {
         return openStream(buffers, sound.getPath(), looping);
@@ -68,6 +69,11 @@ public abstract class RuntimeSoundInstance extends AbstractTickableSoundInstance
         if (source == null) {
             return buffers.getStream(path, looping);
         }
+        return streamFile(source, looping);
+    }
+
+    /** Streams an OGG file from disk, read as it plays and never cached as a buffer. */
+    public static CompletableFuture<AudioStream> streamFile(Path source, boolean looping) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 InputStream in = new BufferedInputStream(Files.newInputStream(source));
