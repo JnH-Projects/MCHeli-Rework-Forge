@@ -9,14 +9,15 @@ MCHeli Rework is a ground-up port of MCHeli 1.0.3, a mod that stopped at Minecra
 system is rewritten for the modern game, while the original vehicle definitions, models,
 textures and sounds load unchanged.
 
-> **Status:** on the way to 1.1.0, now at phase 13 (`1.1.0-beta.9`). Every helicopter, plane,
+> **Status:** `1.1.0` is the current release. Every helicopter, plane,
 > tank, car and ground vehicle can be placed, crewed and driven with the original handling, all
 > 229 weapons fire, and the scripted HUDs, fuel, the vehicle screen and all of the original's
 > equipment are in, down to UAV stations, the drafting table and the team manager. The vehicle
 > workshop builds new vehicles in game from a Blockbench or Blender model, with their own textures
-> and sounds, and sends them to a server for its operators to approve. From `1.1.0-beta.9` on,
-> every jar ships: Forge, NeoForge and Fabric for every version from 1.20.6 to 26.3 (see
-> [supported versions](docs/ROADMAP.md#supported-versions)). See the [roadmap](docs/ROADMAP.md).
+> and sounds, and sends them to a server for its operators to approve. Every jar ships: Forge,
+> NeoForge and Fabric for every version from 1.20.6 to 26.3 (see
+> [supported versions](docs/ROADMAP.md#supported-versions)). Testers are playing these jars for the
+> first time on this release, and fixes go into 1.1.1. See the [roadmap](docs/ROADMAP.md).
 
 ## Showcase video
 
@@ -63,7 +64,8 @@ mod does not ship it: on first start it converts the player's own copy of the or
 to the modern resource layout. This repository holds none of it either; the unit tests import
 the same zip.
 
-The rework is by **JayMar921** ([JnH Projects](https://github.com/JnH-Projects)).
+The rework is by **JayMar921** ([JnH Projects](https://github.com/JnH-Projects)). More of their
+projects and plugins are at [jhprojects.dev](https://www.jhprojects.dev).
 
 ## Licensing note
 

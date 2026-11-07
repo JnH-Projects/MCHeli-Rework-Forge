@@ -1,7 +1,7 @@
 # Architecture
 
 This document explains how MCHeli Rework is organized and why. It reflects the code as of
-`1.1.0-beta.3`.
+`1.1.0`.
 
 ## Goals
 
