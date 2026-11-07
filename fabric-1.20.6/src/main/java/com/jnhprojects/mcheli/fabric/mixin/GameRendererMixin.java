@@ -40,10 +40,13 @@ abstract class GameRendererMixin {
         });
     }
 
-    /** Vanilla's view matrix has no roll; it stacks on top of the other two, as NeoForge does it. */
+    /**
+     * Vanilla's view matrix has no roll; it stacks on top of the other two, as NeoForge does it. This
+     * is the inverse of the camera's rotation, hence the negated roll.
+     */
     @Redirect(method = "renderLevel", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;rotationXYZ(FFF)Lorg/joml/Matrix4f;"))
     private Matrix4f mcheli$withRoll(Matrix4f matrix, float x, float y, float z) {
-        return new Matrix4f().rotationZ(mcheli$viewRoll * Mth.DEG_TO_RAD).mul(matrix.rotationXYZ(x, y, z));
+        return new Matrix4f().rotationZ(-mcheli$viewRoll * Mth.DEG_TO_RAD).mul(matrix.rotationXYZ(x, y, z));
     }
 
     @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
