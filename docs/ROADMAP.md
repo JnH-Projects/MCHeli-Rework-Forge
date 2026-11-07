@@ -2,7 +2,7 @@
 
 The original mod is about 60,000 lines of 1.7.10 code. Nearly all of it touches APIs that no
 longer exist (immediate mode OpenGL, numeric ids, the old network and event systems), so the port
-happened in four phases toward 1.0.0, and 1.1.0 continues with six more. Each phase ends with a
+happened in four phases toward 1.0.0, and 1.1.0 continued with nine more. Each phase ends with a
 tagged pre-release that installs and runs on its own.
 
 | Phase | Version | Theme | State |
@@ -12,8 +12,9 @@ tagged pre-release that installs and runs on its own.
 | 3 | `1.0.0-alpha.3` | Weapons and combat | Implemented, in-game test in progress |
 | 4 | `1.0.0-beta.1` | HUD and polish | Done |
 | | `1.0.0` | Release: code-only jar | Released |
-| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, equipment, workshop, every release version from 1.20.6 to 26.3 ([plan](#road-to-110)) | In progress |
-| | `1.1.0` | Release on CurseForge | Planned |
+| 5-13 | `1.1.0-beta.1` to `beta.9` | Content packs, NeoForge and Fabric, equipment, workshop, every release version from 1.20.6 to 26.3 ([plan](#road-to-110)) | Released |
+| | `1.1.0` | Release on CurseForge | Released |
+| | `1.1.1` | Fixes for what testers find on 1.1.0 ([list](#111-after-testing)) | Planned |
 
 ## Phase 1: foundation and flyable helicopters
 
@@ -105,7 +106,7 @@ split into nine phases, each ending in a beta.
 |-------|--------------|-------------|------------|
 | `1.1.0-beta.N` | GitHub pre-release | Mirrored, GitHub pre-release | Not uploaded |
 | `1.1.0-rc.N` (if needed) | GitHub pre-release | Mirrored, GitHub pre-release | Not uploaded |
-| `1.1.0` | GitHub release | Mirrored, GitHub release | Uploaded, one file per Minecraft version |
+| `1.1.0` | GitHub release | Mirrored, GitHub release | Uploaded, one file per Minecraft version and loader |
 
 Every beta goes through the usual flow: set `mod_version`, move the changelog section, merge,
 tag `v1.1.0-beta.N` in the private repo, mirror the commits to the public repo and tag the same
@@ -141,7 +142,7 @@ Rules that hold for every beta:
 | 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Released |
 | | `1.1.0-beta.8.1` | Hotfix: the files missing from the released jars | Released |
 | 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.20.6 to 26.3 | Released |
-| | `1.1.0` | Release on CurseForge | Planned |
+| | `1.1.0` | Release on CurseForge | Released |
 
 The order is deliberate. The registry and the source split come first because everything else
 sits on them. Content packs come before the workshop, since the workshop's output is a pack.
@@ -325,15 +326,22 @@ to the 1.1.0 release. Only the Forge 26.3 jar has been started from a launcher p
 
 ## 1.1.0 release
 
-No new features after beta.9; a `1.1.0-rc.N` follows only if beta.9 testing finds problems.
+No new features after beta.9. Hands-on testing moved from before this release to after it: testers play
+the released jars, and what they find goes into 1.1.1 instead of a `1.1.0-rc.N`.
+
+- [x] Drafting table labels no longer run into the inventory
+- [x] Tag `v1.1.0` in both repositories; upload one CurseForge file per Minecraft version and loader, with
+      the player-facing changelog from `docs/CURSEFORGE.md`
+
+## 1.1.1: after testing
+
+Fixes for what testers find on 1.1.0, and these checks, which no one has done yet:
 
 - [ ] The phase 7 smoke tests for every jar ([TESTING.md](TESTING.md#smoke-test-every-jar)), each from a
       launcher profile, with a real flight, weapons, sound by ear and a pack download from a server
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
 - [ ] A pack made in the workshop on one version loads on every other supported version
-- [ ] Tag `v1.1.0` in both repositories; upload one CurseForge file per Minecraft version and loader, with
-      the player-facing changelog from `docs/CURSEFORGE.md`
 
 ## Open decisions
 
