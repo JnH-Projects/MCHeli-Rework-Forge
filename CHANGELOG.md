@@ -7,6 +7,12 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- Drafting table: the recipe position ("1 / 35") ran into the top row of the inventory and the "Inventory"
+  title crossed the panel's border, on every Minecraft version. The position now sits between narrower `<<`
+  and `>>` buttons, and the title sits above the panel.
+
 ## [1.1.0-beta.9] - 2026-11-07
 
 Phase 13 of the road to 1.1.0: every loader on every supported version. This beta ships 21 jars, one per
