@@ -18,6 +18,7 @@ import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.ViewportEvent;
+import net.minecraftforge.client.event.sound.SoundEngineLoadEvent;
 import net.minecraftforge.client.gui.overlay.ForgeLayeredDraw;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
@@ -33,6 +34,7 @@ final class ForgeClient {
         FMLClientSetupEvent.getBus(modBus).addListener(event -> event.enqueueWork(() -> ClientHooks.registerMenuScreens(MenuScreens::register)));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerEntityRenderers(event::registerEntityRenderer));
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(event -> ClientHooks.registerBlockEntityRenderers(event::registerBlockEntityRenderer));
+        SoundEngineLoadEvent.BUS.addListener(event -> PackSoundBuffers.install(event.getEngine()));
         RegisterParticleProvidersEvent.BUS.addListener(event -> {
             event.registerSpriteSet(ModParticles.GLOW.get(), GlowParticle.Provider::new);
             event.registerSpriteSet(ModParticles.SMOKE.get(), SmokeParticle.Provider::new);
