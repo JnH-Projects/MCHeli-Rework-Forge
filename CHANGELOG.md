@@ -7,6 +7,49 @@ way to 1.0.0; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-07
+
+The first full release since 1.0.0, on Forge, NeoForge and Fabric for Minecraft 26.3, 26.2, 26.1, 1.21.11,
+1.21.5, 1.21.1 and 1.20.6: 21 jars, one per loader and version. The details of everything below are in the
+beta sections that follow. Players and servers need the same version. The network protocol is the same as
+in 1.1.0-beta.8 and later (11).
+
+### Before you update
+
+Back up your world. Scripted clients ran on every loader and version during development and dedicated
+servers start on all of them, but only the Forge 26.3 jar has been started from a launcher profile, and
+nobody has played the released jars yet. Testing happens on this release, and fixes go into 1.1.1. Please
+report what you find on [GitHub](https://github.com/JnH-Projects/MCHeli-Rework-Forge/issues) with your
+`logs/latest.log`.
+
+### Installing
+
+This jar contains only the mod's code. The vehicles, models, textures and sounds are EMB4's original
+MCHeli content, which you download yourself:
+
+1. Install Forge, NeoForge or Fabric for your Minecraft version. On Fabric, also install Fabric API.
+2. Put `mcheli-<loader>-<minecraft>-1.1.0.jar` in the `mods` folder.
+3. Download `MC1.7.10_mcheli_1.0.3.zip` from the
+   [MCHeli CurseForge page, Files tab](https://www.curseforge.com/minecraft/mc-mods/mcheli-minecraft-helicopter-mod/files).
+4. Create a folder called `mcheli` next to `mods` and put the zip in it. Do not unzip it.
+5. Start the game. The first start converts the zip, which takes a few seconds.
+
+### Added since 1.0.0
+
+- NeoForge and Fabric next to Forge, and six more Minecraft versions next to 26.3.
+- Vehicle workshop: build a vehicle in game from a Blockbench or Blender model, with its own textures and
+  sounds, and send it to a server for its operators to approve.
+- Content packs, sent to players when they join a server.
+- Fuel, the vehicle screen, cargo and supply vehicles.
+- The rest of the original's equipment, including the thermal view, UAV stations, the drafting table and
+  the team manager.
+- Night glow on tracers, rocket motors, flares and explosions, and wrecks that keep burning for 30 seconds.
+- Server settings in `serverconfig/mcheli-server.toml`, and `/mcheli` to list, give and reload vehicles.
+
+### Changed
+
+- 1.20.2 and 1.19.4 are not part of this release.
+
 ### Fixed
 
 - Drafting table: the recipe position ("1 / 35") ran into the top row of the inventory and the "Inventory"
@@ -766,6 +809,7 @@ Phase 1: foundation and flyable helicopters.
 - Free look moved from Left Ctrl to Left Alt, because Left Ctrl is now the vanilla sprint key.
 - Roll damping runs per tick instead of per frame, so handling no longer depends on frame rate.
 
+[1.1.0]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0
 [1.1.0-beta.9]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.9
 [1.1.0-beta.8.1]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8.1
 [1.1.0-beta.8]: https://github.com/JnH-Projects/MCHeli-Rework-Forge/releases/tag/v1.1.0-beta.8
