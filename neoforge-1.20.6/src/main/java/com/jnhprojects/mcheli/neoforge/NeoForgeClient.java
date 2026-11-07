@@ -77,6 +77,7 @@ final class NeoForgeClient {
         }
     }
 
+    /** NeoForge turns the camera the other way round its roll axis than {@link CameraAngles} means, as on every version. */
     private record Angles(ViewportEvent.ComputeCameraAngles event) implements CameraAngles {
         @Override
         public Camera camera() {
@@ -100,7 +101,7 @@ final class NeoForgeClient {
 
         @Override
         public float roll() {
-            return event.getRoll();
+            return -event.getRoll();
         }
 
         @Override
@@ -115,7 +116,7 @@ final class NeoForgeClient {
 
         @Override
         public void setRoll(float roll) {
-            event.setRoll(roll);
+            event.setRoll(-roll);
         }
     }
 }
