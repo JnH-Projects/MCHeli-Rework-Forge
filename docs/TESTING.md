@@ -31,7 +31,8 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 - [ ] Fire a missile from a helicopter or jet: the use key fires without swinging the arm, the pick
       block key switches weapons, the weapon HUD draws, the missile hits and explodes.
 - [ ] Right-clicking the hull outside the main hit box boards the vehicle (the arm swings).
-- [ ] Engine and rotor sounds play, including a content pack sound (the example pack).
+- [ ] Engine and rotor sounds play. Also a content pack sound: the example pack has none, so give a
+      workshop vehicle an OGG for its engine or a weapon and listen to it.
 - [ ] `config/mcheli-client.toml` exists; setting `nightGlow = false` and restarting removes the
       glow.
 - [ ] Join a dedicated server running the same jar: the server log has no `mcheli` errors, the
@@ -51,8 +52,9 @@ Run this for each jar in `build/release`: Forge, NeoForge and Fabric on every Mi
 ### 1.20.6 only
 
 - [ ] From the built jars on a launcher profile: all three loaders start, and thermal turns on and off.
-- [ ] In a banked aircraft, heading east and then north, the horizon tilts the same way on all three
-      loaders. Forge's camera event applies the roll before the other two rotations, unlike NeoForge's.
+- [ ] In a flight with real turns, banked right, the cockpit stays upright on screen and the horizon's right
+      side rises, on every heading and all three loaders. Held at a fixed bank in a driver this already
+      matches 1.21.1 (see `AircraftRotation.rollInXyzOrder`); nobody has flown it.
 - [ ] Sight zoom works on all three loaders.
 - [ ] A vehicle's recipe crafts on each loader, including one with gunpowder or feathers.
 - [ ] "Respawn all" in the team manager sends a player to their bed, and to world spawn without one.
