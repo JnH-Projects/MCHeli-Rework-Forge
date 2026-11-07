@@ -140,7 +140,7 @@ Rules that hold for every beta:
 | 11 | `1.1.0-beta.7` | Workshop: model, parts and tuning (Forge 26.3 only) | Released |
 | 12 | `1.1.0-beta.8` | Workshop: textures, sounds and sharing (Forge 26.3 only) | Released |
 | | `1.1.0-beta.8.1` | Hotfix: the files missing from the released jars | Released |
-| 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.20.6 to 26.3 | Planned |
+| 13 | `1.1.0-beta.9` | Every loader on every supported version, 1.20.6 to 26.3 | Released |
 | | `1.1.0` | Release on CurseForge | Planned |
 
 The order is deliberate. The registry and the source split come first because everything else
@@ -314,13 +314,21 @@ added since beta.3 to NeoForge, Fabric and 1.21.1, and ports the mod to the rest
 - [x] `minecraft-1.21.11` with its Forge, NeoForge and Fabric glue
 - [x] `minecraft-1.21.5` with its Forge, NeoForge and Fabric glue
 - [x] `minecraft-1.20.6` with its Forge, NeoForge and Fabric glue
-- [ ] Legacy importer and content packs checked on every version
-- [ ] The phase 7 smoke tests for every jar
+- [x] Legacy importer and content packs checked on every version: a scripted client on each of the 21
+      modules loads the imported recipes and the example pack, spawns its vehicle and plays a pack
+      sound from the server. Server sync of packs moved to the smoke tests below
+- [x] Pack sounds play on every Forge version (silent on 1.21.11 and later before this phase)
+- [x] The camera roll on 1.20.6 follows the hull on all three loaders
+
+Scripted clients found the bugs above, but nobody has played these jars, so the phase 7 smoke tests moved
+to the 1.1.0 release. Only the Forge 26.3 jar has been started from a launcher profile.
 
 ## 1.1.0 release
 
 No new features after beta.9; a `1.1.0-rc.N` follows only if beta.9 testing finds problems.
 
+- [ ] The phase 7 smoke tests for every jar ([TESTING.md](TESTING.md#smoke-test-every-jar)), each from a
+      launcher profile, with a real flight, weapons, sound by ear and a pack download from a server
 - [ ] Every phase checklist done on every supported Minecraft version
 - [ ] A 1.0.0 world and the beta worlds load with their vehicles and items intact
 - [ ] A pack made in the workshop on one version loads on every other supported version
