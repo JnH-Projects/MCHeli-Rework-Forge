@@ -78,9 +78,14 @@ fires its event, so the shared code sees the same thing on every loader:
 | Use and pick block keys | `InputEvent.InteractionKeyMappingTriggered` | the same | mixin on `Minecraft` |
 | Rider tilt | `RenderLivingEvent.Pre` | `RenderLivingEvent.Pre` | mixin on `LivingEntityRenderer.submit` |
 | Imported content pack | `AddPackFindersEvent` | `AddPackFindersEvent` | mixin on the `PackRepository` constructor |
-| Streamed sounds | `SoundInstance.getStream` | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
+| Streamed sounds | `SoundInstance.getStream` up to 1.21.5; `PackSoundBuffers` from 1.21.11 | `SoundInstance.getStream` | mixin adding `getAudioStream` to `RuntimeSoundInstance` |
 
 NeoForge rolls the camera the other way round from Forge, so its mixin negates the roll.
+
+Forge 1.21.11 and later still declare `SoundInstance.getStream`, but their `SoundEngine` calls
+`SoundBufferLibrary.getStream` directly, and a failed stream leaves no trace in the log. So
+`forge-<version>` swaps the library for its own subclass on `SoundEngineLoadEvent`, through an access
+transformer on the field. The subclass only steps in for an `mcheli` sound no resource pack has.
 
 ### Minecraft 26.2
 
@@ -134,6 +139,10 @@ Forge sets the official mappings and Fabric uses the remapping Loom plugin.
 - **Interaction.** A click on the hull arrives through `interactAt`, as on 1.21.1.
 - **Camera.** `GameRenderer.updateCamera` calls `Camera.setup`, and NeoForge and Fabric hook after that
   and at the head of `extractCamera`. Field of view is `GameRenderer.getFov`.
+- **Pack metadata.** One `pack.mcmeta` is read both as client resources and as server data, and each has
+  its own limit: resources refuse `supported_formats` above format 64, data requires it up to 81. So a range
+  can only start at 82, above the game's own resource format of 75. All three loaders still load the mod's
+  resources, since mod packs are not refused for their format.
 - **Fabric API.** The older names: `KeyBindingHelper`, `ParticleFactoryRegistry`, `FabricItemGroup`,
   `PayloadTypeRegistry.playS2C`, and on `CustomIngredient` `getMatchingItems` and `toDisplay`.
 - **Conventional tags.** Forge on 1.21.x has `forge:gunpowder` and `forge:feathers` but not the `c:`
@@ -207,9 +216,12 @@ the betas it is not kept in step; each final release brings it, and every other
 - **Vertices.** The older builder: `vertex`, `color`, `uv`, `overlayCoords`, `uv2`, `normal`, and an
   `endVertex` to finish each one.
 - **Particle render types.** `begin` is handed a builder and `end` a tesselator.
-- **Camera.** The view matrix comes from the camera's angles rather than its quaternion. NeoForge's
-  `ComputeCameraAngles` carries the roll, so it uses the event as Forge does and has no camera mixin.
-  Fabric hooks after `resetProjectionMatrix` and wraps `Matrix4f.rotationXYZ` to stack the roll on top.
+- **Camera.** The view matrix comes from the camera's angles rather than its quaternion, and each loader
+  gets the roll in differently. NeoForge's `ComputeCameraAngles` stacks it on top of the view with the
+  opposite sign, so its glue negates it and needs no camera mixin. Fabric hooks after
+  `resetProjectionMatrix` and wraps `Matrix4f.rotationXYZ` to do the same. Forge passes the event's roll
+  into `rotationXYZ` itself, where it turns around the world's Z axis, so `ForgeClient` replaces all three
+  angles with `AircraftRotation.rollInXyzOrder`, which builds the same matrix.
 - **Conventional tags.** Forge has none of the `c:` tags, so `forge-1.20.6` defines all our recipes use,
   from the vanilla items and any matching `forge:` tag. Fabric lacks five, defined in `fabric-1.20.6`.
 - **Respawn.** `TeamManager` finds the respawn point itself, since there is no `DimensionTransition`.
