@@ -7,6 +7,7 @@ import com.jnhprojects.mcheli.client.particle.SmokeParticle;
 import com.jnhprojects.mcheli.client.CameraAngles;
 import com.jnhprojects.mcheli.client.ClientHooks;
 import com.jnhprojects.mcheli.client.particle.GlowParticle;
+import com.jnhprojects.mcheli.physics.AircraftRotation;
 import com.jnhprojects.mcheli.registry.ModParticles;
 import net.minecraft.client.Camera;
 import net.minecraftforge.client.event.AddGuiOverlayLayersEvent;
@@ -51,7 +52,10 @@ final class ForgeClient {
                 ClientHooks.clientTickEnd();
             }
         });
-        forgeBus.addListener((ViewportEvent.ComputeCameraAngles event) -> ClientHooks.computeCameraAngles(new Angles(event)));
+        forgeBus.addListener((ViewportEvent.ComputeCameraAngles event) -> {
+            ClientHooks.computeCameraAngles(new Angles(event));
+            stackRoll(event);
+        });
         forgeBus.addListener((ViewportEvent.ComputeFov event) -> event.setFOV(ClientHooks.fov((float) event.getFOV())));
         forgeBus.addListener((RenderHandEvent event) -> event.setCanceled(ClientHooks.hidesHand()));
         forgeBus.addListener(EventPriority.NORMAL, false, RenderLivingEvent.Pre.class,
@@ -59,6 +63,20 @@ final class ForgeClient {
         forgeBus.addListener(ForgeClient::onInteractionKey);
         forgeBus.addListener((ClientPlayerNetworkEvent.LoggingIn event) -> ClientHooks.loggedIn(event.getPlayer()));
         forgeBus.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> ClientHooks.loggedOut());
+    }
+
+    /**
+     * Forge puts the event's roll straight into {@code rotationXYZ} on 1.20.6, so it turns around the
+     * world's Z axis rather than the view's. The camera's look vectors were set before the event and
+     * stay as they are, so this only changes the view matrix of this frame.
+     */
+    private static void stackRoll(ViewportEvent.ComputeCameraAngles event) {
+        if (event.getRoll() != 0.0F) {
+            float[] angles = AircraftRotation.rollInXyzOrder(event.getYaw(), event.getPitch(), event.getRoll());
+            event.setYaw(angles[0]);
+            event.setPitch(angles[1]);
+            event.setRoll(angles[2]);
+        }
     }
 
     private static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {
