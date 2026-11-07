@@ -12,6 +12,8 @@ apply from: rootProject.file('gradle/loader.gradle')
 def legacyZip = rootProject.file('Mod/MC1.7.10_mcheli_1.0.3.zip').absolutePath
 
 minecraft {
+    useDefaultAccessTransformer()
+
     runs {
         configureEach {
             workingDir = rootProject.layout.projectDirectory.dir('run')
