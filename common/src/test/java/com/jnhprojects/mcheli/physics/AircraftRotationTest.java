@@ -1,10 +1,12 @@
 package com.jnhprojects.mcheli.physics;
 
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Checks the camera tilt against the hull. The camera rotation is rebuilt the way
@@ -67,5 +69,57 @@ class AircraftRotationTest {
         assertEquals(expected.x, cameraUp.x, EPSILON);
         assertEquals(expected.y, cameraUp.y, EPSILON);
         assertEquals(expected.z, cameraUp.z, EPSILON);
+    }
+
+    /** The view matrix Forge builds on Minecraft 1.20.6 from what its camera angle event returns. */
+    private static Matrix4f forgeView(float[] angles) {
+        return new Matrix4f().rotationXYZ((float) Math.toRadians(angles[1]), (float) (Math.toRadians(angles[0]) + Math.PI), (float) Math.toRadians(angles[2]));
+    }
+
+    /** The inverse of {@link #camera}: what every other version builds as its view matrix. */
+    private static Matrix4f expectedView(float yaw, float pitch, float roll) {
+        return new Matrix4f().rotation(camera(yaw, pitch, roll).conjugate());
+    }
+
+    private static void assertSameRotation(Matrix4f expected, Matrix4f actual) {
+        Vector3f[] axes = {new Vector3f(1.0F, 0.0F, 0.0F), new Vector3f(0.0F, 1.0F, 0.0F), new Vector3f(0.0F, 0.0F, 1.0F)};
+        for (Vector3f axis : axes) {
+            Vector3f a = expected.transformDirection(new Vector3f(axis));
+            Vector3f b = actual.transformDirection(new Vector3f(axis));
+            assertEquals(a.x, b.x, EPSILON);
+            assertEquals(a.y, b.y, EPSILON);
+            assertEquals(a.z, b.z, EPSILON);
+        }
+    }
+
+    @Test
+    void rollInXyzOrderBuildsTheSameViewOnEveryHeading() {
+        for (float yaw = -180.0F; yaw <= 180.0F; yaw += 15.0F) {
+            for (float pitch = -80.0F; pitch <= 80.0F; pitch += 20.0F) {
+                for (float roll = -170.0F; roll <= 170.0F; roll += 34.0F) {
+                    assertSameRotation(expectedView(yaw, pitch, roll), forgeView(AircraftRotation.rollInXyzOrder(yaw, pitch, roll)));
+                }
+            }
+        }
+    }
+
+    @Test
+    void rollInXyzOrderSurvivesGimbalLock() {
+        // Due east or west and level, a hair of roll leaves the middle angle at its limit.
+        for (float yaw : new float[]{-90.0F, 90.0F}) {
+            for (float roll : new float[]{0.0F, 1.0E-4F, -1.0E-4F, 1.0F}) {
+                assertSameRotation(expectedView(yaw, 0.0F, roll), forgeView(AircraftRotation.rollInXyzOrder(yaw, 0.0F, roll)));
+            }
+        }
+    }
+
+    @Test
+    void forgesPlainAnglesWouldBeWrong() {
+        // Why rollInXyzOrder exists: going east, the plain angles do not give the same view at all.
+        Matrix4f expected = expectedView(-90.0F, 0.0F, -30.0F);
+        Matrix4f plain = forgeView(new float[]{-90.0F, 0.0F, -30.0F});
+        Vector3f expectedUp = expected.transformDirection(new Vector3f(0.0F, 1.0F, 0.0F));
+        Vector3f plainUp = plain.transformDirection(new Vector3f(0.0F, 1.0F, 0.0F));
+        assertTrue(expectedUp.distance(plainUp) > 0.1F);
     }
 }
