@@ -73,7 +73,7 @@ public class DraftingTableScreen extends AbstractContainerScreen<DraftingTableMe
     public DraftingTableScreen(DraftingTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 400, 240);
         inventoryLabelX = 30;
-        inventoryLabelY = 130;
+        inventoryLabelY = 122;
     }
 
     @Override
@@ -87,8 +87,8 @@ public class DraftingTableScreen extends AbstractContainerScreen<DraftingTableMe
         }
         create = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.drafting_table.create"), b -> create())
                 .bounds(leftPos + 120, topPos + 89, 50, 20).build());
-        previous = addRenderableWidget(Button.builder(Component.literal("<<"), b -> step(-1)).bounds(leftPos + 120, topPos + 111, 36, 20).build());
-        next = addRenderableWidget(Button.builder(Component.literal(">>"), b -> step(1)).bounds(leftPos + 155, topPos + 111, 35, 20).build());
+        previous = addRenderableWidget(Button.builder(Component.literal("<<"), b -> step(-1)).bounds(leftPos + 120, topPos + 111, 16, 20).build());
+        next = addRenderableWidget(Button.builder(Component.literal(">>"), b -> step(1)).bounds(leftPos + 180, topPos + 111, 16, 20).build());
         previousPage = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.drafting_table.previous_page"), b -> turnPage(-1))
                 .bounds(leftPos + 210, topPos + 210, 60, 20).build());
         nextPage = addRenderableWidget(Button.builder(Component.translatable("gui.mcheli.drafting_table.next_page"), b -> turnPage(1))
@@ -263,7 +263,8 @@ public class DraftingTableScreen extends AbstractContainerScreen<DraftingTableMe
         }
         ItemStack result = result();
         graphics.text(font, font.plainSubstrByWidth(result.getHoverName().getString(), 85), 120, 20, WHITE, true);
-        graphics.text(font, (index + 1) + " / " + lists.get(list).size(), 120, 134, TEXT, false);
+        String position = (index + 1) + " / " + lists.get(list).size();
+        graphics.text(font, position, 158 - font.width(position) / 2, 117, TEXT, false);
         ingredients(graphics, entry.display(), mouseX, mouseY);
         graphics.item(result, 178, 52);
         if (pageCount == 0) {
